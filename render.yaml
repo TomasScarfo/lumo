@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: lumo
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      # Render genera estos dos valores una sola vez y los conserva entre despliegues.
+      # Guardá una copia de ENCRYPTION_KEY: si se pierde, cada cuenta tiene que volver a conectarse.
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: SECRET_KEY
+        generateValue: true
+      # Los valores secretos se cargan a mano en el panel de Render (sync: false), nunca en este archivo.
+      - key: ML_CLIENT_ID
+        sync: false
+      - key: ML_CLIENT_SECRET
+        sync: false
+      - key: REDIRECT_URI
+        sync: false
+      - key: DATABASE_URL
+        sync: false

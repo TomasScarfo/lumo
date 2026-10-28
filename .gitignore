@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+*.db
+.env
+.DS_Store
+
+# Archivos de trabajo que no van al repositorio
+hub/
+logo/
+pulso.html
+pulso_orig.html
