@@ -353,7 +353,7 @@ function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').repla
 function parseDay(t) { var p = String(t).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
 function isoDay(d) { var m = d.getMonth() + 1, x = d.getDate(); return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (x < 10 ? '0' : '') + x; }
 var END = parseDay(D.end);
-/* La API expone el objetivo de cada campaña como ACOS objetivo (acos_target). ROAS objetivo = 100 / ACOS objetivo. */
+/* La API informa el ROAS objetivo de cada campaña (roas_target); si falta, se usa 100 / acos_target. El servidor ya lo resuelve. */
 var CAMPS = D.camps.map(function (c) {
   return { id: String(c.id), name: esc(c.name), status: c.status, budget: c.budget, acosTarget: c.acosTarget, target: c.target, estTarget: c.estTarget,
     lostB: c.lostB, lostR: c.lostR, share: c.share,
@@ -1108,7 +1108,7 @@ var GLOSSARY = [
   ]},
   { g: 'Eficiencia', terms: [
     { n: 'ROAS (retorno de la inversión publicitaria)', api: 'roas', d: 'Return On Ad Spend. Cuánto vendés por cada $1 que invertís en publicidad.', ex: 'Invertiste $10.000 y vendiste $60.000 con anuncios: el ROAS es $6 por cada $1.', best: 'Más alto es mejor. Se compara con tu ROAS objetivo.' },
-    { n: 'ROAS objetivo', api: 'acos_target', d: 'El ROAS mínimo que esperás de una campaña. Se configura campaña por campaña en Mercado Libre y Lumo lo lee de ahí. La API lo expone como ACOS objetivo: ROAS objetivo = 100 ÷ ACOS objetivo.', ex: 'Un ACOS objetivo del 20% equivale a un ROAS objetivo de $5.', best: 'Es la vara del semáforo de cada campaña.', check: true },
+    { n: 'ROAS objetivo', api: 'roas_target', d: 'El ROAS mínimo que esperás de una campaña. Se configura campaña por campaña en Mercado Libre y Lumo lo lee de ahí. Si una campaña solo informa su ACOS objetivo, usamos ROAS objetivo = 100 ÷ ACOS objetivo.', ex: 'Un ROAS objetivo de $5 equivale a un ACOS objetivo del 20%.', best: 'Es la vara del semáforo de cada campaña.' },
     { n: 'ACOS (costo publicitario de ventas)', api: 'acos', d: 'Advertising Cost of Sales. Qué porcentaje de lo vendido con publicidad se fue en anuncios. Es el ROAS al revés.', ex: 'Invertiste $10.000 y vendiste $60.000: el ACOS es 16,7%. Un ROAS de $5 equivale a un ACOS del 20%.', best: 'Más bajo es mejor.' },
     { n: 'CVR (tasa de conversión)', api: 'cvr', d: 'Conversion Rate. Es el porcentaje de clics que terminan en una compra.', ex: '120 clics y 4 compras es un CVR del 3,3%.', best: 'Más alto es mejor.' }
   ]},

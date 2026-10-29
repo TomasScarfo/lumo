@@ -1,7 +1,8 @@
 """Lectura de Product Ads y armado de los datos que muestra el panel.
 
-Todo lo que se pide acá es de solo lectura. `get(path, params, version)` es la función que hace la llamada
-autenticada, así se puede reemplazar en las pruebas.
+Usa los endpoints vigentes de Product Ads (con el sitio en la ruta y Ad Groups). Los anteriores, sin sitio, se dieron
+de baja en 2026 y responden 404. Todo es de solo lectura. `get(path, params, version)` hace la llamada autenticada,
+así se puede reemplazar en las pruebas.
 """
 import logging
 from concurrent.futures import ThreadPoolExecutor
@@ -13,14 +14,15 @@ log = logging.getLogger("lumo")
 
 DAYS = 60
 AR = timezone(timedelta(hours=-3))  # Argentina no usa horario de verano
-MAX_ITEMS = 600
-PAGE = 50
+MAX_GROUPS = 800
+PAGE = 200
 WORKERS = 5
 DEFAULT_ROAS_TARGET = 5.0  # equivale a un ACOS del 20%, solo si la campaña no informa su objetivo
 
 CAMP_DAILY = "clicks,prints,cost,direct_units_quantity,indirect_units_quantity,direct_amount,indirect_amount"
 CAMP_SHARE = "impression_share,top_impression_share,lost_impression_share_by_budget,lost_impression_share_by_ad_rank,acos_benchmark"
-ITEM_METRICS = "clicks,prints,cost,organic_units_quantity,organic_units_amount,direct_units_quantity,indirect_units_quantity,direct_amount,indirect_amount"
+GROUP_METRICS = ("CLICKS,PRINTS,COST,DIRECT_AMOUNT,INDIRECT_AMOUNT,TOTAL_AMOUNT,DIRECT_UNITS_QUANTITY,INDIRECT_UNITS_QUANTITY,"
+                 "UNITS_QUANTITY,ORGANIC_UNITS_QUANTITY,ORGANIC_UNITS_AMOUNT")
 
 
 def _n(v) -> float:
@@ -41,12 +43,9 @@ def _rows(resp) -> list:
     return []
 
 
-def _share(v):
-    """Participación de impresiones: Mercado Libre puede informarla en porcentaje (0-100) o en fracción (0-1)."""
-    if v is None:
-        return None
-    v = _n(v)
-    return v / 100.0 if v > 1 else v
+def _pct(v):
+    """Mercado Libre informa los porcentajes de 0 a 100 (por ejemplo acos 19.41, ctr 1.4). Acá se guardan como fracción."""
+    return None if v is None else _n(v) / 100.0
 
 
 def window_end(now: datetime) -> datetime:
@@ -60,20 +59,25 @@ def _day(d: datetime) -> str:
     return d.strftime("%Y-%m-%d")
 
 
-def list_campaigns(get, adv_id) -> list:
+def _page(get, path, params, limit, cap):
     out, offset = [], 0
-    while True:
-        resp = get("/advertising/advertisers/%s/product_ads/campaigns" % adv_id, {"limit": PAGE, "offset": offset})
+    while len(out) < cap:
+        resp = get(path, dict(params, limit=limit, offset=offset))
         rows = resp.get("results", []) if isinstance(resp, dict) else []
         out.extend(rows)
         total = (resp.get("paging") or {}).get("total", 0) if isinstance(resp, dict) else 0
-        offset += PAGE
-        if not rows or offset >= total or offset >= 500:
-            return out
+        offset += limit
+        if not rows or offset >= total:
+            break
+    return out
 
 
-def campaign_daily(get, cid, start: datetime, end: datetime) -> list:
-    resp = get("/advertising/product_ads/campaigns/%s" % cid, {
+def list_campaigns(get, site, adv_id) -> list:
+    return _page(get, "/advertising/%s/advertisers/%s/product_ads/campaigns/search" % (site, adv_id), {}, 50, 500)
+
+
+def campaign_daily(get, site, cid, start: datetime, end: datetime) -> list:
+    resp = get("/advertising/%s/product_ads/campaigns/%s" % (site, cid), {
         "date_from": _day(start), "date_to": _day(end), "metrics": CAMP_DAILY, "aggregation_type": "DAILY"})
     by_date = {}
     for r in _rows(resp):
@@ -86,34 +90,18 @@ def campaign_daily(get, cid, start: datetime, end: datetime) -> list:
     return [by_date.get(_day(start + timedelta(days=i)), empty) for i in range(DAYS)]
 
 
-def campaign_shares(get, cid, end: datetime) -> dict:
-    resp = get("/advertising/product_ads/campaigns/%s" % cid, {
+def campaign_shares(get, site, cid, end: datetime) -> dict:
+    resp = get("/advertising/%s/product_ads/campaigns/%s" % (site, cid), {
         "date_from": _day(end - timedelta(days=29)), "date_to": _day(end), "metrics": CAMP_SHARE})
     m = resp.get("metrics", resp) if isinstance(resp, dict) else {}
-    return {"share": _share(m.get("impression_share")), "topShare": _share(m.get("top_impression_share")),
-            "lostB": _share(m.get("lost_impression_share_by_budget")), "lostR": _share(m.get("lost_impression_share_by_ad_rank")),
+    return {"share": _pct(m.get("impression_share")), "topShare": _pct(m.get("top_impression_share")),
+            "lostB": _pct(m.get("lost_impression_share_by_budget")), "lostR": _pct(m.get("lost_impression_share_by_ad_rank")),
             "benchmark": m.get("acos_benchmark")}
 
 
-def item_sweep(get, adv_id, start: datetime, end: datetime) -> list:
-    out, offset = [], 0
-    params = {"limit": PAGE, "date_from": _day(start), "date_to": _day(end), "metrics": ITEM_METRICS,
-              "filters[statuses]": "active,paused,idle"}
-    while len(out) < MAX_ITEMS:
-        try:
-            resp = get("/advertising/advertisers/%s/product_ads/items" % adv_id, dict(params, offset=offset))
-        except MLError as exc:
-            if exc.status == 400 and "filters[statuses]" in params:
-                params.pop("filters[statuses]")  # por si ese filtro no aplica, se piden todas
-                continue
-            raise
-        rows = resp.get("results", []) if isinstance(resp, dict) else []
-        out.extend(rows)
-        total = (resp.get("paging") or {}).get("total", 0) if isinstance(resp, dict) else 0
-        offset += PAGE
-        if not rows or offset >= total:
-            break
-    return out
+def group_sweep(get, site, adv_id, start: datetime, end: datetime) -> list:
+    params = {"date_from": _day(start), "date_to": _day(end), "metrics": GROUP_METRICS, "sort": "desc", "sort_by": "cost"}
+    return _page(get, "/advertising/%s/advertisers/%s/product_ads/ad_groups/search" % (site, adv_id), params, PAGE, MAX_GROUPS)
 
 
 def _chunks(seq, n):
@@ -122,11 +110,11 @@ def _chunks(seq, n):
 
 
 def item_details(get, ids: list) -> dict:
-    """Stock y categoría de cada publicación (API de ítems). Si falla, el panel funciona sin esos datos."""
+    """Stock, categoría y marca de cada publicación (API de ítems). Si falla, el panel funciona sin esos datos."""
     out = {}
     for chunk in _chunks(ids, 20):
         try:
-            resp = get("/items", {"ids": ",".join(chunk), "attributes": "id,available_quantity,category_id"}, None)
+            resp = get("/items", {"ids": ",".join(chunk), "attributes": "id,available_quantity,category_id,attributes"}, None)
         except MLError as exc:
             log.warning("detalle de ítems falló: %s", exc.status)
             continue
@@ -135,6 +123,13 @@ def item_details(get, ids: list) -> dict:
             if row.get("code") == 200 and body.get("id"):
                 out[body["id"]] = body
     return out
+
+
+def _brand(detail: dict):
+    for a in detail.get("attributes") or []:
+        if a.get("id") == "BRAND" and a.get("value_name"):
+            return a["value_name"]
+    return None
 
 
 def category_names(get, ids) -> dict:
@@ -173,44 +168,45 @@ def _humanize(domain: str) -> str:
     return name.capitalize() if name else "Sin categoría"
 
 
+def _sales(m: dict) -> float:
+    return _n(m.get("direct_amount")) + _n(m.get("indirect_amount")) or _n(m.get("total_amount"))
+
+
 def build_dataset(get, advertiser: dict, now: datetime = None) -> dict:
     now = now or datetime.now(timezone.utc)
     adv_id = advertiser["advertiser_id"]
+    site = advertiser.get("site_id") or "MLA"
     end = window_end(now)
     start = end - timedelta(days=DAYS - 1)
     cur_from, prev_to, prev_from = end - timedelta(days=29), end - timedelta(days=30), end - timedelta(days=59)
     notes = []
 
-    camps_raw = list_campaigns(get, adv_id)
+    camps_raw = list_campaigns(get, site, adv_id)
     with ThreadPoolExecutor(WORKERS) as pool:
-        dailies = list(pool.map(lambda c: campaign_daily(get, c["id"], start, end), camps_raw))
-        shares = list(pool.map(lambda c: campaign_shares(get, c["id"], end), camps_raw))
-        cur_items, prev_items = pool.map(lambda w: item_sweep(get, adv_id, w[0], w[1]), [(cur_from, end), (prev_from, prev_to)])
+        dailies = list(pool.map(lambda c: campaign_daily(get, site, c["id"], start, end), camps_raw))
+        shares = list(pool.map(lambda c: campaign_shares(get, site, c["id"], end), camps_raw))
+        cur_groups, prev_groups = pool.map(lambda w: group_sweep(get, site, adv_id, w[0], w[1]), [(cur_from, end), (prev_from, prev_to)])
 
     camps, estimated = [], []
     for c, daily, sh in zip(camps_raw, dailies, shares):
-        acos = _n(c.get("acos_target"))
-        target = 100.0 / acos if acos > 0 else DEFAULT_ROAS_TARGET
-        if acos <= 0:
+        roas_t, acos_t = _n(c.get("roas_target")), _n(c.get("acos_target"))
+        target = roas_t if roas_t > 0 else 100.0 / acos_t if acos_t > 0 else DEFAULT_ROAS_TARGET
+        if roas_t <= 0 and acos_t <= 0:
             estimated.append(c.get("name"))
         camps.append({"id": c["id"], "name": c.get("name") or "Campaña %s" % c["id"], "status": c.get("status"),
-                      "budget": _n(c.get("budget")), "strategy": c.get("strategy"), "acosTarget": acos if acos > 0 else 100.0 / DEFAULT_ROAS_TARGET,
-                      "target": target, "estTarget": acos <= 0, "daily": daily, **sh})
+                      "budget": _n(c.get("budget")), "strategy": c.get("strategy"), "acosTarget": 100.0 / target,
+                      "target": target, "estTarget": roas_t <= 0 and acos_t <= 0, "daily": daily, **sh})
     if estimated:
-        notes.append("Estas campañas no informan un ACOS objetivo en Mercado Libre, así que usamos un ROAS objetivo estimado de $%s: %s." % (
+        notes.append("Estas campañas no informan un ROAS objetivo en Mercado Libre, así que usamos uno estimado de $%s: %s." % (
             int(DEFAULT_ROAS_TARGET), ", ".join(estimated)))
 
     camp_ids = {c["id"] for c in camps}
-    prev_by_id = {r.get("item_id"): r.get("metrics") or {} for r in prev_items}
-    rows = {}
-    for r in cur_items:
-        rows[r.get("item_id")] = r
-    ids = [i for i in rows if i]
+    prev_by_id = {r.get("id"): r.get("metrics") or {} for r in prev_groups}
+    rows = {r.get("id"): r for r in cur_groups if r.get("id") is not None}
 
-    def worth(i):  # el detalle solo se pide para lo que se usa en el panel
-        m = rows[i].get("metrics") or {}
-        return _n(m.get("organic_units_quantity")) > 0 or rows[i].get("status") == "active"
-    detail_ids = [i for i in ids if worth(i)][:300]
+    def single_item(g):  # solo las publicaciones individuales traen un item_id para pedir stock, marca y visitas
+        return g.get("ad_group_external_id") if g.get("ad_group_type") == "ITEM" else None
+    detail_ids = [single_item(g) for g in rows.values() if single_item(g)][:300]
     with ThreadPoolExecutor(WORKERS) as pool:
         details_f = pool.submit(item_details, get, detail_ids)
         visits_f = pool.submit(item_visits, get, detail_ids, cur_from, end)
@@ -222,35 +218,40 @@ def build_dataset(get, advertiser: dict, now: datetime = None) -> dict:
     if not visits and detail_ids:
         notes.append("No pudimos leer las visitas de tus publicaciones, por eso no mostramos su conversión.")
 
+    def in_campaign(g):
+        cid = g.get("campaign_id")
+        return cid if str(g.get("status", "")).lower() == "active" and cid in camp_ids else None
+
     totals = {}
-    for r in cur_items:
-        cid = r.get("campaign_id")
-        if r.get("status") == "active" and cid in camp_ids:
-            m = r.get("metrics") or {}
+    for g in rows.values():
+        cid = in_campaign(g)
+        if cid is not None:
+            m = g.get("metrics") or {}
             t = totals.setdefault(cid, {"n": 0, "cost": 0.0, "sales": 0.0})
             t["n"] += 1
             t["cost"] += _n(m.get("cost"))
-            t["sales"] += _n(m.get("direct_amount")) + _n(m.get("indirect_amount"))
+            t["sales"] += _sales(m)
 
     items = []
-    for i in ids:
-        r = rows[i]
-        m, pm = r.get("metrics") or {}, prev_by_id.get(i, {})
-        cid = r.get("campaign_id") if r.get("status") == "active" and r.get("campaign_id") in camp_ids else None
+    for gid, g in rows.items():
+        m, pm = g.get("metrics") or {}, prev_by_id.get(gid, {})
+        cid = in_campaign(g)
         sp = sa = 0.0
         if cid is not None:
             t = totals[cid]
             sp = _n(m.get("cost")) / t["cost"] if t["cost"] else 1.0 / t["n"]
-            sa = (_n(m.get("direct_amount")) + _n(m.get("indirect_amount"))) / t["sales"] if t["sales"] else 1.0 / t["n"]
-        d = details.get(i, {})
+            sa = _sales(m) / t["sales"] if t["sales"] else 1.0 / t["n"]
+        iid = single_item(g)
+        d = details.get(iid, {}) if iid else {}
         units = _n(m.get("organic_units_quantity"))
-        vis = visits.get(i)
-        cat = cats.get(d.get("category_id")) or _humanize(r.get("domain_id"))
-        items.append({"id": i, "name": r.get("title") or i, "cat": cat, "brand": r.get("brand_value_name") or "Sin marca",
-                      "camp": cid, "sp": sp, "sa": sa, "price": _n(r.get("price")), "units": units,
+        vis = visits.get(iid) if iid else None
+        cat = cats.get(d.get("category_id")) or _humanize(g.get("domain_id"))
+        items.append({"id": str(gid), "name": g.get("title") or str(gid), "cat": cat,
+                      "brand": _brand(d) or g.get("brand_value_name") or "Sin marca",
+                      "camp": cid, "sp": sp, "sa": sa, "price": _n(g.get("price")), "units": units,
                       "prevUnits": _n(pm.get("organic_units_quantity")), "orgAmt": _n(m.get("organic_units_amount")),
                       "prevOrgAmt": _n(pm.get("organic_units_amount")), "visits": vis,
-                      "conv": (units / vis) if vis else None, "stock": d.get("available_quantity"), "link": r.get("permalink")})
+                      "conv": (units / vis) if vis else None, "stock": d.get("available_quantity"), "link": g.get("permalink")})
 
-    return {"advertiser": {"id": adv_id, "name": advertiser.get("advertiser_name") or "Tu cuenta", "site": advertiser.get("site_id") or ""},
+    return {"advertiser": {"id": adv_id, "name": advertiser.get("advertiser_name") or "Tu cuenta", "site": site},
             "end": _day(end), "days": DAYS, "fetchedAt": now.astimezone(timezone.utc).isoformat(), "camps": camps, "items": items, "notes": notes}

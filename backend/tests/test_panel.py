@@ -32,16 +32,17 @@ class Dataset(unittest.TestCase):
         camps = {c["id"]: c for c in self.data["camps"]}
         self.assertEqual(len(camps), 4)
         self.assertEqual(len(camps[101]["daily"]), 60)
-        self.assertAlmostEqual(camps[101]["target"], 5.0)   # ACOS objetivo 20 -> ROAS objetivo 5
-        self.assertAlmostEqual(camps[102]["target"], 4.0)   # ACOS objetivo 25 -> ROAS objetivo 4
+        self.assertAlmostEqual(camps[101]["target"], 5.0)   # roas_target tal cual
+        self.assertAlmostEqual(camps[102]["target"], 4.0)   # sin roas_target: ACOS objetivo 25 -> ROAS objetivo 4
         self.assertFalse(camps[101]["estTarget"])
+        self.assertFalse(camps[102]["estTarget"])
 
-    def test_campana_sin_acos_objetivo_usa_uno_estimado_y_avisa(self):
+    def test_campana_sin_objetivo_usa_uno_estimado_y_avisa(self):
         c = next(c for c in self.data["camps"] if c["id"] == 103)
         self.assertTrue(c["estTarget"])
         self.assertTrue(any("Sin objetivo" in n for n in self.data["notes"]))
 
-    def test_participaciones_de_impresiones_quedan_como_fraccion(self):
+    def test_porcentajes_de_mercado_libre_quedan_como_fraccion(self):
         c = self.data["camps"][0]
         self.assertAlmostEqual(c["lostB"], 0.20)
         self.assertAlmostEqual(c["lostR"], 0.415)
@@ -56,23 +57,31 @@ class Dataset(unittest.TestCase):
     def test_participacion_de_cada_publicacion_suma_uno_por_campana(self):
         for cid in (101, 102):
             its = [i for i in self.data["items"] if i["camp"] == cid]
+            self.assertTrue(its)
             self.assertAlmostEqual(sum(i["sp"] for i in its), 1.0)
             self.assertAlmostEqual(sum(i["sa"] for i in its), 1.0)
 
     def test_publicaciones_sin_publicidad_o_pausadas_no_pertenecen_a_campana(self):
         by = {i["id"]: i for i in self.data["items"]}
-        self.assertIsNone(by["MLA6"]["camp"])   # idle
-        self.assertIsNone(by["MLA8"]["camp"])   # pausada
-        self.assertEqual(by["MLA6"]["units"], 31)
-        self.assertEqual(by["MLA6"]["prevUnits"], 21)
-        self.assertEqual(by["MLA6"]["stock"], 7)
-        self.assertAlmostEqual(by["MLA6"]["conv"], 31 / 800)
-        self.assertEqual(by["MLA6"]["cat"], "Comedor")
+        self.assertIsNone(by["9006"]["camp"])   # sin campaña
+        self.assertIsNone(by["9008"]["camp"])   # pausada
+        self.assertEqual(by["9006"]["units"], 31)
+        self.assertEqual(by["9006"]["prevUnits"], 21)
+        self.assertEqual(by["9006"]["orgAmt"], 31 * 38000.0)
+        self.assertEqual(by["9006"]["stock"], 7)
+        self.assertAlmostEqual(by["9006"]["conv"], 31 / 800)
+        self.assertEqual(by["9006"]["cat"], "Comedor")
+
+    def test_grupos_de_familia_no_tienen_stock_ni_visitas(self):
+        fam = next(i for i in self.data["items"] if i["id"] == "9009")
+        self.assertEqual(fam["camp"], 102)
+        self.assertIsNone(fam["stock"])
+        self.assertIsNone(fam["conv"])
 
     def test_marca_por_defecto(self):
         by = {i["id"]: i for i in self.data["items"]}
-        self.assertEqual(by["MLA1"]["brand"], "Nogal")
-        self.assertEqual(by["MLA3"]["brand"], "Sin marca")
+        self.assertEqual(by["9001"]["brand"], "Nogal")
+        self.assertEqual(by["9003"]["brand"], "Sin marca")
 
     def test_si_fallan_stock_y_visitas_el_panel_sigue_y_avisa(self):
         def parcial(path, params=None, version="2"):
@@ -80,24 +89,22 @@ class Dataset(unittest.TestCase):
                 raise ml.MLError(500, "boom")
             return fake_get(path, params, version)
         data = ads.build_dataset(parcial, fake_ml.ADVERTISER, NOW)
-        it = next(i for i in data["items"] if i["id"] == "MLA6")
+        it = next(i for i in data["items"] if i["id"] == "9006")
         self.assertIsNone(it["stock"])
         self.assertIsNone(it["conv"])
         self.assertEqual(len(data["notes"]), 3)  # objetivo estimado + stock + visitas
 
-    def test_si_el_filtro_de_estados_da_400_se_pide_sin_filtro(self):
+    def test_usa_solo_las_rutas_vigentes_con_el_sitio(self):
         llamadas = []
 
         def get(path, params=None, version="2"):
-            if path.endswith("/product_ads/items"):
-                llamadas.append("filters[statuses]" in params)
-                if "filters[statuses]" in params:
-                    raise ml.MLError(400, "bad_request")
+            llamadas.append(path)
             return fake_get(path, params, version)
-        data = ads.build_dataset(get, fake_ml.ADVERTISER, NOW)
-        self.assertTrue(len(data["items"]) > 0)
-        self.assertIn(True, llamadas)
-        self.assertIn(False, llamadas)
+        ads.build_dataset(get, fake_ml.ADVERTISER, NOW)
+        propias = [p for p in llamadas if p.startswith("/advertising")]
+        self.assertTrue(propias)
+        self.assertTrue(all(p.startswith("/advertising/MLA/") for p in propias), propias)
+        self.assertFalse([p for p in propias if "/product_ads/items" in p or "/ads/search" in p])  # rutas dadas de baja
 
 
 class Rutas(unittest.TestCase):
@@ -191,7 +198,7 @@ class Rutas(unittest.TestCase):
         self.login()
 
         def falla_campanas(cfg, tok, path, params=None, version="2"):
-            if path.endswith("/product_ads/campaigns"):
+            if path.endswith("/campaigns/search"):
                 exc = ml.MLError(404, "not_found", "ruta")
                 exc.path = path
                 raise exc
@@ -200,7 +207,7 @@ class Rutas(unittest.TestCase):
         r = self.client.get("/api/datos")
         body = r.get_json()
         self.assertEqual((r.status_code, body["error"]), (502, "api"))
-        self.assertIn("/product_ads/campaigns", body["detail"])
+        self.assertIn("/campaigns/search", body["detail"])
 
     def test_sin_anunciantes(self):
         self.login()
