@@ -17,6 +17,7 @@ class MLError(Exception):
         self.status = status
         self.code = code
         self.message = message
+        self.path = ""
 
 
 def new_pkce():
@@ -101,7 +102,9 @@ def api_get(cfg: dict, access_token: str, path: str, params: dict = None, versio
         body = {}
     if resp.status_code != 200:
         err = body if isinstance(body, dict) else {}
-        raise MLError(resp.status_code, str(err.get("error", "error")), str(err.get("message", "")))
+        exc = MLError(resp.status_code, str(err.get("error", "error")), str(err.get("message", "")))
+        exc.path = path
+        raise exc
     return body
 
 

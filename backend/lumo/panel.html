@@ -1224,6 +1224,7 @@ render();
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(function () { drawChart(); }).observe(document.querySelector('.page'));
 }
 var dyn = document.getElementById('dyn');
+function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function say(html) { dyn.innerHTML = '<div class="wrap"><section class="card empty" style="margin-top:12vh;text-align:center">' + html + '</section></div>'; }
 var MSG = {
   no_ads: '<h2>Tu cuenta todavía no tiene Publicidad habilitada</h2><p class="sub">Entrá a Mercado Libre, Mi perfil, Publicidad, activala y volvé.</p>',
@@ -1239,7 +1240,7 @@ fetch('/api/datos' + (want.length ? '?' + want.join('&') : ''), { credentials: '
   .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
   .then(function (x) {
     if (x.s === 401) { location.href = x.j.error === 'reconnect' ? '/connect' : '/'; return; }
-    if (x.j.error) { say(MSG[x.j.error] || MSG.api); return; }
+    if (x.j.error) { say((MSG[x.j.error] || MSG.api) + (x.j.detail ? '<p class="small">Detalle técnico: <code>' + esc(x.j.detail) + '</code></p>' : '')); return; }
     if (!x.j.camps.length) { say('<h2>Todavía no tenés campañas de Product Ads</h2><p class="sub">Cuando crees una en Mercado Libre, va a aparecer acá.</p>'); return; }
     history.replaceState(null, '', '/panel' + location.hash);
     boot(x.j);

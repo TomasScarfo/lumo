@@ -187,6 +187,21 @@ class Rutas(unittest.TestCase):
         r = self.client.get("/api/datos")
         self.assertEqual((r.status_code, r.get_json()["error"]), (404, "no_ads"))
 
+    def test_un_404_en_otra_ruta_no_se_confunde_con_falta_de_publicidad(self):
+        self.login()
+
+        def falla_campanas(cfg, tok, path, params=None, version="2"):
+            if path.endswith("/product_ads/campaigns"):
+                exc = ml.MLError(404, "not_found", "ruta")
+                exc.path = path
+                raise exc
+            return fake_ml.api_get(cfg, tok, path, params, version)
+        self.api.side_effect = falla_campanas
+        r = self.client.get("/api/datos")
+        body = r.get_json()
+        self.assertEqual((r.status_code, body["error"]), (502, "api"))
+        self.assertIn("/product_ads/campaigns", body["detail"])
+
     def test_sin_anunciantes(self):
         self.login()
         self.advs.return_value = []

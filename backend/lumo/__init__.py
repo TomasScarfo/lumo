@@ -162,6 +162,14 @@ def create_app(overrides=None) -> Flask:
         resp.headers["Cache-Control"] = "no-store"
         return resp
 
+    def _api_error(exc, advertisers=False):
+        """Solo un 404 al listar anunciantes significa que no hay Publicidad habilitada; en otras rutas es otro problema."""
+        if exc.status == 404 and advertisers:
+            return _json({"error": "no_ads"}, 404)
+        kind = {401: "forbidden", 403: "forbidden", 429: "busy"}.get(exc.status, "api")
+        detail = ("%s %s %s" % (exc.status, exc.code, exc.path or "/advertising/advertisers")).strip()
+        return _json({"error": kind, "detail": detail}, 503 if kind == "busy" else 502)
+
     @app.get("/api/datos")
     def api_datos():
         uid = session.get("uid")
@@ -183,16 +191,19 @@ def create_app(overrides=None) -> Flask:
                     return _json({"error": "reconnect"}, 401)
                 try:
                     advs = ml.advertisers(cfg, token)
-                    if not advs:
-                        return _json({"error": "no_ads"}, 404)
-                    adv = next((a for a in advs if a["advertiser_id"] == want), advs[0])
-                    get = lambda path, params=None, version="2": ml.api_get(cfg, token, path, params, version)
-                    data = ads.build_dataset(get, adv)
-                    data["advertisers"] = [{"id": a["advertiser_id"], "name": a.get("advertiser_name"), "site": a.get("site_id")} for a in advs]
                 except ml.MLError as exc:
-                    log.warning("lectura de datos falló: %s %s", exc.status, exc.code)
-                    kind = {404: "no_ads", 401: "forbidden", 403: "forbidden", 429: "busy"}.get(exc.status, "api")
-                    return _json({"error": kind}, 404 if kind == "no_ads" else 503 if kind == "busy" else 502)
+                    log.warning("anunciantes falló: %s %s", exc.status, exc.code)
+                    return _api_error(exc, advertisers=True)
+                if not advs:
+                    return _json({"error": "no_ads"}, 404)
+                adv = next((a for a in advs if a["advertiser_id"] == want), advs[0])
+                get = lambda path, params=None, version="2": ml.api_get(cfg, token, path, params, version)
+                try:
+                    data = ads.build_dataset(get, adv)
+                except ml.MLError as exc:
+                    log.warning("lectura de datos falló: %s %s %s", exc.status, exc.code, exc.path)
+                    return _api_error(exc)
+                data["advertisers"] = [{"id": a["advertiser_id"], "name": a.get("advertiser_name"), "site": a.get("site_id")} for a in advs]
                 row = snap or Snapshot(user_id=uid)
                 row.advertiser_id, row.data, row.fetched_at = data["advertiser"]["id"], json.dumps(data), utcnow()
                 s.add(row)
