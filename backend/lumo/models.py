@@ -20,7 +20,7 @@ class Account(Base):
     access_token = Column(Text, nullable=False)
     refresh_token = Column(Text, nullable=True)
     expires_at = Column(DateTime, nullable=False)
-    scope = Column(String(255), nullable=True)
+    scope = Column(Text, nullable=True)
     # connected | needs_reconnect
     status = Column(String(32), nullable=False, default="connected")
     created_at = Column(DateTime, nullable=False, default=utcnow)

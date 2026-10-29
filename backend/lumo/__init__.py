@@ -3,7 +3,7 @@ import os
 import secrets
 
 from flask import Flask, redirect, render_template_string, request, session
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
@@ -66,6 +66,7 @@ def create_app(overrides=None) -> Flask:
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     engine = make_engine(cfg["DATABASE_URL"])
     Base.metadata.create_all(engine)
+    _widen_scope(engine)
     app.extensions["lumo_cfg"] = cfg
     app.extensions["lumo_engine"] = engine
 
@@ -118,6 +119,14 @@ def create_app(overrides=None) -> Flask:
         return page(_result_body(cfg, tok, user_id))
 
     return app
+
+
+def _widen_scope(engine) -> None:
+    """La primera versión creó scope como varchar(255) y Mercado Libre devuelve listas más largas."""
+    if engine.dialect.name != "postgresql":
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE account ALTER COLUMN scope TYPE TEXT"))
 
 
 def _esc(text) -> str:

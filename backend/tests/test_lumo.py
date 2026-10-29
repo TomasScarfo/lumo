@@ -3,6 +3,7 @@ from datetime import timedelta
 from unittest import mock
 
 from cryptography.fernet import Fernet
+from sqlalchemy import Text
 from sqlalchemy.orm import Session
 
 from lumo import create_app, ml
@@ -89,6 +90,10 @@ class Flujo(unittest.TestCase):
     def test_permiso_restringido(self):
         r, _ = self._conectar({"side_effect": ml.MLError(403, "forbidden")})
         self.assertIn("error 403", r.get_data(as_text=True))
+
+    def test_scope_admite_listas_largas(self):
+        # Mercado Libre devuelve más de 255 caracteres; en Postgres un varchar(255) rompía el guardado.
+        self.assertIsInstance(Account.__table__.c.scope.type, Text)
 
     def test_la_pagina_no_muestra_tokens(self):
         r, _ = self._conectar({"return_value": []})
