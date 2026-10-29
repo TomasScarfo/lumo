@@ -7,7 +7,7 @@ import fake_ml
 from sqlalchemy.orm import Session
 
 from lumo import ads, create_app, ml
-from lumo.models import Account, Snapshot, utcnow
+from lumo.models import Access, Account, Snapshot, utcnow
 from lumo.tokens import save_tokens
 
 CFG = {"ML_CLIENT_ID": "123", "ML_CLIENT_SECRET": "secreto-de-prueba", "REDIRECT_URI": "https://lumo.test/callback",
@@ -114,6 +114,7 @@ class Rutas(unittest.TestCase):
         self.engine = self.app.extensions["lumo_engine"]
         with Session(self.engine) as s:
             save_tokens(s, CFG, 5, {"access_token": "AT", "refresh_token": "RT", "expires_in": 21600, "scope": "read"})
+            s.add(Access(user_id=5))
             s.commit()
         patches = [mock.patch("lumo.ml.api_get", side_effect=lambda cfg, tok, path, params=None, version="2": fake_ml.api_get(cfg, tok, path, params, version)),
                    mock.patch("lumo.ml.advertisers", return_value=[fake_ml.ADVERTISER])]
@@ -225,9 +226,10 @@ class Rutas(unittest.TestCase):
     def test_cuenta_que_hay_que_reconectar(self):
         self.login()
         with Session(self.engine) as s:
-            s.get(Account, 5).status = "needs_reconnect"
+            s.get(Account, 5).expires_at = utcnow() - timedelta(hours=1)  # el token venció y hay que renovarlo
             s.commit()
-        r = self.client.get("/api/datos")
+        with mock.patch("lumo.ml.refresh", side_effect=ml.MLError(400, "invalid_grant")):
+            r = self.client.get("/api/datos")
         self.assertEqual((r.status_code, r.get_json()["error"]), (401, "reconnect"))
 
     def test_estado_se_guarda_y_vuelve_con_los_datos(self):
@@ -249,6 +251,7 @@ class Rutas(unittest.TestCase):
     def test_el_estado_de_una_cuenta_no_se_mezcla_con_otra(self):
         with Session(self.engine) as s:
             save_tokens(s, CFG, 6, {"access_token": "AT2", "refresh_token": "RT2", "expires_in": 21600, "scope": "read"})
+            s.add(Access(user_id=6))
             s.commit()
         self.login(5)
         self.client.post("/api/estado", json={"done": {"a": True}})

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, Column, DateTime, String, Text
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, String, Text
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -46,3 +46,27 @@ class PanelState(Base):
     user_id = Column(BigInteger, primary_key=True, autoincrement=False)
     data = Column(Text, nullable=False)
     updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+
+class Access(Base):
+    """Cuentas de Mercado Libre que pueden usar Lumo. Quien no figura acá (y no es administrador) no entra."""
+
+    __tablename__ = "access"
+
+    user_id = Column(BigInteger, primary_key=True, autoincrement=False)
+    note = Column(String(120), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+
+
+class Invite(Base):
+    """Invitación de un solo uso. El enlace /invitacion/<token> permite conectar una cuenta nueva."""
+
+    __tablename__ = "invite"
+
+    token = Column(String(64), primary_key=True)
+    label = Column(String(120), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    revoked = Column(Boolean, nullable=False, default=False)
+    used_by = Column(BigInteger, nullable=True)
+    used_at = Column(DateTime, nullable=True)

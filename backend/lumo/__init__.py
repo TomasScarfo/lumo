@@ -5,13 +5,13 @@ import secrets
 from datetime import timedelta
 from pathlib import Path
 
-from flask import Flask, Response, jsonify, redirect, render_template_string, request, session
-from sqlalchemy import create_engine, text
+from flask import Flask, Response, abort, jsonify, redirect, render_template, render_template_string, request, session
+from sqlalchemy import create_engine, delete, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from . import ads, ml
-from .models import Account, Base, PanelState, Snapshot, utcnow
+from . import access, ads, ml
+from .models import Access, Account, Base, Invite, PanelState, Snapshot, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
 log = logging.getLogger("lumo")
@@ -50,6 +50,8 @@ def load_config(overrides=None) -> dict:
         "DATABASE_URL": os.environ.get("DATABASE_URL", "sqlite:///lumo.db"),
         "ML_AUTH_BASE": os.environ.get("ML_AUTH_BASE", "https://auth.mercadolibre.com.ar"),
         "ML_API_BASE": os.environ.get("ML_API_BASE", "https://api.mercadolibre.com"),
+        "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
+        "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", ""),
     }
     cfg.update(overrides or {})
     return cfg
@@ -74,8 +76,11 @@ def create_app(overrides=None) -> Flask:
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.permanent_session_lifetime = timedelta(days=SESSION_DAYS)
     engine = make_engine(cfg["DATABASE_URL"])
+    had_access_table = inspect(engine).has_table("access")
     Base.metadata.create_all(engine)
     _widen_scope(engine)
+    if not had_access_table:
+        _grandfather(engine)
     app.extensions["lumo_cfg"] = cfg
     app.extensions["lumo_engine"] = engine
 
@@ -86,18 +91,33 @@ def create_app(overrides=None) -> Flask:
     def healthz():
         return {"ok": True}
 
+    @app.get("/favicon.ico")
+    def favicon():
+        return redirect("/static/logo.png")
+
+    def _contact():
+        email = cfg.get("CONTACT_EMAIL")
+        return "mailto:%s?subject=Acceso%%20a%%20Lumo" % email if email else None
+
     @app.get("/")
     def index():
         miss = missing_config()
         if miss:
             return page("<h1>Lumo</h1><p class='bad'>Falta configurar: %s</p>" % ", ".join("<code>%s</code>" % m for m in miss), 500)
-        if _logged_in():
-            return redirect("/panel")
-        return page(
-            "<h1>Lumo</h1><p>Entendé tus métricas de Product Ads y qué mejorar, con palabras simples.</p>"
-            "<p>Lumo <b>solo lee</b> tus datos de publicidad. Nunca modifica tus campañas.</p>"
-            "<a class='btn' href='/connect'>Conectar con Mercado Libre</a>"
-        )
+        uid = _current_user()
+        if uid:
+            return redirect("/admin" if access.is_admin(cfg, uid) else "/panel")
+        return render_template("landing.html", contact=_contact(), invited=False, label=None)
+
+    @app.get("/invitacion/<token>")
+    def invitacion(token):
+        with Session(engine) as s:
+            inv = access.valid_invite(s, token)
+            label = inv.label if inv else None
+        if inv is None:
+            return render_template("landing.html", contact=_contact(), invited=False, label=None, invite_error=True), 404
+        session["invite"] = token
+        return render_template("landing.html", contact=_contact(), invited=True, label=label)
 
     @app.get("/connect")
     def connect():
@@ -124,8 +144,20 @@ def create_app(overrides=None) -> Flask:
             log.warning("exchange_code falló: %s %s", exc.status, exc.code)
             return page("<h1>No se pudo conectar</h1><p>Mercado Libre rechazó el intercambio (<code>%s</code>). Revisá que la dirección de redirección de la app sea exactamente <code>%s</code>.</p>" % (_esc(exc.code), _esc(cfg["REDIRECT_URI"])), 502)
         user_id = int(tok["user_id"])
+        invite_token = session.get("invite")
         with Session(engine) as s:
-            save_tokens(s, cfg, user_id, tok)
+            allowed = access.has_access(s, cfg, user_id)
+            if not allowed and invite_token and access.valid_invite(s, invite_token):
+                if access.consume_invite(s, invite_token, user_id):
+                    inv = s.get(Invite, invite_token)
+                    access.grant(s, user_id, inv.label)
+                    allowed = True
+            if not allowed:
+                s.rollback()
+                session.clear()
+                log.info("acceso denegado a la cuenta %s", user_id)
+                return render_template("denied.html", user_id=user_id, contact=_contact()), 403
+            save_tokens(s, cfg, user_id, tok)  # los tokens solo se guardan si la cuenta tiene acceso
             s.commit()
         session.clear()
         session["uid"] = user_id  # Lumo recuerda a la persona en este navegador
@@ -133,19 +165,24 @@ def create_app(overrides=None) -> Flask:
         body, ok = _result_body(cfg, tok, user_id)
         if ok:
             return redirect("/panel")
+        if access.is_admin(cfg, user_id):
+            return redirect("/admin")
         return page(body)
 
-    def _logged_in() -> bool:
+    def _current_user():
+        """El id de la cuenta de esta sesión, solo si está conectada y sigue teniendo acceso."""
         uid = session.get("uid")
         if not uid:
-            return False
+            return None
         with Session(engine) as s:
             acc = s.get(Account, uid)
-            return bool(acc and acc.status == "connected")
+            if acc and acc.status == "connected" and access.has_access(s, cfg, uid):
+                return uid
+        return None
 
     @app.get("/panel")
     def panel():
-        if not _logged_in():
+        if not _current_user():
             return redirect("/")
         resp = Response(PANEL_HTML, mimetype="text/html")
         resp.headers["Cache-Control"] = "no-store"
@@ -172,7 +209,7 @@ def create_app(overrides=None) -> Flask:
 
     @app.get("/api/datos")
     def api_datos():
-        uid = session.get("uid")
+        uid = _current_user()
         if not uid:
             return _json({"error": "login"}, 401)
         want = request.args.get("adv", type=int)
@@ -210,11 +247,12 @@ def create_app(overrides=None) -> Flask:
                 s.commit()
             st = s.get(PanelState, uid)
             data["estado"] = json.loads(st.data) if st else {}
+            data["admin"] = access.is_admin(cfg, uid)
         return _json(data)
 
     @app.post("/api/estado")
     def api_estado():
-        uid = session.get("uid")
+        uid = _current_user()
         if not uid:
             return _json({"error": "login"}, 401)
         body = request.get_json(silent=True)
@@ -231,10 +269,98 @@ def create_app(overrides=None) -> Flask:
             s.commit()
         return _json({"ok": True})
 
+    # ---------- Administración: invitaciones y accesos ----------
+    def _admin_uid():
+        uid = _current_user()
+        if not uid or not access.is_admin(cfg, uid):
+            abort(404)  # a quien no administra, la página ni siquiera le aparece
+        return uid
+
+    def _csrf() -> str:
+        if not session.get("csrf"):
+            session["csrf"] = secrets.token_urlsafe(24)
+        return session["csrf"]
+
+    def _check_csrf():
+        if not secrets.compare_digest(request.form.get("csrf", ""), session.get("csrf", "-")):
+            abort(400)
+
+    @app.get("/admin")
+    def admin():
+        _admin_uid()
+        base = request.url_root.rstrip("/")
+        now = utcnow()
+        with Session(engine) as s:
+            invites = []
+            for inv in s.execute(select(Invite).order_by(Invite.created_at.desc())).scalars():
+                state = "revocada" if inv.revoked else "usada" if inv.used_by else "vencida" if inv.expires_at < now else "pendiente"
+                invites.append({"token": inv.token, "label": inv.label or "Sin nombre", "state": state, "url": "%s/invitacion/%s" % (base, inv.token),
+                                "expires": inv.expires_at, "used_by": inv.used_by})
+            members = []
+            for row in s.execute(select(Access).order_by(Access.created_at.desc())).scalars():
+                acc, snap = s.get(Account, row.user_id), s.get(Snapshot, row.user_id)
+                name = None
+                if snap:
+                    try:
+                        name = json.loads(snap.data).get("advertiser", {}).get("name")
+                    except ValueError:
+                        pass
+                members.append({"user_id": row.user_id, "note": row.note, "since": row.created_at,
+                                "status": acc.status if acc else "sin conectar", "advertiser": name})
+        return render_template("admin.html", csrf=_csrf(), invites=invites, members=members, admins=sorted(access.admin_ids(cfg)))
+
+    @app.post("/admin/invitar")
+    def admin_invitar():
+        _admin_uid(); _check_csrf()
+        with Session(engine) as s:
+            access.create_invite(s, request.form.get("label", ""))
+            s.commit()
+        return redirect("/admin#invitaciones")
+
+    @app.post("/admin/invitacion/revocar")
+    def admin_revocar():
+        _admin_uid(); _check_csrf()
+        with Session(engine) as s:
+            inv = s.get(Invite, request.form.get("token", ""))
+            if inv and inv.used_by is None:
+                inv.revoked = True
+                s.commit()
+        return redirect("/admin#invitaciones")
+
+    @app.post("/admin/acceso/agregar")
+    def admin_agregar():
+        _admin_uid(); _check_csrf()
+        raw = request.form.get("user_id", "").strip()
+        if raw.isdigit():
+            with Session(engine) as s:
+                access.grant(s, int(raw), request.form.get("note", ""))
+                s.commit()
+        return redirect("/admin#accesos")
+
+    @app.post("/admin/acceso/quitar")
+    def admin_quitar():
+        _admin_uid(); _check_csrf()
+        raw = request.form.get("user_id", "").strip()
+        if raw.isdigit():
+            uid = int(raw)
+            with Session(engine) as s:
+                for model in (Access, Account, Snapshot, PanelState):
+                    s.execute(delete(model).where(model.user_id == uid))
+                s.commit()
+        return redirect("/admin#accesos")
+
     return app
 
 
 PANEL_HTML = (Path(__file__).parent / "panel.html").read_text(encoding="utf-8")
+
+
+def _grandfather(engine) -> None:
+    """Al estrenar el control de acceso, las cuentas que ya estaban conectadas siguen entrando."""
+    with Session(engine) as s:
+        for (uid,) in s.execute(select(Account.user_id)).all():
+            s.add(Access(user_id=uid, note="Conectada antes de las invitaciones"))
+        s.commit()
 
 
 def _widen_scope(engine) -> None:

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Administración · Lumo</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<main class="page wide adm">
+  <div class="row" style="justify-content:space-between">
+    <a class="logo" href="/admin"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo · Administración</a>
+    <div class="row"><a class="btn ghost sm" href="/panel">Ver mi panel</a><a class="btn ghost sm" href="/salir">Salir</a></div>
+  </div>
+
+  <h2 id="invitaciones">Invitaciones</h2>
+  <p class="sub">Creá un enlace por persona. Se usa una sola vez y vence a los 14 días. Quien lo abra conecta su cuenta de Mercado Libre y queda con acceso.</p>
+  <form method="post" action="/admin/invitar" class="row" style="margin-bottom:16px">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="text" name="label" maxlength="120" placeholder="Nombre de la persona o del negocio" aria-label="Nombre de la persona o del negocio">
+    <button class="btn" type="submit">Crear invitación</button>
+  </form>
+  <div class="tw">
+    {% if invites %}
+    <table>
+      <thead><tr><th>Para</th><th>Estado</th><th>Enlace</th><th></th></tr></thead>
+      <tbody>
+      {% for i in invites %}
+        <tr>
+          <td><b>{{ i.label }}</b></td>
+          <td>
+            {% if i.state == 'pendiente' %}<span class="pill pe" style="padding:2px 10px">Pendiente</span><br><small>vence {{ i.expires.strftime('%d/%m') }}</small>
+            {% elif i.state == 'usada' %}<span class="pill bi" style="padding:2px 10px">Usada</span><br><small>cuenta {{ i.used_by }}</small>
+            {% else %}<span class="pill us" style="padding:2px 10px">{{ i.state|capitalize }}</span>{% endif %}
+          </td>
+          <td>{% if i.state == 'pendiente' %}<div class="linkbox"><input type="text" readonly value="{{ i.url }}" aria-label="Enlace de invitación" onfocus="this.select()"><button class="btn ghost sm" type="button" data-copy="{{ i.url }}">Copiar</button></div>{% else %}<span class="sub">—</span>{% endif %}</td>
+          <td>{% if i.state == 'pendiente' %}
+            <form method="post" action="/admin/invitacion/revocar" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="token" value="{{ i.token }}"><button class="btn danger sm" type="submit">Cancelar</button></form>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="empty">Todavía no creaste invitaciones.</p>{% endif %}
+  </div>
+
+  <h2 id="accesos">Cuentas con acceso</h2>
+  <p class="sub">Las cuentas de esta lista pueden entrar a Lumo. También podés habilitar una por su ID de Mercado Libre, sin invitación.</p>
+  <form method="post" action="/admin/acceso/agregar" class="row" style="margin-bottom:16px">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="text" name="user_id" inputmode="numeric" pattern="[0-9]+" placeholder="ID de Mercado Libre (solo números)" aria-label="ID de Mercado Libre" required>
+    <input type="text" name="note" maxlength="120" placeholder="Nombre o nota" aria-label="Nombre o nota">
+    <button class="btn" type="submit">Habilitar</button>
+  </form>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Cuenta</th><th>Anunciante</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+      {% for a in admins %}
+        <tr><td><code>{{ a }}</code></td><td><b>Administrador</b></td><td><span class="pill ex" style="padding:2px 10px">Siempre con acceso</span></td><td></td></tr>
+      {% endfor %}
+      {% for m in members %}
+        <tr>
+          <td><b>{{ m.note or 'Sin nombre' }}</b><br><code>{{ m.user_id }}</code></td>
+          <td>{{ m.advertiser or '—' }}</td>
+          <td>{% if m.status == 'connected' %}<span class="pill bi" style="padding:2px 10px">Conectada</span>
+              {% elif m.status == 'needs_reconnect' %}<span class="pill at" style="padding:2px 10px">Debe reconectar</span>
+              {% else %}<span class="pill us" style="padding:2px 10px">Sin conectar</span>{% endif %}</td>
+          <td><form method="post" action="/admin/acceso/quitar" class="inline" onsubmit="return confirm('¿Quitar el acceso y borrar los datos guardados de esta cuenta?')"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="user_id" value="{{ m.user_id }}"><button class="btn danger sm" type="submit">Quitar acceso</button></form></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if not members and not admins %}<p class="empty">Todavía no hay cuentas.</p>{% endif %}
+  </div>
+  <p class="sub" style="margin-top:14px">Quitar el acceso borra los permisos guardados, la copia de datos y las tareas de esa cuenta. Para volver a entrar necesitará una invitación nueva.</p>
+</main>
+<script>
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-copy]'); if (!b) return;
+  var done = function () { var t = b.textContent; b.textContent = 'Copiado'; setTimeout(function () { b.textContent = t; }, 1600); };
+  if (navigator.clipboard) navigator.clipboard.writeText(b.dataset.copy).then(done, function () {});
+  else { var i = b.parentNode.querySelector('input'); i.select(); document.execCommand('copy'); done(); }
+});
+</script>
+</body>
+</html>

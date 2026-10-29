@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lumo: entendé tu publicidad en Mercado Libre</title>
+<meta name="description" content="Lumo lee tus métricas de Product Ads y te dice qué mejorar, campaña por campaña, con palabras simples.">
+<meta property="og:title" content="Lumo: entendé tu publicidad en Mercado Libre">
+<meta property="og:description" content="Lee tus métricas de Product Ads y te dice qué mejorar con palabras simples.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/static/logo.png">
+<meta name="theme-color" content="#2446D6">
+{% if invited or invite_error %}<meta name="robots" content="noindex">{% endif %}
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></symbol>
+    <symbol id="i-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15a6 6 0 0 1 12 0z"/><path d="M4 19h16"/><path d="M12 4v2M5.6 7.6L7 9M18.4 7.6L17 9"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 5h11l-2 4 2 4H5"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h10"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/></symbol>
+    <symbol id="i-power" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"/><path d="M6.3 6.5a8 8 0 1 0 11.4 0"/></symbol>
+  </defs>
+</svg>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="/" aria-label="Lumo, inicio"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
+    <nav class="links" aria-label="Secciones">
+      <a href="#que-hace">Qué hace</a><a href="#como">Cómo funciona</a><a href="#panel">El panel</a><a href="#seguridad">Seguridad</a><a href="#preguntas">Preguntas</a>
+    </nav>
+    <a class="btn sm" href="/connect">Ingresar</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow"><i></i>Para vendedores y agencias de Mercado Libre</span>
+        <h1>Sabé qué mejorar en tu publicidad, <em>sin descifrar métricas</em>.</h1>
+        <p class="lead">Lumo lee tus campañas de Product Ads y te explica, en palabras simples, qué está funcionando, qué no y qué conviene hacer primero. Sin planillas ni jerga.</p>
+        <div class="cta-row">
+          <a class="btn" href="/connect">{% if invited %}Aceptar la invitación y conectar{% else %}Ingresar con Mercado Libre{% endif %}</a>
+          <a class="btn ghost" href="#como">Ver cómo funciona</a>
+        </div>
+        <ul class="chips" aria-label="Garantías">
+          <li><svg><use href="#i-eye"/></svg>Solo consulta tus datos</li>
+          <li><svg><use href="#i-lock"/></svg>Tokens cifrados</li>
+          <li><svg><use href="#i-power"/></svg>Te desconectás cuando quieras</li>
+        </ul>
+        {% if invite_error %}
+        <p class="invite-note bad" role="alert"><b>Esa invitación no es válida.</b> Puede que ya se haya usado, que haya vencido o que la hayan cancelado. Pedí una nueva a quien te la envió.</p>
+        {% elif invited %}
+        <p class="invite-note ok"><b>Te invitaron a Lumo{% if label %}, {{ label }}{% endif %}.</b> Conectá tu cuenta de Mercado Libre para activar tu acceso. La invitación es de un solo uso.</p>
+        {% else %}
+        <p class="invite-note"><b>Lumo está en acceso por invitación.</b>
+          {% if contact %}¿Todavía no tenés acceso? <a href="{{ contact }}">Pedilo por email</a>.{% else %}Si todavía no tenés acceso, pedíselo a quien te compartió Lumo.{% endif %}</p>
+        {% endif %}
+      </div>
+
+      <div class="mock" role="img" aria-label="Ejemplo del panel de Lumo con datos ficticios: una campaña en estado Excelente, una en Atención y una en Revisar, y una recomendación para subir el presupuesto.">
+        <span class="mock-tag">Ejemplo con datos ficticios</span>
+        <div class="mk-hero">
+          <div class="ic"><svg><use href="#i-alert"/></svg></div>
+          <div><b>Tu publicidad rinde, pero podés mejorarla</b><span>Por cada $1 invertido en los últimos 7 días, vendiste $3,8.</span></div>
+        </div>
+        <div class="mk-kpis">
+          <div class="mk-kpi"><small>Inversión</small><b>$209.852</b><em class="dn">−12%</em></div>
+          <div class="mk-kpi"><small>Ventas por publicidad</small><b>$798.000</b><em class="dn">−26%</em></div>
+          <div class="mk-kpi"><small>ROAS</small><b>$3,8</b><em class="dn">−27%</em></div>
+        </div>
+        <div class="mk-scroll"><table class="mk-table">
+          <thead><tr><th>Campaña</th><th>Estado</th><th>ROAS</th><th>Objetivo</th></tr></thead>
+          <tbody>
+            <tr><td>Organizadores</td><td><span class="pill ex">Excelente</span></td><td>$9,2</td><td>$8,0</td></tr>
+            <tr><td>Mesas y sillas</td><td><span class="pill at">Atención</span></td><td>$4,6</td><td>$5,0</td></tr>
+            <tr><td>Cortinas blackout</td><td><span class="pill re">Revisar</span></td><td>$2,1</td><td>$4,0</td></tr>
+          </tbody>
+        </table></div>
+        <div class="mk-reco">
+          <small>Oportunidad</small>
+          <b>Organizadores se queda sin presupuesto</b>
+          <p>Gastó casi todo su presupuesto diario y su ROAS supera tu objetivo. Subilo un 30% y mirá cómo responde.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block alt" id="que-hace">
+    <div class="wrap">
+      <div class="head">
+        <span class="kicker">Qué hace Lumo</span>
+        <h2>De los números de Mercado Ads a las decisiones que importan</h2>
+        <p>Mercado Ads te muestra métricas. Lumo las interpreta contra el objetivo de cada campaña y te dice qué hacer, en qué orden.</p>
+      </div>
+      <div class="grid c3">
+        <article class="card"><div class="ico"><svg><use href="#i-target"/></svg></div><h3>Un semáforo por campaña</h3><p>Cada campaña se mide contra su propio ROAS objetivo, el que configuraste en Mercado Libre. Ves enseguida cuáles están Excelente, Bien, en Atención o para Revisar.</p></article>
+        <article class="card"><div class="ico"><svg><use href="#i-sliders"/></svg></div><h3>Recomendaciones con números</h3><p>Cuánto subir o bajar un presupuesto y por qué, con las cifras de tu cuenta. Nada de consejos genéricos.</p></article>
+        <article class="card"><div class="ico"><svg><use href="#i-alert"/></svg></div><h3>Alertas por publicación</h3><p>Detectá las publicaciones que gastan y no venden, y las que ya venden solas y merecen publicidad.</p></article>
+        <article class="card"><div class="ico"><svg><use href="#i-flag"/></svg></div><h3>Seguimiento de lo que hacés</h3><p>Marcá cada acción como hecha y mirá cómo cambiaron tus ventas antes y después, para saber qué funcionó de verdad.</p></article>
+        <article class="card"><div class="ico"><svg><use href="#i-trend"/></svg></div><h3>Tendencias de tu catálogo</h3><p>Qué categorías y marcas crecen, y cuáles tienen poca publicidad para el momento que viven.</p></article>
+        <article class="card"><div class="ico"><svg><use href="#i-book"/></svg></div><h3>Un glosario en palabras simples</h3><p>ROAS, ACOS, CTR, CVR, participación de impresiones… cada métrica explicada con un ejemplo.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="como">
+    <div class="wrap">
+      <div class="head center">
+        <span class="kicker">Cómo funciona</span>
+        <h2>Listo en un minuto, sin instalar nada</h2>
+      </div>
+      <ol class="steps">
+        <li><h3>Conectás tu cuenta</h3><p>Iniciás sesión en Mercado Libre y autorizás a Lumo. Tu contraseña nunca pasa por Lumo.</p></li>
+        <li><h3>Lumo lee tu publicidad</h3><p>Trae tus campañas, sus métricas de los últimos 60 días y tus publicaciones, y las compara con tus objetivos.</p></li>
+        <li><h3>Sabés qué hacer</h3><p>Recibís tareas, alertas y recomendaciones ordenadas por importancia, y volvés cuando quieras: Lumo te recuerda.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block alt" id="panel">
+    <div class="wrap">
+      <div class="head">
+        <span class="kicker">El panel</span>
+        <h2>Siete pestañas, cada una responde una pregunta</h2>
+        <p>Pensado para entenderse a primera vista, también desde el celular.</p>
+      </div>
+      <div class="tabs">
+        <div class="tab"><span class="dot"></span><div><b>Principal</b><span>¿Cómo voy? Tus campañas en una tabla que ordenás y filtrás, con sus publicaciones desplegables.</span></div></div>
+        <div class="tab"><span class="dot"></span><div><b>Tareas</b><span>¿Qué hago hoy? Una lista priorizada que se arma sola, y a la que sumás las tuyas.</span></div></div>
+        <div class="tab"><span class="dot"></span><div><b>Alertas</b><span>¿Qué se rompió? Publicaciones que gastan sin vender y oportunidades sin publicidad.</span></div></div>
+        <div class="tab"><span class="dot"></span><div><b>Recomendaciones</b><span>¿Qué me conviene? Ajustes de presupuesto y oportunidades, con cifras.</span></div></div>
+        <div class="tab"><span class="dot"></span><div><b>Seguimiento</b><span>¿Funcionó? El antes y el después de cada acción que registraste.</span></div></div>
+        <div class="tab"><span class="dot"></span><div><b>Tendencias</b><span>¿Qué crece? Categorías y marcas que suben y qué tan cubiertas están por publicidad.</span></div></div>
+        <div class="tab"><span class="dot"></span><div><b>Glosario</b><span>¿Qué significa? Cada métrica explicada en palabras simples.</span></div></div>
+        <div class="tab"><span class="dot"></span><div><b>Agencias y consultores<span class="soon">Próximamente</span></b><span>Una vista de cartera para seguir a todos tus clientes desde un solo lugar.</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="seguridad">
+    <div class="wrap split">
+      <div class="head" style="margin-bottom:0">
+        <span class="kicker">Seguridad y transparencia</span>
+        <h2>Tus datos son tuyos. Lumo solo los consulta.</h2>
+        <p>Conectar tu cuenta no tiene que ser un acto de fe. Esto es lo que hace y lo que no hace Lumo.</p>
+      </div>
+      <ul class="checks">
+        <li><svg><use href="#i-eye"/></svg><div><b>No modifica tus campañas</b><span>Lumo solo consulta información. No crea, pausa ni edita campañas ni publicaciones: los cambios los hacés vos, en Mercado Libre.</span></div></li>
+        <li><svg><use href="#i-key"/></svg><div><b>Tu contraseña no pasa por Lumo</b><span>Iniciás sesión directamente en Mercado Libre, con el mismo estándar (OAuth 2.0 con PKCE) que usan las aplicaciones profesionales.</span></div></li>
+        <li><svg><use href="#i-lock"/></svg><div><b>Credenciales cifradas</b><span>Los permisos que le das a Lumo se guardan cifrados y nunca se muestran en pantalla.</span></div></li>
+        <li><svg><use href="#i-power"/></svg><div><b>Vos decidís</b><span>Podés quitarle el acceso a Lumo cuando quieras desde la configuración de tu cuenta de Mercado Libre, o pedir que borremos tus datos.</span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block alt" id="preguntas">
+    <div class="wrap" style="max-width:820px">
+      <div class="head center">
+        <span class="kicker">Preguntas frecuentes</span>
+        <h2>Lo que más nos preguntan</h2>
+      </div>
+      <details><summary>¿Lumo modifica mis campañas?</summary><p>No. Lumo solo lee tus datos y te dice qué mejorar. Cualquier cambio, como subir un presupuesto o pausar una publicación, lo hacés vos desde Mercado Libre.</p></details>
+      <details><summary>¿Qué necesito para usarlo?</summary><p>Una cuenta de Mercado Libre con Publicidad (Product Ads) habilitada y una invitación a Lumo. Si todavía no tenés campañas, el panel te lo avisa y se completa cuando crees la primera.</p></details>
+      <details><summary>¿Cada cuánto se actualizan los datos?</summary><p>Mercado Libre actualiza sus métricas una vez por día, alrededor de las 10 de la mañana (hora de Argentina). Lumo guarda una copia por unas horas para cargar rápido, y tenés un botón para actualizar cuando lo necesites.</p></details>
+      <details><summary>¿De dónde salen las recomendaciones?</summary><p>De comparar el rendimiento real de cada campaña y publicación con el ROAS objetivo que configuraste. Son orientativas: las decisiones y sus resultados dependen de tu negocio, la temporada y la competencia.</p></details>
+      <details><summary>¿Por qué es por invitación?</summary><p>Lumo está en una etapa inicial y se abre de a poco. Cada cuenta se habilita con una invitación para cuidar la calidad de la experiencia.</p></details>
+      <details><summary>¿Puedo ver varias cuentas juntas?</summary><p>Hoy, cada persona ve su propia cuenta de Mercado Libre. Estamos trabajando en una vista de cartera pensada para agencias y consultores.</p></details>
+    </div>
+  </section>
+
+  <section class="block" style="padding-bottom:40px">
+    <div class="cta-band"><div class="cta-box">
+      <h2>Empezá a entender tu publicidad hoy</h2>
+      <p>Conectá tu cuenta de Mercado Libre y mirá tus campañas con otros ojos.</p>
+      <a class="btn" href="/connect">{% if invited %}Aceptar la invitación y conectar{% else %}Ingresar con Mercado Libre{% endif %}</a>
+      {% if not invited %}<small>Acceso por invitación. {% if contact %}<a href="{{ contact }}">Pedí el tuyo por email</a>.{% else %}Pedíselo a quien te compartió Lumo.{% endif %}</small>{% endif %}
+    </div></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <a class="logo" href="/" style="font-size:1.1rem"><img src="/static/logo.svg" alt="" width="28" height="28">Lumo</a>
+      <nav aria-label="Pie"><a href="/connect">Ingresar</a>{% if contact %} · <a href="{{ contact }}">Contacto</a>{% endif %}</nav>
+    </div>
+    <p>Lumo es una herramienta independiente: no está afiliada ni respaldada por Mercado Libre. Mercado Libre y Mercado Ads son marcas de sus respectivos titulares.</p>
+    <p>© 2026 Lumo</p>
+  </div>
+</footer>
+</body>
+</html>

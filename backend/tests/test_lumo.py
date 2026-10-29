@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from lumo import create_app, ml
 from lumo.crypto import CryptoError, decrypt, encrypt
-from lumo.models import Account, utcnow
+from lumo.models import Access, Account, utcnow
 from lumo.tokens import NeedsReconnect, save_tokens, valid_access_token
 
 KEY = Fernet.generate_key().decode()
@@ -19,6 +19,7 @@ CFG = {
     "ENCRYPTION_KEY": KEY,
     "SECRET_KEY": "x" * 32,
     "DATABASE_URL": "sqlite://",
+    "ADMIN_USER_IDS": "",
 }
 TOK = {"access_token": "AT-1", "refresh_token": "RT-1", "expires_in": 21600, "scope": "read offline_access", "user_id": 777}
 
@@ -44,6 +45,9 @@ class Flujo(unittest.TestCase):
     def setUp(self):
         self.app = create_app(CFG)
         self.client = self.app.test_client()
+        with Session(self.app.extensions["lumo_engine"]) as s:
+            s.add(Access(user_id=777))  # la cuenta de estas pruebas ya tiene acceso
+            s.commit()
 
     def test_connect_redirige_con_state_y_pkce(self):
         r = self.client.get("/connect")

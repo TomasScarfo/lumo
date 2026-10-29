@@ -19,8 +19,12 @@ python -m unittest discover -s tests
 
 1. Subir esta carpeta a un repositorio de GitHub.
 2. En Supabase, copiar la cadena de conexión "Session pooler" (Project Settings, Database).
-3. En Render: New, Blueprint, elegir el repositorio. Cargar `ML_CLIENT_ID`, `ML_CLIENT_SECRET`, `REDIRECT_URI` y `DATABASE_URL`.
+3. En Render: New, Blueprint, elegir el repositorio. Cargar `ML_CLIENT_ID`, `ML_CLIENT_SECRET`, `REDIRECT_URI`, `DATABASE_URL` y `ADMIN_USER_IDS` (tu ID de Mercado Libre; opcional `CONTACT_EMAIL`).
 4. En Mercado Libre: poner en la app la misma dirección que `REDIRECT_URI` (la dirección de Render más `/callback`).
-5. Abrir la dirección de Render y tocar "Conectar con Mercado Libre".
+5. Abrir la dirección de Render, ingresar con Mercado Libre y crear invitaciones en `/admin`.
+
+## Acceso
+
+Lumo es por invitación. Entran los administradores (`ADMIN_USER_IDS`), las cuentas habilitadas en `/admin` y quien abre un enlace `/invitacion/...` de un solo uso. Las cuentas que ya estaban conectadas antes de este control siguen entrando.
 
 Los secretos se cargan solo en Render. Nunca van en GitHub ni en el chat.
