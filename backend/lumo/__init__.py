@@ -1,17 +1,25 @@
+import json
 import logging
 import os
 import secrets
+from datetime import timedelta
+from pathlib import Path
 
-from flask import Flask, redirect, render_template_string, request, session
+from flask import Flask, Response, jsonify, redirect, render_template_string, request, session
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from . import ml
-from .models import Base
-from .tokens import save_tokens
+from . import ads, ml
+from .models import Account, Base, PanelState, Snapshot, utcnow
+from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
 log = logging.getLogger("lumo")
+
+SNAPSHOT_TTL = timedelta(hours=3)  # Mercado Libre actualiza los datos una vez al día
+MIN_REFRESH = timedelta(minutes=10)  # tope para el botón "Actualizar"
+MAX_STATE_BYTES = 200_000
+SESSION_DAYS = 90
 
 PAGE = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Lumo</title>
@@ -64,6 +72,7 @@ def create_app(overrides=None) -> Flask:
     app.config["SESSION_COOKIE_SECURE"] = cfg["REDIRECT_URI"].startswith("https://")
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.permanent_session_lifetime = timedelta(days=SESSION_DAYS)
     engine = make_engine(cfg["DATABASE_URL"])
     Base.metadata.create_all(engine)
     _widen_scope(engine)
@@ -82,6 +91,8 @@ def create_app(overrides=None) -> Flask:
         miss = missing_config()
         if miss:
             return page("<h1>Lumo</h1><p class='bad'>Falta configurar: %s</p>" % ", ".join("<code>%s</code>" % m for m in miss), 500)
+        if _logged_in():
+            return redirect("/panel")
         return page(
             "<h1>Lumo</h1><p>Entendé tus métricas de Product Ads y qué mejorar, con palabras simples.</p>"
             "<p>Lumo <b>solo lee</b> tus datos de publicidad. Nunca modifica tus campañas.</p>"
@@ -116,9 +127,103 @@ def create_app(overrides=None) -> Flask:
         with Session(engine) as s:
             save_tokens(s, cfg, user_id, tok)
             s.commit()
-        return page(_result_body(cfg, tok, user_id))
+        session.clear()
+        session["uid"] = user_id  # Lumo recuerda a la persona en este navegador
+        session.permanent = True
+        body, ok = _result_body(cfg, tok, user_id)
+        if ok:
+            return redirect("/panel")
+        return page(body)
+
+    def _logged_in() -> bool:
+        uid = session.get("uid")
+        if not uid:
+            return False
+        with Session(engine) as s:
+            acc = s.get(Account, uid)
+            return bool(acc and acc.status == "connected")
+
+    @app.get("/panel")
+    def panel():
+        if not _logged_in():
+            return redirect("/")
+        resp = Response(PANEL_HTML, mimetype="text/html")
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
+    @app.get("/salir")
+    def salir():
+        session.clear()
+        return redirect("/")
+
+    def _json(data, status=200):
+        resp = jsonify(data)
+        resp.status_code = status
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
+    @app.get("/api/datos")
+    def api_datos():
+        uid = session.get("uid")
+        if not uid:
+            return _json({"error": "login"}, 401)
+        want = request.args.get("adv", type=int)
+        refresh = request.args.get("refresh") == "1"
+        with Session(engine) as s:
+            snap = s.get(Snapshot, uid)
+            age = utcnow() - snap.fetched_at if snap else None
+            limit = MIN_REFRESH if refresh else SNAPSHOT_TTL  # "Actualizar" salta la copia, pero no más de una vez cada 10 minutos
+            usable = snap and (want is None or snap.advertiser_id == want) and age < limit
+            if usable:
+                data = json.loads(snap.data)
+            else:
+                try:
+                    token = valid_access_token(s, cfg, uid)
+                except NeedsReconnect:
+                    return _json({"error": "reconnect"}, 401)
+                try:
+                    advs = ml.advertisers(cfg, token)
+                    if not advs:
+                        return _json({"error": "no_ads"}, 404)
+                    adv = next((a for a in advs if a["advertiser_id"] == want), advs[0])
+                    get = lambda path, params=None, version="2": ml.api_get(cfg, token, path, params, version)
+                    data = ads.build_dataset(get, adv)
+                    data["advertisers"] = [{"id": a["advertiser_id"], "name": a.get("advertiser_name"), "site": a.get("site_id")} for a in advs]
+                except ml.MLError as exc:
+                    log.warning("lectura de datos falló: %s %s", exc.status, exc.code)
+                    kind = {404: "no_ads", 401: "forbidden", 403: "forbidden", 429: "busy"}.get(exc.status, "api")
+                    return _json({"error": kind}, 404 if kind == "no_ads" else 503 if kind == "busy" else 502)
+                row = snap or Snapshot(user_id=uid)
+                row.advertiser_id, row.data, row.fetched_at = data["advertiser"]["id"], json.dumps(data), utcnow()
+                s.add(row)
+                s.commit()
+            st = s.get(PanelState, uid)
+            data["estado"] = json.loads(st.data) if st else {}
+        return _json(data)
+
+    @app.post("/api/estado")
+    def api_estado():
+        uid = session.get("uid")
+        if not uid:
+            return _json({"error": "login"}, 401)
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return _json({"error": "formato"}, 400)
+        clean = {k: body[k] for k in ("done", "actions", "custom", "sw") if k in body}
+        raw = json.dumps(clean)
+        if len(raw) > MAX_STATE_BYTES:
+            return _json({"error": "grande"}, 413)
+        with Session(engine) as s:
+            row = s.get(PanelState, uid) or PanelState(user_id=uid)
+            row.data = raw
+            s.add(row)
+            s.commit()
+        return _json({"ok": True})
 
     return app
+
+
+PANEL_HTML = (Path(__file__).parent / "panel.html").read_text(encoding="utf-8")
 
 
 def _widen_scope(engine) -> None:
@@ -133,14 +238,16 @@ def _esc(text) -> str:
     return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
-def _result_body(cfg: dict, tok: dict, user_id: int) -> str:
+def _result_body(cfg: dict, tok: dict, user_id: int):
+    """Devuelve (html, ok). ok es True cuando se puede pasar directo al panel."""
     lines = ["<h1>Conectado</h1><p class='ok'>Lumo ya puede leer tu cuenta de Mercado Libre.</p>"]
     lines.append("<p>Cuenta: <code>%s</code></p>" % user_id)
     lines.append("<p>Permisos recibidos: <code>%s</code></p>" % _esc(tok.get("scope") or "sin dato"))
-    if not tok.get("refresh_token"):
+    has_refresh = bool(tok.get("refresh_token"))
+    if not has_refresh:
         lines.append("<p class='bad'>Mercado Libre no entregó un refresh token. Hay que activar el acceso offline en la app para que Lumo pueda renovar el permiso sola.</p>")
     try:
-        ads = ml.advertisers(cfg, tok["access_token"])
+        found = ml.advertisers(cfg, tok["access_token"])
     except ml.MLError as exc:
         if exc.status == 404:
             lines.append("<p class='bad'>Tu cuenta todavía no tiene Publicidad habilitada.</p><p>Entrá a Mercado Libre, Mi perfil, Publicidad, activala y volvé a conectar.</p>")
@@ -148,12 +255,14 @@ def _result_body(cfg: dict, tok: dict, user_id: int) -> str:
             lines.append("<p class='bad'>Mercado Libre no dejó que Lumo lea Product Ads con esta cuenta (error %s).</p><p>Puede ser un permiso restringido a desarrolladores autorizados.</p>" % exc.status)
         else:
             lines.append("<p class='bad'>La consulta de anunciantes falló (error %s, <code>%s</code>).</p>" % (exc.status, _esc(exc.code)))
-        return "".join(lines)
-    if not ads:
+        return "".join(lines), False
+    if not found:
         lines.append("<p>No encontramos anunciantes de Product Ads en esta cuenta.</p>")
-    else:
-        lines.append("<p>Anunciantes de Product Ads:</p><ul>")
-        for a in ads:
-            lines.append("<li><b>%s</b> · sitio <code>%s</code> · id <code>%s</code></li>" % (_esc(a.get("advertiser_name", "")), _esc(a.get("site_id", "")), _esc(a.get("advertiser_id", ""))))
-        lines.append("</ul>")
-    return "".join(lines)
+        return "".join(lines), False
+    lines.append("<p>Anunciantes de Product Ads:</p><ul>")
+    for a in found:
+        lines.append("<li><b>%s</b> · sitio <code>%s</code> · id <code>%s</code></li>" % (_esc(a.get("advertiser_name", "")), _esc(a.get("site_id", "")), _esc(a.get("advertiser_id", ""))))
+    lines.append("</ul>")
+    if not has_refresh:
+        lines.append("<a class='btn' href='/panel'>Entrar igual al panel</a>")
+    return "".join(lines), has_refresh

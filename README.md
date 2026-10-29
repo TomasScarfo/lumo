@@ -2,8 +2,8 @@
 
 Lee tus métricas de Product Ads y te dice qué mejorar con palabras simples.
 
-- `backend/`: servidor (Python, Flask). Conecta con Mercado Libre y guarda los tokens cifrados.
-- `design/`: prototipo de la interfaz y logos.
+- `backend/`: servidor (Python, Flask). Conecta con Mercado Libre, guarda los tokens cifrados, lee Product Ads y sirve el panel (`backend/lumo/panel.html`).
+- `design/`: prototipo de la interfaz con datos de ejemplo y logos.
 - `render.yaml`: configuración para publicar en Render.
 
 ## Probar en tu computadora

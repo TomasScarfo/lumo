@@ -1,0 +1,1251 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lumo</title>
+<meta name="robots" content="noindex">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout concept: una columna pensada para el celular, dividida en seis secciones con una barra de pestañas fija.
+   Cada sección responde una sola pregunta: cómo voy, qué hago, qué se rompió, qué me conviene, qué crece, qué significa. */
+:root {
+  --bg: #F2F5F8;
+  --surface: #FFFFFF;
+  --surface-2: #E9EEF3;
+  --ink: #13202C;
+  --ink-2: #44566A;
+  --ink-3: #5A6B7C;
+  --line: #DAE2E9;
+  --accent: #2446D6;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E3E9FC;
+  --good: #146C43;
+  --on-good: #FFFFFF;
+  --good-soft: #D9F1E3;
+  --warn: #8F5200;
+  --warn-soft: #FBEACB;
+  --bad: #B42318;
+  --bad-soft: #FADFDB;
+  --font-display: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B131A; --surface: #131E28; --surface-2: #1B2834; --ink: #E7EDF3; --ink-2: #B1BECB; --ink-3: #8F9FAF;
+    --line: #263543; --accent: #8BA0FF; --accent-ink: #0B131A; --accent-soft: #1E2B55;
+    --good: #52CC8C; --on-good: #07140D; --good-soft: #143525; --warn: #F2B24E; --warn-soft: #3A2A0D;
+    --bad: #FF8F83; --bad-soft: #42201C; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B131A; --surface: #131E28; --surface-2: #1B2834; --ink: #E7EDF3; --ink-2: #B1BECB; --ink-3: #8F9FAF;
+  --line: #263543; --accent: #8BA0FF; --accent-ink: #0B131A; --accent-soft: #1E2B55;
+  --good: #52CC8C; --on-good: #07140D; --good-soft: #143525; --warn: #F2B24E; --warn-soft: #3A2A0D;
+  --bad: #FF8F83; --bad-soft: #42201C; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-block: 18px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 10; }
+.page { max-width: 800px; margin: 0 auto; }
+.wrap { display: flex; flex-direction: column; gap: 18px; }
+.panel { display: flex; flex-direction: column; gap: 26px; scroll-margin-top: 70px; }
+.panel > *, .wrap > * { min-width: 0; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; line-height: 1.2; text-wrap: balance; letter-spacing: -0.01em; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.ic { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Header and navigation */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+.brand-mark .ic { width: 20px; height: 20px; stroke-width: 2.4; }
+.brand-name { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; line-height: 1.1; }
+.brand-store { font-size: .85rem; color: var(--ink-3); }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; font-size: .9rem; font-weight: 600; color: var(--ink-2); min-height: 36px; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
+.notice { display: flex; gap: 8px; align-items: flex-start; font-size: .85rem; color: var(--ink-2); background: var(--accent-soft); padding: 9px 12px; border-radius: 10px; }
+.notice .ic { margin-top: 2px; color: var(--accent); }
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 11; background: var(--bg); display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: none; margin-inline: -2px; padding-inline: 2px; }
+.nav::-webkit-scrollbar { display: none; }
+.nav button { border: 0; background: none; padding: 12px 12px 11px; font-weight: 600; font-size: .95rem; color: var(--ink-3); white-space: nowrap; border-bottom: 3px solid transparent; display: inline-flex; gap: 7px; align-items: center; }
+.nav button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.badge { background: var(--accent); color: var(--accent-ink); border-radius: 999px; font-size: .72rem; font-weight: 700; min-width: 20px; height: 20px; padding: 0 6px; display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+
+/* Pantallas anchas: las secciones pasan a un panel fijo a la izquierda */
+@media (min-width: 900px) {
+  .page { max-width: 1120px; }
+  .wrap { display: grid; grid-template-columns: 232px minmax(0, 1fr); column-gap: 32px; row-gap: 18px; align-items: start; }
+  .wrap > .top, .wrap > .notice { grid-column: 1 / -1; }
+  .wrap > .nav { grid-column: 1; grid-row: 3; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); flex-direction: column; overflow: visible; gap: 4px; margin: 0; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; z-index: 5; }
+  .wrap > #panel { grid-column: 2; grid-row: 3; }
+  .nav button { width: 100%; justify-content: space-between; text-align: left; padding: 11px 12px; border-bottom: 0; border-radius: 10px; }
+  .nav button:hover { background: var(--surface-2); }
+  .nav button[aria-selected="true"] { background: var(--accent-soft); color: var(--ink); border-bottom: 0; }
+}
+
+/* Common */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.sec-head h2 { font-size: 1.3rem; font-weight: 700; }
+.sub { color: var(--ink-2); font-size: .95rem; }
+.small { font-size: .85rem; color: var(--ink-3); }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: nowrap; }
+.pill .ic { width: 1.05em; height: 1.05em; }
+.s-excelente { background: var(--good); color: var(--on-good); }
+.s-bien { background: var(--good-soft); color: var(--good); }
+.s-atencion { background: var(--warn-soft); color: var(--warn); }
+.s-revisar { background: var(--bad-soft); color: var(--bad); }
+.s-sindatos { background: var(--surface-2); color: var(--ink-2); }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.tag.up { background: var(--good-soft); color: var(--good); }
+.tag.down { background: var(--bad-soft); color: var(--bad); }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.tag .ic { width: 1em; height: 1em; stroke-width: 2.6; }
+.btn { border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 9px 16px; border-radius: 10px; min-height: 40px; font-size: .92rem; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.link { border: 0; background: none; padding: 6px 0; color: var(--accent); font-weight: 700; font-size: .92rem; display: inline-flex; align-items: center; gap: 6px; text-align: left; }
+.link .ic { transition: transform .15s; }
+.link[aria-expanded="true"] .ic { transform: rotate(180deg); }
+.empty { display: flex; gap: 12px; align-items: center; color: var(--ink-2); }
+.empty .ic { width: 26px; height: 26px; color: var(--good); }
+
+/* Principal: hero */
+.hero { border-radius: 18px; padding: 22px 20px; display: flex; flex-direction: column; gap: 16px; }
+.hero-head { display: flex; gap: 14px; align-items: flex-start; }
+.hero-ic { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; flex: none; }
+.hero-ic .ic { width: 28px; height: 28px; stroke-width: 2.3; }
+.hero h1 { font-size: clamp(1.5rem, 5.5vw, 2rem); font-weight: 700; }
+.hero-lines { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; color: var(--ink-2); }
+.hero-lines b { color: var(--ink); }
+
+/* KPIs */
+.kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 720px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi-l { font-size: .85rem; color: var(--ink); font-weight: 600; line-height: 1.3; }
+.kpi-v { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.4rem, 5vw, 1.75rem); line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.kpi-d { font-size: .8rem; color: var(--ink-3); line-height: 1.35; margin-top: 2px; }
+.delta { display: inline-flex; gap: 4px; align-items: flex-start; font-size: .78rem; font-weight: 600; line-height: 1.3; color: var(--ink-3); }
+.delta .ic { margin-top: 1px; width: 1em; height: 1em; stroke-width: 2.6; }
+.delta.good { color: var(--good); }
+.delta.bad { color: var(--bad); }
+.group-t { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); margin-bottom: 8px; }
+
+/* Chart */
+.tabs { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
+.tabs button { border: 0; background: transparent; padding: 6px 12px; border-radius: 999px; font-size: .86rem; font-weight: 600; color: var(--ink-2); min-height: 34px; }
+.tabs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
+.chart-box { position: relative; margin-top: 10px; min-height: 210px; touch-action: pan-y; }
+.chart-box svg { display: block; }
+.chart-box text { fill: var(--ink-3); font-family: var(--font-body); font-size: 11.5px; }
+.bar { fill: var(--accent); transition: opacity .1s; }
+.bar.dim { opacity: .45; }
+.grid { stroke: var(--line); stroke-width: 1; }
+.tt { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); padding: 7px 10px; border-radius: 8px; font-size: .82rem; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -100%); z-index: 2; }
+.tt b { display: block; font-size: .95rem; font-variant-numeric: tabular-nums; }
+.tbl { overflow-x: auto; margin-top: 10px; max-height: 340px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { position: sticky; top: 0; background: var(--surface-2); font-size: .8rem; color: var(--ink-2); }
+tr:last-child td { border-bottom: 0; }
+
+/* Campaigns */
+.camp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 70px; }
+.camp-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.camp-top h3 { font-size: 1.12rem; font-weight: 700; min-width: 0; }
+.camp-why { color: var(--ink-2); font-size: .95rem; }
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.trio div { background: var(--surface-2); border-radius: 10px; padding: 9px 10px; min-width: 0; }
+.trio dt { font-size: .75rem; color: var(--ink-3); line-height: 1.25; }
+.trio dd { margin: 2px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.budget { display: flex; flex-direction: column; gap: 6px; font-size: .85rem; color: var(--ink-2); }
+.meter { height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.meter span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.ads { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.ad { padding: 12px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.ad:last-child { border-bottom: 0; padding-bottom: 0; }
+.ad-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ad-name { font-weight: 600; font-size: .95rem; min-width: 0; }
+.ad-nums { display: flex; gap: 6px 18px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ad-nums b { color: var(--ink); }
+
+/* Tabla de campañas */
+.cfilters { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.cfilters .row { display: flex; gap: 8px 12px; flex-wrap: wrap; align-items: center; }
+.cfilters .search { flex: 1 1 240px; width: auto; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); padding: 6px 12px; border-radius: 999px; font-size: .86rem; font-weight: 600; min-height: 36px; display: inline-flex; gap: 6px; align-items: center; }
+.chip[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
+.chip b { font-variant-numeric: tabular-nums; }
+.ctw { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table.ct { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1120px; font-size: .88rem; }
+table.ct th, table.ct td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; background: var(--surface); }
+table.ct th { background: var(--surface-2); }
+table.ct th:first-child, table.ct td:first-child { position: sticky; left: 0; text-align: left; z-index: 2; min-width: 240px; box-shadow: 1px 0 0 var(--line); }
+table.ct th:first-child { z-index: 3; }
+table.ct th:nth-child(2), table.ct td:nth-child(2) { text-align: left; }
+table.ct tbody tr:last-child td { border-bottom: 0; }
+table.ct tr.itr td { background: var(--bg); color: var(--ink-2); }
+table.ct tr.itr td:first-child { padding-left: 34px; white-space: normal; max-width: 300px; }
+table.ct td .cname { font-weight: 700; font-family: var(--font-display); font-size: 1rem; }
+table.ct td .link { padding: 2px 0; font-size: .85rem; }
+.sort { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; font-size: .8rem; color: var(--ink-2); display: inline-flex; align-items: center; gap: 4px; min-height: 28px; }
+.sort .ic { width: .95em; height: .95em; stroke-width: 2.6; color: var(--accent); }
+.mini { display: inline-block; width: 44px; height: 6px; background: var(--surface-2); border-radius: 999px; margin-left: 8px; overflow: hidden; vertical-align: middle; }
+.mini i { display: block; height: 100%; background: var(--accent); }
+.mini.cap i { background: var(--warn); }
+.dash { color: var(--ink-3); }
+
+/* Alert-style cards (recomendaciones) */
+.alert { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; gap: 14px; }
+.sev-urgente { --c: var(--bad); --cs: var(--bad-soft); }
+.sev-mejora { --c: var(--warn); --cs: var(--warn-soft); }
+.sev-oportunidad { --c: var(--accent); --cs: var(--accent-soft); }
+.sev-buena { --c: var(--good); --cs: var(--good-soft); }
+.a-ic { width: 40px; height: 40px; border-radius: 12px; background: var(--cs); color: var(--c); display: grid; place-items: center; flex: none; }
+.a-ic .ic { width: 22px; height: 22px; }
+.a-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.a-tag { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--c); }
+.a-body h3 { font-size: 1.1rem; font-weight: 700; }
+.a-body p { color: var(--ink-2); font-size: .95rem; }
+.a-do { background: var(--surface-2); border-radius: 10px; padding: 9px 12px; color: var(--ink) !important; }
+.a-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.done-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; color: var(--ink-3); font-size: .9rem; }
+.done-item span { min-width: 0; }
+
+/* Alertas: publication cards */
+.sum { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.sum-i { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.sum-i b { font-family: var(--font-display); font-size: 1.8rem; line-height: 1.1; }
+.sum-i span { font-size: .85rem; color: var(--ink-2); line-height: 1.3; }
+.blk-h { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.blk-h h2 { font-size: 1.3rem; font-weight: 700; }
+.item { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.item-top { display: flex; flex-direction: column; gap: 6px; }
+.item-top h3 { font-size: 1.05rem; font-weight: 700; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+@media (min-width: 640px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.stats div { background: var(--surface-2); border-radius: 10px; padding: 9px 10px; min-width: 0; }
+.stats dt { font-size: .75rem; color: var(--ink-3); line-height: 1.25; }
+.stats dd { margin: 2px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stats dd small { font-family: var(--font-body); font-weight: 600; font-size: .78rem; }
+.stats dd small.g { color: var(--good); }
+.stats dd small.b { color: var(--bad); }
+.reco { background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: .93rem; color: var(--ink); }
+.reco strong { display: block; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin-bottom: 2px; }
+.rbar { position: relative; height: 10px; background: var(--surface-2); border-radius: 999px; margin: 6px 0 4px; }
+.rbar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; }
+.rbar .fill.revisar { background: var(--bad); }
+.rbar .fill.atencion { background: var(--warn); }
+.rbar .mark { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--ink); border-radius: 2px; }
+.rlab { display: flex; justify-content: space-between; gap: 10px; font-size: .8rem; color: var(--ink-2); flex-wrap: wrap; }
+.impact { font-size: .9rem; color: var(--ink-2); }
+.impact b { color: var(--ink); }
+
+/* Tareas */
+.prog { display: flex; flex-direction: column; gap: 8px; }
+.task { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.task:last-child { border-bottom: 0; }
+.task label { display: flex; gap: 12px; align-items: flex-start; flex: 1; min-width: 0; cursor: pointer; }
+.task input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--accent); flex: none; cursor: pointer; }
+.task span { min-width: 0; font-weight: 600; font-size: .96rem; }
+.task small { display: block; font-weight: 400; color: var(--ink-2); font-size: .85rem; }
+.task.is-done span { color: var(--ink-3); text-decoration: line-through; }
+.task.is-done small { text-decoration: none; }
+.addrow { display: flex; gap: 8px; }
+.addrow input { flex: 1; min-width: 0; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+
+/* Tendencias */
+.dim-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.trow { padding: 14px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.trow:last-child { border-bottom: 0; padding-bottom: 0; }
+.trow:first-child { padding-top: 0; }
+.trow-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.trow-top b { font-family: var(--font-display); font-size: 1.08rem; }
+.tbar { height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.tbar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.tnums { display: flex; gap: 4px 18px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.tnums b { color: var(--ink); }
+
+/* Switches */
+.switches { display: flex; flex-direction: column; }
+.sw { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.sw:last-child { border-bottom: 0; }
+.sw span { min-width: 0; font-size: .95rem; }
+.sw small { display: block; color: var(--ink-3); font-size: .82rem; }
+.sw input { appearance: none; -webkit-appearance: none; width: 46px; height: 28px; border-radius: 999px; background: var(--ink-3); position: relative; flex: none; margin: 0; cursor: pointer; transition: background .15s; }
+.sw input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
+.sw input:checked { background: var(--accent); }
+.sw input:checked::after { transform: translateX(18px); background: var(--accent-ink); }
+
+/* Glosario */
+.search { width: 100%; font: inherit; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.gl-group { display: flex; flex-direction: column; gap: 10px; }
+.gl-group > h2 { font-size: 1.15rem; font-weight: 700; }
+.term { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.term-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+.term-top h3 { font-size: 1.05rem; font-weight: 700; }
+.term code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; background: var(--surface-2); color: var(--ink-2); padding: 2px 7px; border-radius: 6px; }
+.term p { color: var(--ink-2); font-size: .94rem; }
+.term .ex { font-size: .88rem; color: var(--ink); background: var(--surface-2); border-radius: 8px; padding: 7px 10px; }
+.term .meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.foot { font-size: .82rem; color: var(--ink-3); text-align: center; margin-top: 28px; }
+/* Seguimiento */
+.s-neu { background: var(--surface-2); color: var(--ink-2); }
+.trk-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px 12px; flex-wrap: wrap; }
+.sim-note { background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 8px 12px; font-size: .88rem; font-weight: 600; }
+.wait { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; font-size: .93rem; color: var(--ink-2); }
+.evchart { width: 100%; height: auto; display: block; }
+.evchart text { fill: var(--ink-3); font-family: var(--font-body); font-size: 12px; }
+.evchart .bb { fill: var(--ink-3); opacity: .5; }
+.evchart .ba { fill: var(--accent); }
+.evchart .dv { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.cap { font-size: .8rem; color: var(--ink-3); margin-top: -6px; }
+.say { font-size: .94rem; color: var(--ink-2); }
+.say b { color: var(--ink); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20; background: var(--ink); color: var(--bg); padding: 12px 16px; border-radius: 12px; display: flex; gap: 14px; align-items: center; width: max-content; max-width: calc(100vw - 32px); font-size: .92rem; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+.toast button { background: none; border: 0; color: var(--bg); text-decoration: underline; text-underline-offset: 3px; font-weight: 700; padding: 4px 0; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-lumo" viewBox="0 0 24 24"><path d="M9 4.5v14h7.5"/><circle cx="17" cy="7" r="1.7" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17.3h.01"/></symbol>
+  <symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></symbol>
+  <symbol id="i-flat" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</svg>
+
+<main class="page">
+  <div id="dyn"></div>
+  <p class="foot">Lumo solo lee tus datos de Product Ads. Nada de lo que ves acá modifica tus campañas.</p>
+</main>
+
+<script>
+(function () {
+function boot(D) {
+/*DATA-START*/
+var DAYS = D.days;
+var EST = D.estado || {};
+function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function parseDay(t) { var p = String(t).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function isoDay(d) { var m = d.getMonth() + 1, x = d.getDate(); return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (x < 10 ? '0' : '') + x; }
+var END = parseDay(D.end);
+/* La API expone el objetivo de cada campaña como ACOS objetivo (acos_target). ROAS objetivo = 100 / ACOS objetivo. */
+var CAMPS = D.camps.map(function (c) {
+  return { id: String(c.id), name: esc(c.name), status: c.status, budget: c.budget, acosTarget: c.acosTarget, target: c.target, estTarget: c.estTarget,
+    lostB: c.lostB, lostR: c.lostR, share: c.share,
+    daily: c.daily.map(function (d, i) { var dt = new Date(END); dt.setDate(END.getDate() - (DAYS - 1 - i)); return { date: dt, spend: d.spend, clicks: d.clicks, prints: d.prints, units: d.units, sales: d.sales }; }) };
+});
+var ITEMS = D.items.map(function (i) {
+  return { id: String(i.id), name: esc(i.name), cat: esc(i.cat), brand: esc(i.brand), camp: i.camp == null ? null : String(i.camp), sp: i.sp, sa: i.sa, price: i.price,
+    units: i.units, conv: i.conv, visits: i.visits, prevUnits: i.prevUnits, stock: i.stock, orgAmt: i.orgAmt, prevOrgAmt: i.prevOrgAmt, link: i.link };
+});
+/* Acciones que la persona ya registró. Se guardan con la fecha, no con la posición en la serie, que se corre cada día. */
+var SEED_ACTIONS = [], OLD_ACTIONS = [];
+(EST.actions || []).forEach(function (a) {
+  var di = a.at ? DAYS - 1 + Math.round((parseDay(a.at) - END) / 864e5) : DAYS;
+  a.di = di;
+  (di >= 7 && di <= DAYS ? SEED_ACTIONS : OLD_ACTIONS).push(a);
+});
+function notesHTML() {
+  var h = (D.notes || []).map(function (n) { return '<div class="notice">' + icon('info') + '<span>' + esc(n) + '</span></div>'; }).join('');
+  if ((D.advertisers || []).length > 1) {
+    h += '<div class="notice">' + icon('info') + '<span>Cuentas de anuncios: ' + D.advertisers.map(function (a) {
+      return a.id === D.advertiser.id ? '<b>' + esc(a.name) + '</b>' : '<a class="link" href="/panel?adv=' + encodeURIComponent(a.id) + '">' + esc(a.name) + '</a>';
+    }).join(' · ') + '</span></div>';
+  }
+  return h;
+}
+var lastSaved = null, saveT = null;
+function stateObj() { return { done: S.done, actions: S.actions.filter(function (a) { return a.src === 'tuya'; }).concat(OLD_ACTIONS), custom: S.custom, sw: S.sw }; }
+function saveState() {
+  var j = JSON.stringify(stateObj());
+  if (lastSaved === null) { lastSaved = j; return; }
+  if (j === lastSaved) return;
+  clearTimeout(saveT);
+  saveT = setTimeout(function () {
+    fetch('/api/estado', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: j })
+      .then(function (r) { if (r.ok) lastSaved = j; }).catch(function () {});
+  }, 500);
+}
+/*DATA-END*/
+
+/*LOGIC-START*/
+var S = { days: 7, metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
+  showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
+var nf0 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+var money = function (n) { return '$' + nf0.format(Math.round(n)); };
+var r1 = function (n) { return n.toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); };
+var r2 = function (n) { return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+var pct1 = function (n) { return r1(n * 100) + '%'; };
+var pctN = function (v) { return v == null ? '—' : Math.round(v * 100) + '%'; };
+var short = function (n) { return n >= 1e6 ? '$' + r1(n / 1e6) + ' M' : n >= 1e3 ? '$' + nf0.format(Math.round(n / 1000)) + ' mil' : '$' + nf0.format(n); };
+var pl = function (n, a, b) { return n + ' ' + (n === 1 ? a : b); };
+var ST = {
+  excelente: { label: 'Excelente', icon: 'check-circle', rank: 3 },
+  bien: { label: 'Bien', icon: 'check', rank: 2 },
+  atencion: { label: 'Atención', icon: 'alert', rank: 1 },
+  revisar: { label: 'Revisar', icon: 'x-circle', rank: 0 },
+  sindatos: { label: 'Sin actividad', icon: 'info', rank: 4 }
+};
+function statusOf(roas, spend, sales, t) {
+  if (!spend) return 'sindatos';
+  if (spend > 0 && sales === 0) return 'revisar';
+  var k = roas / t;
+  return k >= 1.25 ? 'excelente' : k >= 1 ? 'bien' : k >= 0.7 ? 'atencion' : 'revisar';
+}
+function agg(arr, from, to) {
+  var s = { spend: 0, sales: 0, clicks: 0, prints: 0, units: 0 };
+  for (var i = from; i < to; i++) { s.spend += arr[i].spend; s.sales += arr[i].sales; s.clicks += arr[i].clicks; s.prints += arr[i].prints; s.units += arr[i].units; }
+  return s;
+}
+function roundTo(n, step) { return Math.max(step, Math.round(n / step) * step); }
+function isStrongOrganic(o) { return o.units >= 10 && (o.conv == null || o.conv >= 0.03); }
+
+function lowReco(o) {
+  if (o.sales === 0) return { short: 'Pausar «' + o.name + '»', text: 'Invirtió ' + money(o.spend) + ' y no vendió nada con publicidad. Pausala y revisá precio, fotos y stock antes de volver a activarla.' };
+  if (isStrongOrganic(o)) return { short: 'Probar pausar «' + o.name + '»', text: 'Se vende bien sola: ' + pl(o.units, 'unidad', 'unidades') + ' en 30 días sin contar la publicidad. Es probable que mantenga sus ventas sin anuncios. Probá pausarla unos días y compará.' };
+  if (o.roas < 0.7 * o.target) return { short: 'Pausar «' + o.name + '»', text: 'Su ROAS está muy lejos del objetivo. Pausala o sacala de la campaña mientras mejorás precio, fotos y título.' };
+  return { short: 'Mejorar «' + o.name + '»', text: 'Está cerca del objetivo. Mejorá título, fotos y precio antes de seguir invirtiendo. Si no sube, pausala.' };
+}
+function actReco(o, camps) {
+  var cands = camps.filter(function (c) { return c.items.some(function (i) { return i.cat === o.cat; }); })
+    .sort(function (a, b) { return b.roas - a.roas; });
+  var best = cands[0], txt;
+  if (!best) txt = 'No hay una campaña de esta categoría. Creá una nueva con un presupuesto chico y mirá los resultados durante una semana.';
+  else if (best.status === 'revisar') txt = 'La campaña de su categoría («' + best.name + '») hoy está en Revisar, con ROAS $' + r1(best.roas) + '. Conviene crear una campaña aparte con presupuesto chico para no mezclarla.';
+  else txt = 'Sumala a «' + best.name + '», que hoy tiene ROAS $' + r1(best.roas) + ' (' + ST[best.status].label + '). Es solo una referencia: no garantiza el mismo resultado, pero esa categoría ya responde bien a la publicidad.' + (best.used >= 0.95 ? ' Esa campaña llega al tope de su presupuesto, así que subilo para que alcance.' : '');
+  if (o.stock != null && o.stock < 10) txt += ' Ojo: con ' + pl(o.stock, 'unidad', 'unidades') + ' de stock se puede agotar rápido. Reponé antes de invertir.';
+  return txt;
+}
+function groups(items, key) {
+  var m = {};
+  items.forEach(function (i) {
+    var g = m[i[key]] = m[i[key]] || { name: i[key], sales: 0, prev: 0, ad: 0, n: 0, act: 0 };
+    g.sales += i.orgSales + i.ad30; g.prev += i.prevOrgSales + i.prevAd30; g.ad += i.ad30; g.n++; if (i.active) g.act++;
+  });
+  return Object.keys(m).map(function (k) {
+    var g = m[k];
+    g.growth = g.prev ? g.sales / g.prev - 1 : 0; g.adShare = g.sales ? g.ad / g.sales : 0; g.cover = g.act / g.n;
+    return g;
+  }).sort(function (a, b) { return b.growth - a.growth; });
+}
+
+function compute() {
+  var n = S.days;
+  var camps = CAMPS.map(function (c) {
+    var cur = agg(c.daily, DAYS - n, DAYS), prev = agg(c.daily, DAYS - 2 * n, DAYS - n);
+    var roas = cur.spend ? cur.sales / cur.spend : 0;
+    return { id: c.id, name: c.name, budget: c.budget, cur: cur, prev: prev,
+      cur30: agg(c.daily, DAYS - 30, DAYS), prev30: agg(c.daily, DAYS - 60, DAYS - 30),
+      roas: roas, target: c.target, acosTarget: c.acosTarget, status: statusOf(roas, cur.spend, cur.sales, c.target), avgSpend: cur.spend / n, used: c.budget ? cur.spend / n / c.budget : 0,
+      ctr: cur.prints ? cur.clicks / cur.prints : 0, cpc: cur.clicks ? cur.spend / cur.clicks : 0, cvr: cur.clicks ? cur.units / cur.clicks : 0,
+      lostB: c.lostB, lostR: c.lostR, share: c.share, estTarget: c.estTarget, paused: c.status === 'paused',
+      dSales: prev.sales ? cur.sales / prev.sales - 1 : 0, items: [] };
+  });
+  var byId = {}; camps.forEach(function (c) { byId[c.id] = c; });
+  var tot = { spend: 0, sales: 0, clicks: 0, prints: 0, units: 0 }, prev = { spend: 0, sales: 0, clicks: 0, prints: 0, units: 0 };
+  camps.forEach(function (c) { ['spend', 'sales', 'clicks', 'prints', 'units'].forEach(function (k) { tot[k] += c.cur[k]; prev[k] += c.prev[k]; }); });
+  var roas = tot.spend ? tot.sales / tot.spend : 0;
+  var tgtAvg = tot.spend ? camps.reduce(function (a, c) { return a + c.cur.spend * c.target; }, 0) / tot.spend : 0;
+  var items = ITEMS.map(function (it) {
+    var o = { id: it.id, name: it.name, cat: it.cat, brand: it.brand, camp: it.camp, price: it.price, stock: it.stock, units: it.units, prevUnits: it.prevUnits,
+      conv: it.conv, visits: it.visits, link: it.link, orgSales: it.orgAmt != null ? it.orgAmt : it.units * it.price, prevOrgSales: it.prevOrgAmt != null ? it.prevOrgAmt : it.prevUnits * it.price,
+      growth: it.prevUnits ? it.units / it.prevUnits - 1 : 0, active: !!it.camp, ad30: 0, prevAd30: 0 };
+    if (it.camp) {
+      var c = byId[it.camp];
+      o.spend = c.cur.spend * it.sp; o.sales = c.cur.sales * it.sa; o.roas = o.spend ? o.sales / o.spend : 0;
+      o.target = c.target; o.sp = it.sp; o.status = statusOf(o.roas, o.spend, o.sales, c.target); o.campName = c.name;
+      o.ad30 = c.cur30.sales * it.sa; o.prevAd30 = c.prev30.sales * it.sa;
+      c.items.push(o);
+    }
+    return o;
+  });
+  camps.forEach(function (c) {
+    var sc = 0, sp = 0;
+    c.items.forEach(function (o, i) { o.kc = o.sp * (1 + ((i % 3) - 1) * 0.12); o.kp = o.sp * (1 + (((i + 1) % 3) - 1) * 0.15); sc += o.kc; sp += o.kp; });
+    c.items.forEach(function (o) { o.clicks = c.cur.clicks * o.kc / sc; o.prints = c.cur.prints * o.kp / sp; o.cpc = o.clicks ? o.spend / o.clicks : 0; o.ctr = o.prints ? o.clicks / o.prints : 0; });
+  });
+  var lowItems = items.filter(function (o) { return o.active && (o.status === 'atencion' || o.status === 'revisar'); }).map(function (o) {
+    o.shortfall = o.spend * o.target - o.sales;
+    o.roasWithout = (tot.spend - o.spend) ? (tot.sales - o.sales) / (tot.spend - o.spend) : 0;
+    o.reco = lowReco(o);
+    return o;
+  }).sort(function (a, b) { return b.shortfall - a.shortfall; });
+  var strong = items.filter(function (o) { return !o.active && isStrongOrganic(o) && o.growth >= 0; })
+    .sort(function (a, b) { return b.orgSales - a.orgSales; });
+  strong.forEach(function (o) { o.reco = actReco(o, camps); });
+
+  var catG = groups(items, 'cat'), brandG = groups(items, 'brand');
+  var recs = [];
+  camps.forEach(function (c) {
+    var base = 'En los últimos ' + n + ' días invertiste ' + money(c.cur.spend) + ' y vendiste ' + money(c.cur.sales) + '. Su ROAS es $' + r1(c.roas) + ' (por cada $1 invertido vendiste $' + r1(c.roas) + ') y el ROAS objetivo de la campaña es $' + r1(c.target) + '.';
+    if (c.status === 'revisar') {
+      var drop = c.dSales <= -0.25 ? ' Además, las ventas bajaron ' + Math.round(-c.dSales * 100) + '% respecto de los ' + n + ' días anteriores.' : '';
+      recs.push({ id: 'rec-' + c.id + '-low', camp: c.id, sev: 'urgente', score: c.cur.spend, go: 'camp',
+        title: c.name + ': bajá el presupuesto mientras la revisás',
+        text: base + drop,
+        action: 'Bajá el presupuesto diario de ' + money(c.budget) + ' a ' + money(roundTo(c.budget * 0.5, 500)) + ' y revisá sus publicaciones en la sección Alertas.' });
+    } else if (c.status === 'atencion') {
+      recs.push({ id: 'rec-' + c.id + '-mid', camp: c.id, sev: 'mejora', score: c.cur.spend, go: 'camp',
+        title: c.name + ' rinde un poco menos que tu objetivo',
+        text: base,
+        action: 'Mejorá las publicaciones que menos venden antes de subir el presupuesto.' });
+    }
+    if (c.used >= 0.95 && (c.status === 'excelente' || c.status === 'bien')) {
+      recs.push({ id: 'rec-' + c.id + '-cap', camp: c.id, sev: 'oportunidad', score: c.cur.sales, go: 'camp',
+        title: c.name + ' se queda sin presupuesto',
+        text: 'Gastó casi todo su presupuesto diario (' + Math.round(c.used * 100) + '% en promedio) y su ROAS es $' + r1(c.roas) + ', por encima de tu objetivo. Cuando llega al tope, sus anuncios dejan de mostrarse y es probable que queden ventas sin captar.',
+        action: 'Subí el presupuesto diario de ' + money(c.budget) + ' a ' + money(roundTo(c.budget * 1.3, 500)) + ' (un 30% más) y mirá cómo responde durante unos días.' });
+    }
+  });
+  var best = camps.filter(function (c) { return c.status === 'excelente'; }).sort(function (a, b) { return b.roas - a.roas; })[0];
+  if (best) recs.push({ id: 'rec-' + best.id + '-best', camp: best.id, sev: 'buena', score: 0, go: 'camp',
+    title: best.name + ' es tu mejor campaña',
+    text: 'Su ROAS es $' + r1(best.roas) + ': por cada $1 invertido vendiste $' + r1(best.roas) + ', bastante por encima de su objetivo de $' + r1(best.target) + '.',
+    action: 'No hace falta tocar nada. Si tenés stock, es la campaña más segura para crecer.' });
+  var hot = catG.filter(function (g) { return g.growth >= 0.1 && g.cover < 0.7; })[0];
+  if (hot) {
+    var free = items.filter(function (o) { return o.cat === hot.name && !o.active; }).length;
+    recs.push({ id: 'rec-trend-' + hot.name, camp: null, sev: 'oportunidad', score: hot.sales, go: 'alertas',
+      title: hot.name + ' crece ' + Math.round(hot.growth * 100) + '% y tiene poca publicidad',
+      text: 'Las ventas de esta categoría crecieron ' + Math.round(hot.growth * 100) + '% en los últimos 30 días, pero solo ' + hot.act + ' de sus ' + hot.n + ' publicaciones tienen publicidad activa.' + (free ? ' ' + pl(free, 'publicación sin anuncios', 'publicaciones sin anuncios') + ' en esta categoría.' : ''),
+      action: 'Mirá en Alertas las publicaciones sin publicidad que ya venden bien y activá las que tengan stock.' });
+  }
+  var sevOrder = { urgente: 0, mejora: 1, oportunidad: 2, buena: 3 };
+  recs.sort(function (a, b) { return sevOrder[a.sev] - sevOrder[b.sev] || b.score - a.score; });
+
+  var tasks = [];
+  lowItems.slice(0, 3).forEach(function (o) { tasks.push({ id: 'low-' + o.id, title: o.reco.short, why: 'ROAS $' + r1(o.roas) + ' contra un ROAS objetivo de $' + r1(o.target) + '.', when: 'Hoy', tab: 'alertas' }); });
+  recs.forEach(function (r) {
+    if (r.sev === 'buena') return;
+    tasks.push({ id: r.id, title: r.title, why: r.action, when: r.sev === 'urgente' ? 'Hoy' : 'Esta semana', tab: 'recomendaciones' });
+  });
+  strong.forEach(function (o) { tasks.push({ id: 'org-' + o.id, title: 'Activar «' + o.name + '» en publicidad', why: pl(o.units, 'unidad vendida', 'unidades vendidas') + ' en 30 días sin anuncios.', when: 'Esta semana', tab: 'alertas' }); });
+  var whenOrder = { 'Hoy': 0, 'Esta semana': 1 };
+  tasks.sort(function (a, b) { return whenOrder[a.when] - whenOrder[b.when]; });
+
+  var daily = [];
+  for (var i = DAYS - n; i < DAYS; i++) {
+    var d = { date: CAMPS[0].daily[i].date, spend: 0, sales: 0, clicks: 0 };
+    CAMPS.forEach(function (c) { d.spend += c.daily[i].spend; d.sales += c.daily[i].sales; d.clicks += c.daily[i].clicks; });
+    daily.push(d);
+  }
+  var tot30 = { sales: 0, ad: 0 };
+  items.forEach(function (o) { tot30.sales += o.orgSales + o.ad30; tot30.ad += o.ad30; });
+  var openTasks = tasks.filter(function (x) { return !S.done[x.id]; });
+  return { camps: camps, items: items, tot: tot, prev: prev, roas: roas, prevRoas: prev.spend ? prev.sales / prev.spend : 0,
+    overall: statusOf(roas, tot.spend, tot.sales, tgtAvg), tgtAvg: tgtAvg, daily: daily, lowItems: lowItems, strong: strong, recs: recs, tasks: tasks,
+    openTasks: openTasks, catG: catG, brandG: brandG, tot30: tot30,
+    openAlerts: strong.filter(function (o) { return !S.done['org-' + o.id]; }).length + lowItems.filter(function (o) { return !S.done['low-' + o.id]; }).length,
+    openRecs: recs.filter(function (r) { return !S.done[r.id] && r.sev !== 'buena'; }).length };
+}
+/*LOGIC-END*/
+
+var $ = function (s) { return document.querySelector(s); };
+var M = null;
+function pill(key) { var s = ST[key]; return '<span class="pill s-' + key + '"><svg class="ic"><use href="#i-' + s.icon + '"/></svg>' + s.label + '</span>'; }
+function icon(n) { return '<svg class="ic"><use href="#i-' + n + '"/></svg>'; }
+function growthTag(g) {
+  var up = g >= 0.1, down = g <= -0.1;
+  var label = up ? 'En alza' : down ? 'En baja' : 'Estable';
+  return '<span class="tag ' + (up ? 'up' : down ? 'down' : '') + '">' + icon(up ? 'up' : down ? 'down' : 'flat') + label + ' · ' + (g >= 0 ? '+' : '') + Math.round(g * 100) + '%</span>';
+}
+function delta(cur, prev, goodUp) {
+  if (!prev) return '';
+  var d = cur / prev - 1, a = Math.abs(d), n = S.days;
+  if (a < 0.02) return '<span class="delta">Igual que los ' + n + ' días anteriores</span>';
+  var up = d > 0, cls = goodUp === null ? '' : (up === goodUp ? 'good' : 'bad');
+  return '<span class="delta ' + cls + '">' + icon(up ? 'up' : 'down') + '<span>' + Math.round(a * 100) + '% ' + (up ? 'más' : 'menos') + ' que los ' + n + ' días anteriores</span></span>';
+}
+
+var SEV = {
+  urgente: { tag: 'Urgente', icon: 'alert' },
+  mejora: { tag: 'Para mejorar', icon: 'info' },
+  oportunidad: { tag: 'Oportunidad', icon: 'trend' },
+  buena: { tag: 'Buena noticia', icon: 'check-circle' }
+};
+
+/* ---------- Encabezado y pestañas ---------- */
+function topHTML() {
+  var seg = [7, 14, 30].map(function (v) {
+    return '<button data-act="days" data-v="' + v + '" aria-pressed="' + (S.days === v) + '">' + v + ' días</button>';
+  }).join('');
+  return '<header class="top"><div class="brand"><div class="brand-mark">' + icon('lumo') + '</div><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(D.advertiser.name) + ' · ' + esc(D.advertiser.site) + '</div></div></div>' +
+    '<div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div></header>' +
+    '<div class="notice">' + icon('info') + '<span>Datos reales de Mercado Libre hasta el ' + dayLong(END) + '. Se actualizan una vez por día. El período elegido cambia las métricas de publicidad; las ventas orgánicas y las tendencias miran siempre los últimos 30 días. <a class="link" href="/panel?refresh=1">Actualizar ahora</a> · <a class="link" href="/salir">Salir</a></span></div>' + notesHTML();
+}
+var TABS = [['principal', 'Principal'], ['tareas', 'Tareas'], ['alertas', 'Alertas'], ['recomendaciones', 'Recomendaciones'], ['seguimiento', 'Seguimiento'], ['tendencias', 'Tendencias'], ['glosario', 'Glosario']];
+function navHTML() {
+  var badge = { tareas: M.openTasks.length, alertas: M.openAlerts, recomendaciones: M.openRecs, seguimiento: S.actions.length };
+  return '<nav class="nav" role="tablist" aria-label="Secciones">' + TABS.map(function (t) {
+    var b = badge[t[0]] ? '<span class="badge">' + badge[t[0]] + '</span>' : '';
+    return '<button role="tab" data-act="tab" data-v="' + t[0] + '" aria-selected="' + (S.tab === t[0]) + '">' + t[1] + b + '</button>';
+  }).join('') + '</nav>';
+}
+
+/* ---------- Principal ---------- */
+function heroHTML() {
+  var o = M.overall;
+  var heads = { excelente: 'Tu publicidad va muy bien', bien: 'Tu publicidad va bien', atencion: 'Tu publicidad rinde, pero podés mejorarla', revisar: 'Tu publicidad necesita atención', sindatos: 'No hay inversión publicitaria en este período' };
+  var low = M.camps.filter(function (c) { return c.status === 'atencion' || c.status === 'revisar'; });
+  var lowSpend = low.reduce(function (a, c) { return a + c.cur.spend; }, 0);
+  var line2 = low.length
+    ? (low.length === 1 ? 'Una campaña está' : low.length + ' campañas están') + ' por debajo de su ROAS objetivo y se llevaron ' + money(lowSpend) + ' (' + Math.round(lowSpend / M.tot.spend * 100) + '% de lo que invertiste).'
+    : 'Todas tus campañas cumplen su ROAS objetivo.';
+  var tone = { excelente: ['var(--good)', 'var(--on-good)'], bien: ['var(--good-soft)', 'var(--good)'], atencion: ['var(--warn-soft)', 'var(--warn)'], revisar: ['var(--bad-soft)', 'var(--bad)'], sindatos: ['var(--surface-2)', 'var(--ink-2)'] }[o];
+  return '<section class="card hero" aria-labelledby="h-hero"><div class="hero-head"><div class="hero-ic" style="background:' + tone[0] + ';color:' + tone[1] + '">' + icon(ST[o].icon) + '</div><div>' +
+    '<h1 id="h-hero">' + heads[o] + '</h1><div class="hero-lines">' +
+    '<p><b>ROAS</b> (retorno de la inversión publicitaria): por cada $1 que invertiste en publicidad en los últimos ' + S.days + ' días, vendiste <b>$' + r1(M.roas) + '</b>.</p><p>' + line2 + '</p>' +
+    '<p class="small">Cada campaña se mide contra su propio ROAS objetivo, el que tenés configurado en Mercado Libre.</p></div></div></div></section>';
+}
+function tile(label, value, dl, def) { return '<div class="kpi"><span class="kpi-l">' + label + '</span><span class="kpi-v">' + value + '</span>' + dl + '<span class="kpi-d">' + def + '</span></div>'; }
+function kpiHTML() {
+  var t = M.tot, p = M.prev;
+  var ctr = t.prints ? t.clicks / t.prints : 0, pctr = p.prints ? p.clicks / p.prints : 0;
+  var cvr = t.clicks ? t.units / t.clicks : 0, pcvr = p.clicks ? p.units / p.clicks : 0;
+  var acos = t.sales ? t.spend / t.sales : 0, pacos = p.sales ? p.spend / p.sales : 0;
+  return '<section aria-labelledby="h-met"><div class="sec-head"><h2 id="h-met">Métricas de publicidad</h2><span class="sub">Últimos ' + S.days + ' días</span></div>' +
+    '<div class="group-t">Resultados</div><div class="kpis">' +
+    tile('Inversión publicitaria', money(t.spend), delta(t.spend, p.spend, null), 'Lo que gastaste en tus anuncios.') +
+    tile('Ventas por publicidad', money(t.sales), delta(t.sales, p.sales, true), 'Ventas que se atribuyen a tus anuncios.') +
+    tile('ROAS (retorno publicitario)', '$' + r1(M.roas), delta(M.roas, M.prevRoas, true), 'Return On Ad Spend: cuánto vendés por cada $1 que invertís en anuncios.') +
+    tile('ACOS (costo publicitario de ventas)', pct1(acos), delta(acos, pacos, false), 'Advertising Cost of Sales: qué parte de lo vendido con publicidad se fue en anuncios. Cuanto más bajo, mejor.') +
+    '</div><div class="group-t" style="margin-top:16px">Cómo responde la gente</div><div class="kpis">' +
+    tile('Impresiones', nf0.format(t.prints), delta(t.prints, p.prints, true), 'Cantidad de veces que se mostraron tus anuncios.') +
+    tile('Clics', nf0.format(t.clicks), delta(t.clicks, p.clicks, true), 'Cantidad de veces que tocaron tus anuncios.') +
+    tile('CTR (tasa de clics)', pct1(ctr), delta(ctr, pctr, true), 'Click Through Rate: de cada 100 veces que se muestra un anuncio, cuántas lo tocan.') +
+    tile('CVR (conversión)', pct1(cvr), delta(cvr, pcvr, true), 'Conversion Rate: de cada 100 clics, cuántos terminan en una compra.') +
+    '</div><button class="link" data-act="tab" data-v="glosario" style="margin-top:6px">Ver todas las métricas en el Glosario</button></section>';
+}
+var METRICS = {
+  sales: { tab: 'Ventas', sub: 'Lo que vendiste cada día gracias a la publicidad.', fmt: function (v) { return money(v); }, axis: short },
+  spend: { tab: 'Inversión', sub: 'Lo que invertiste en anuncios cada día.', fmt: function (v) { return money(v); }, axis: short },
+  clicks: { tab: 'Clics', sub: 'Cuántas veces tocaron tus anuncios cada día.', fmt: function (v) { return nf0.format(v) + ' clics'; }, axis: function (v) { return nf0.format(v); } }
+};
+function dayLong(d) { return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); }
+function chartCardHTML() {
+  var tabs = Object.keys(METRICS).map(function (k) {
+    return '<button data-act="metric" data-v="' + k + '" aria-pressed="' + (S.metric === k) + '">' + METRICS[k].tab + '</button>';
+  }).join('');
+  var body;
+  if (S.table) {
+    body = '<div class="tbl"><table><thead><tr><th>Día</th><th>Inversión</th><th>Ventas</th><th>Clics</th></tr></thead><tbody>' +
+      M.daily.slice().reverse().map(function (d) {
+        return '<tr><td>' + d.date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }) + '</td><td>' + money(d.spend) + '</td><td>' + money(d.sales) + '</td><td>' + nf0.format(d.clicks) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  } else {
+    body = '<div class="chart-box" id="chartBox" role="img" aria-label="Gráfico de barras por día. Usá la tabla para ver los valores exactos."></div>';
+  }
+  return '<section class="card" aria-labelledby="h-dias"><div class="sec-head"><h2 id="h-dias">Cómo vienen tus días</h2><div class="tabs" role="group" aria-label="Qué mostrar">' + tabs + '</div></div>' +
+    '<p class="sub">' + METRICS[S.metric].sub + '</p>' + body +
+    '<button class="link" data-act="table" aria-pressed="' + S.table + '">' + (S.table ? 'Ver como gráfico' : 'Ver como tabla') + '</button></section>';
+}
+function niceMax(v) {
+  if (v <= 0) return 1;
+  var p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p;
+}
+function drawChart() {
+  var box = $('#chartBox'); if (!box || !M) return;
+  var W = Math.max(280, box.clientWidth), H = 210, mg = { l: 54, r: 6, t: 10, b: 26 };
+  var key = S.metric, def = METRICS[key], data = M.daily, N = data.length;
+  var max = niceMax(Math.max.apply(null, data.map(function (d) { return d[key]; })));
+  var pw = W - mg.l - mg.r, ph = H - mg.t - mg.b, slot = pw / N, gap = N <= 7 ? 6 : N <= 14 ? 4 : 2, bw = Math.max(3, slot - gap);
+  var y = function (v) { return mg.t + ph - v / max * ph; };
+  var s = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
+  [0, 0.5, 1].forEach(function (f) {
+    var yy = y(max * f);
+    s += '<line class="grid" x1="' + mg.l + '" x2="' + (W - mg.r) + '" y1="' + yy + '" y2="' + yy + '"/><text x="' + (mg.l - 8) + '" y="' + (yy + 4) + '" text-anchor="end">' + def.axis(max * f) + '</text>';
+  });
+  data.forEach(function (d, i) {
+    var x = mg.l + i * slot + (slot - bw) / 2, h = Math.max(1, d[key] / max * ph), top = mg.t + ph - h, r = Math.min(4, bw / 2, h);
+    s += '<path class="bar" d="M' + x + ' ' + (top + h) + 'V' + (top + r) + 'Q' + x + ' ' + top + ' ' + (x + r) + ' ' + top + 'H' + (x + bw - r) + 'Q' + (x + bw) + ' ' + top + ' ' + (x + bw) + ' ' + (top + r) + 'V' + (top + h) + 'Z"/>';
+  });
+  var step = N <= 7 ? 1 : N <= 14 ? 3 : 7;
+  data.forEach(function (d, i) {
+    if ((N - 1 - i) % step !== 0) return;
+    var last = i === N - 1, cx = last ? mg.l + pw : mg.l + i * slot + slot / 2;
+    var lab = N <= 7 ? d.date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric' }) : d.date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+    s += '<text x="' + cx + '" y="' + (H - 7) + '" text-anchor="' + (last ? 'end' : 'middle') + '">' + lab.replace('.', '') + '</text>';
+  });
+  s += '</svg><div class="tt" id="tt" hidden></div>';
+  box.innerHTML = s;
+  var tt = $('#tt'), bars = box.querySelectorAll('.bar');
+  function clear() { tt.hidden = true; bars.forEach(function (b) { b.classList.remove('dim'); }); }
+  function move(e) {
+    var rect = box.getBoundingClientRect(), x = e.clientX - rect.left, i = Math.floor((x - mg.l) / slot);
+    if (i < 0 || i >= N) { clear(); return; }
+    bars.forEach(function (b, j) { b.classList.toggle('dim', j !== i); });
+    var d = data[i], hh = Math.max(1, d[key] / max * ph);
+    tt.innerHTML = dayLong(d.date) + '<b>' + def.fmt(d[key]) + '</b>';
+    tt.hidden = false;
+    var half = tt.offsetWidth / 2, cx = mg.l + i * slot + slot / 2;
+    tt.style.left = Math.min(Math.max(cx, half + 2), W - half - 2) + 'px';
+    tt.style.top = Math.max(mg.t + ph - hh - 6, tt.offsetHeight + 2) + 'px';
+  }
+  box.onpointermove = move; box.onpointerdown = move; box.onpointerleave = clear;
+}
+/* Tabla de campañas: el ROAS objetivo sale de cada campaña (acos_target), no se carga en Lumo. */
+var COLS = [
+  { k: 'name', label: 'Campaña', d: 1 }, { k: 'status', label: 'Estado', d: 1 }, { k: 'roas', label: 'ROAS', d: -1 }, { k: 'target', label: 'ROAS objetivo', d: -1 },
+  { k: 'spend', label: 'Inversión', d: -1 }, { k: 'sales', label: 'Ventas por publicidad', d: -1 }, { k: 'clicks', label: 'Clics', d: -1 }, { k: 'ctr', label: 'CTR', d: -1 },
+  { k: 'cpc', label: 'CPC', d: -1 }, { k: 'cvr', label: 'CVR', d: -1 }, { k: 'budget', label: 'Presupuesto diario', d: -1 }, { k: 'used', label: 'Uso del presupuesto', d: -1 },
+  { k: 'lostB', label: 'Perdidas por presupuesto', d: -1 }, { k: 'lostR', label: 'Perdidas por ranking', d: -1 }, { k: 'share', label: 'Participación de impresiones', d: -1 }
+];
+function cval(c, k) {
+  switch (k) {
+    case 'name': return c.name; case 'status': return ST[c.status].rank; case 'roas': return c.roas; case 'target': return c.target;
+    case 'spend': return c.cur.spend; case 'sales': return c.cur.sales; case 'clicks': return c.cur.clicks; case 'ctr': return c.ctr;
+    case 'cpc': return c.cpc; case 'cvr': return c.cvr; case 'budget': return c.budget; case 'used': return c.used; case 'lostB': return c.lostB; case 'lostR': return c.lostR; case 'share': return c.share;
+  }
+}
+function ival(o, k) {
+  switch (k) {
+    case 'name': return o.name; case 'status': return ST[o.status].rank; case 'roas': case 'target': case 'spend': case 'sales': case 'clicks': case 'ctr': case 'cpc': return o[k];
+    default: return null;
+  }
+}
+function cmpV(a, b, d) {
+  var an = a == null, bn = b == null;
+  if (an || bn) return an && bn ? 0 : an ? 1 : -1;
+  return typeof a === 'string' ? d * a.localeCompare(b, 'es') : d * (a - b);
+}
+function sortBy(arr, get) {
+  var k = S.sort.k, d = S.sort.d;
+  return arr.slice().sort(function (x, y) { return cmpV(get(x, k), get(y, k), d) || (get(y, 'spend') || 0) - (get(x, 'spend') || 0); });
+}
+function th(col) {
+  var on = S.sort.k === col.k;
+  return '<th scope="col" aria-sort="' + (on ? (S.sort.d > 0 ? 'ascending' : 'descending') : 'none') + '"><button class="sort" data-act="sort" data-v="' + col.k + '">' + col.label + (on ? icon(S.sort.d > 0 ? 'up' : 'down') : '') + '</button></th>';
+}
+var DASH = '<td><span class="dash" title="No se pide a nivel publicación">—</span></td>';
+function campRow(c, open, nItems) {
+  var cap = c.used >= 0.95;
+  return '<tr class="cr" id="camp-' + c.id + '"><td><div class="cname">' + c.name + (c.paused ? ' <small>(pausada)</small>' : '') + '</div><button class="link" data-act="toggleCamp" data-id="' + c.id + '" aria-expanded="' + open + '">' + (open ? 'Ocultar publicaciones' : 'Ver publicaciones (' + nItems + ')') + icon('chevron') + '</button></td>' +
+    '<td>' + pill(c.status) + '</td><td><b>$' + r1(c.roas) + '</b></td><td title="ACOS objetivo de la campaña: ' + r1(c.acosTarget) + '%">$' + r1(c.target) + (c.estTarget ? ' <small>(estimado)</small>' : '') + '</td>' +
+    '<td>' + money(c.cur.spend) + '</td><td>' + money(c.cur.sales) + '</td><td>' + nf0.format(c.cur.clicks) + '</td><td>' + pct1(c.ctr) + '</td><td>' + money(c.cpc) + '</td><td>' + pct1(c.cvr) + '</td>' +
+    '<td>' + money(c.budget) + '</td><td>' + Math.round(c.used * 100) + '%<span class="mini' + (cap ? ' cap' : '') + '" aria-hidden="true"><i style="width:' + Math.min(100, c.used * 100) + '%"></i></span></td><td>' + pctN(c.lostB) + '</td><td>' + pctN(c.lostR) + '</td><td>' + pctN(c.share) + '</td></tr>';
+}
+function itemRow(o) {
+  return '<tr class="itr"><td>' + o.name + '</td><td>' + pill(o.status) + '</td><td><b>$' + r1(o.roas) + '</b></td><td>$' + r1(o.target) + '</td><td>' + money(o.spend) + '</td><td>' + money(o.sales) + '</td>' +
+    '<td>' + nf0.format(o.clicks) + '</td><td>' + pct1(o.ctr) + '</td><td>' + money(o.cpc) + '</td>' + DASH + DASH + DASH + DASH + DASH + DASH + '</tr>';
+}
+function campsHTML() {
+  var q = S.cq.trim().toLowerCase();
+  var sts = [['all', 'Todas']].concat(['excelente', 'bien', 'atencion', 'revisar', 'sindatos'].map(function (k) { return [k, ST[k].label]; }));
+  var chips = sts.map(function (x) {
+    var n = x[0] === 'all' ? M.camps.length : M.camps.filter(function (c) { return c.status === x[0]; }).length;
+    return '<button class="chip" data-act="fstat" data-v="' + x[0] + '" aria-pressed="' + (S.fstat === x[0]) + '">' + x[1] + ' <b>' + n + '</b></button>';
+  }).join('');
+  var rows = M.camps.filter(function (c) { return S.fstat === 'all' || c.status === S.fstat; }).map(function (c) {
+    var nm = !q || c.name.toLowerCase().indexOf(q) !== -1;
+    var its = c.items.filter(function (o) { return nm || o.name.toLowerCase().indexOf(q) !== -1; });
+    return { c: c, its: its, nm: nm };
+  }).filter(function (x) { return x.nm || x.its.length; });
+  rows = sortBy(rows, function (x, k) { return cval(x.c, k); });
+  var allOpen = rows.length > 0 && rows.every(function (x) { return S.open[x.c.id] || (q && !x.nm); });
+  var body = rows.map(function (x) {
+    var open = !!S.open[x.c.id] || (!!q && !x.nm);
+    return campRow(x.c, open, x.its.length) + (open ? sortBy(x.its, ival).map(itemRow).join('') : '');
+  }).join('') || '<tr><td colspan="' + COLS.length + '" style="text-align:center;white-space:normal"><p class="sub" style="padding:14px 0">Ninguna campaña coincide con lo que filtraste. <button class="link" data-act="clearF">Quitar filtros</button></p></td></tr>';
+  return '<section aria-labelledby="h-camps"><div class="sec-head"><h2 id="h-camps">Tus campañas</h2><span class="sub">Tocá el título de una columna para ordenar</span></div>' +
+    '<div class="cfilters"><div class="row"><input type="search" class="search" id="cq" data-act="cq" placeholder="Buscar una campaña o publicación" value="' + S.cq.replace(/"/g, '&quot;') + '" aria-label="Buscar una campaña o publicación"></div>' +
+    '<div class="row" role="group" aria-label="Filtrar por estado">' + chips + '<button class="link" data-act="toggleAll" style="margin-left:auto">' + (allOpen ? 'Ocultar todas las publicaciones' : 'Ver todas las publicaciones') + '</button></div></div>' +
+    '<div class="ctw"><table class="ct"><thead><tr>' + COLS.map(th).join('') + '</tr></thead><tbody>' + body + '</tbody></table></div>' +
+    '</section>';
+}
+function principalHTML() { return heroHTML() + kpiHTML() + campsHTML() + chartCardHTML(); }
+
+/* ---------- Tareas ---------- */
+function taskRow(x) {
+  var d = !!S.done[x.id];
+  return '<div class="task' + (d ? ' is-done' : '') + '"><label><input type="checkbox" data-act="toggleTask" data-id="' + x.id + '"' + (d ? ' checked' : '') + '><span>' + x.title + '<small>' + x.why + '</small></span></label>' +
+    (x.tab ? '<button class="link" data-act="goTab" data-v="' + x.tab + '" data-id="' + x.id + '">Ver</button>' : '') + '</div>';
+}
+function tareasHTML() {
+  var all = M.tasks.concat(S.custom.map(function (c) { return { id: c.id, title: c.title, why: 'Tarea propia', when: 'Mis tareas', tab: null }; }));
+  var done = all.filter(function (x) { return S.done[x.id]; }).length, total = all.length;
+  var groupsHTML = ['Hoy', 'Esta semana', 'Mis tareas'].map(function (w) {
+    var l = all.filter(function (x) { return x.when === w; });
+    if (!l.length) return '';
+    return '<section class="card" aria-label="' + w + '"><div class="sec-head" style="margin-bottom:2px"><h2>' + w + '</h2><span class="small">' + l.filter(function (x) { return !S.done[x.id]; }).length + ' pendientes</span></div>' + l.map(taskRow).join('') + '</section>';
+  }).join('');
+  return '<section class="card prog" aria-labelledby="h-tar"><div class="sec-head" style="margin-bottom:0"><h2 id="h-tar">Tus tareas</h2><span class="sub">' + done + ' de ' + total + ' hechas</span></div>' +
+    '<div class="meter" aria-hidden="true"><span style="width:' + (total ? done / total * 100 : 0) + '%"></span></div>' +
+    '<p class="small">Se arman solas a partir de las alertas y recomendaciones. Al tildar una acá, queda resuelta también en su sección.</p></section>' +
+    groupsHTML +
+    '<form class="card" id="addForm"><div class="sec-head" style="margin-bottom:8px"><h2>Agregar una tarea propia</h2></div><div class="addrow"><input type="text" id="newTask" data-act="draft" placeholder="Por ejemplo: sacar fotos nuevas de la mesa ratona" value="' + S.draft.replace(/"/g, '&quot;') + '" aria-label="Nueva tarea"><button class="btn" type="submit">Agregar</button></div></form>';
+}
+
+/* ---------- Alertas ---------- */
+function statsDL(list) {
+  return '<dl class="stats">' + list.map(function (x) { return '<div><dt>' + x[0] + '</dt><dd>' + x[1] + '</dd></div>'; }).join('') + '</dl>';
+}
+function doneRow(id, title) { return '<div class="done-item"><span>Hecho: ' + title + '</span><span style="display:flex;gap:14px;flex:none"><button class="link" data-act="goTab" data-v="seguimiento" data-id="' + id + '">Ver seguimiento</button><button class="link" data-act="undo" data-id="' + id + '">Deshacer</button></span></div>'; }
+function orgCard(o) {
+  var id = 'org-' + o.id;
+  if (S.done[id]) return doneRow(id, o.name);
+  var g = Math.round(o.growth * 100);
+  return '<article class="item"><div class="item-top"><div class="chips"><span class="tag">' + o.cat + '</span><span class="tag">' + o.brand + '</span><span class="tag warn">Sin publicidad</span></div><h3>' + o.name + '</h3></div>' +
+    statsDL([
+      ['Unidades vendidas (30 días)', o.units + ' <small class="' + (g >= 0 ? 'g' : 'b') + '">' + (g >= 0 ? '+' : '') + g + '% vs. 30 días previos</small>'],
+      ['Ventas orgánicas (30 días)', money(o.orgSales)]
+    ].concat(o.conv != null ? [['Conversión', pct1(o.conv) + ' <small>(' + nf0.format(o.visits) + ' visitas)</small>']] : [],
+      o.stock != null ? [['Stock', pl(o.stock, 'unidad', 'unidades') + (o.stock < 10 ? ' <small class="b">bajo</small>' : '')]] : [])) +
+    '<div class="reco"><strong>Recomendación: activala en publicidad</strong>' + o.reco + '</div>' +
+    '<div class="a-btns"><button class="btn" data-act="done" data-id="' + id + '">Ya la activé</button></div></article>';
+}
+function lowCard(o) {
+  var id = 'low-' + o.id;
+  if (S.done[id]) return doneRow(id, o.name);
+  var t = o.target, max = Math.max(t * 1.6, o.roas * 1.1);
+  var fillW = Math.min(100, o.roas / max * 100), markL = t / max * 100;
+  return '<article class="item"><div class="item-top"><div class="chips"><span class="tag">' + o.cat + '</span><span class="tag">' + o.campName + '</span>' + pill(o.status) + '</div><h3>' + o.name + '</h3></div>' +
+    statsDL([['Inversión', money(o.spend)], ['Ventas por publicidad', money(o.sales)], ['ROAS actual', '$' + r1(o.roas)], ['ROAS objetivo', '$' + r1(t)]]) +
+    '<div><div class="rbar" aria-hidden="true"><span class="fill ' + (o.status === 'revisar' ? 'revisar' : 'atencion') + '" style="width:' + fillW + '%"></span><i class="mark" style="left:' + markL + '%"></i></div>' +
+    '<div class="rlab"><span>ROAS actual: por cada $1 vendés $' + r1(o.roas) + '</span><span>Marca negra: tu objetivo ($' + r1(t) + ')</span></div></div>' +
+    '<p class="impact">Le faltaron <b>' + money(o.shortfall) + '</b> de ventas para llegar a tu ROAS objetivo con lo que invirtió. Tu ROAS general hoy es <b>$' + r2(M.roas) + '</b> y sin esta publicación sería <b>$' + r2(o.roasWithout) + '</b>.</p>' +
+    '<div class="reco"><strong>Recomendación</strong>' + o.reco.text + '</div>' +
+    '<div class="a-btns"><button class="btn" data-act="done" data-id="' + id + '">Ya lo hice</button></div></article>';
+}
+function alertasHTML() {
+  var low = M.lowItems, shown = S.showAllLow ? low : low.slice(0, 5);
+  var lowBlock = low.length
+    ? shown.map(lowCard).join('') + (low.length > 5 ? '<button class="link" data-act="allLow" aria-expanded="' + S.showAllLow + '">' + (S.showAllLow ? 'Ver solo las 5 más importantes' : 'Ver las ' + low.length + ' publicaciones') + icon('chevron') + '</button>' : '')
+    : '<div class="card empty">' + icon('check-circle') + '<p>Todas tus publicaciones con publicidad cumplen el ROAS objetivo de su campaña.</p></div>';
+  var orgBlock = M.strong.length ? M.strong.map(orgCard).join('') : '<div class="card empty">' + icon('check-circle') + '<p>No hay publicaciones sin publicidad con buenas ventas orgánicas por ahora.</p></div>';
+  var sw = [['sw1', 'Resumen semanal por email', 'Los lunes a la mañana, con lo más importante de la semana.'], ['sw2', 'Aviso urgente cuando una publicación gasta mucho y no vende', 'Para no seguir gastando donde no rinde.'], ['sw3', 'Aviso cuando una publicación vende bien sin publicidad', 'Para que la actives a tiempo.']];
+  return '<div class="sum"><div class="sum-i"><b>' + M.strong.length + '</b><span>publicaciones sin publicidad que ya venden bien</span></div><div class="sum-i"><b>' + low.length + '</b><span>publicaciones con ROAS por debajo del objetivo</span></div></div>' +
+    '<section aria-labelledby="h-org"><div class="blk-h"><h2 id="h-org">Vendiendo bien sin publicidad</h2><p class="sub">Publicaciones activas en Mercado Libre pero sin anuncios, con buen desempeño orgánico en los últimos 30 días. Activarlas en publicidad puede ayudarlas a vender más.</p>' +
+    '<p class="small">Criterio: 10 o más unidades vendidas en 30 días sin publicidad, conversión del 3% o más (cuando la conocemos) y sin caída respecto de los 30 días anteriores.</p></div><div class="stack">' + orgBlock + '</div></section>' +
+    '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y ROAS por debajo del objetivo</h2><p class="sub">Publicaciones con anuncios activos que no llegan al ROAS objetivo de su campaña y bajan el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en los últimos ' + S.days + ' días.</p></div><div class="stack">' + lowBlock + '</div></section>' +
+    '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Cómo querés que te avisemos</h2></div><div class="switches">' +
+    sw.map(function (s) { return '<label class="sw" for="' + s[0] + '"><span>' + s[1] + '<small>' + s[2] + '</small></span><input type="checkbox" id="' + s[0] + '" role="switch" data-act="sw" data-id="' + s[0] + '"' + (S.sw[s[0]] ? ' checked' : '') + '></label>'; }).join('') +
+    '</div><p class="small" style="margin-top:10px">Guardamos tus preferencias, pero Lumo todavía no envía avisos: el canal (email, WhatsApp u otro) está por definir.</p></section>';
+}
+
+/* ---------- Recomendaciones ---------- */
+function recsHTML() {
+  var cards = M.recs.map(function (a) {
+    if (S.done[a.id]) return doneRow(a.id, a.title);
+    var sv = SEV[a.sev];
+    return '<article class="alert sev-' + a.sev + '"><div class="a-ic">' + icon(sv.icon) + '</div><div class="a-body"><span class="a-tag">' + sv.tag + '</span><h3>' + a.title + '</h3><p>' + a.text + '</p>' +
+      '<p class="a-do"><strong>Qué podés hacer:</strong> ' + a.action + '</p><div class="a-btns">' +
+      (a.sev === 'buena' ? '' : '<button class="btn" data-act="done" data-id="' + a.id + '">Ya lo hice</button>') +
+      (a.go === 'camp' ? '<button class="btn ghost" data-act="goCamp" data-c="' + a.camp + '">Ver campaña</button>' : '<button class="btn ghost" data-act="goTab" data-v="alertas" data-id="' + a.id + '">Ver alertas</button>') +
+      '</div></div></article>';
+  }).join('');
+  return '<section aria-labelledby="h-rec"><div class="sec-head"><h2 id="h-rec">Recomendaciones para tus campañas</h2><span class="sub">' + (M.openRecs ? M.openRecs + (M.openRecs === 1 ? ' pendiente' : ' pendientes') : 'Todo al día') + '</span></div>' +
+    '<p class="sub" style="margin-bottom:12px">Ajustes de presupuesto y oportunidades, calculados con el período de ' + S.days + ' días y el ROAS objetivo de cada campaña.</p><div class="stack">' + cards + '</div></section>';
+}
+
+/* ---------- Seguimiento ---------- */
+/*SEG-START*/
+var KIND = {
+  budget_up: { tag: 'Subir presupuesto', goal: 'Vender más sin que el ROAS baje de tu ROAS objetivo.' },
+  budget_down: { tag: 'Bajar presupuesto', goal: 'Mejorar el ROAS gastando menos.' },
+  improve: { tag: 'Mejorar publicaciones', goal: 'Mejorar el ROAS o vender más con el mismo presupuesto.' },
+  pause: { tag: 'Pausar', goal: 'Dejar de gastar donde no rinde y mejorar el ROAS de tu cuenta.' },
+  activate: { tag: 'Activar publicidad', goal: 'Vender más con publicaciones que ya vendían bien sin anuncios.' }
+};
+var toastTimer = null;
+function targetOf(scope) {
+  if (scope === 'account') return M.tgtAvg;
+  var c = CAMPS.filter(function (x) { return x.id === scope; })[0];
+  return c ? c.target : M.tgtAvg;
+}
+function itemById(id) { return ITEMS.filter(function (x) { return x.id === id; })[0]; }
+function campName(id) { var c = CAMPS.filter(function (x) { return x.id === id; })[0]; return c ? c.name : ''; }
+function actionFromId(id) {
+  var r, o, kind, verb;
+  if (id.indexOf('rec-trend-') === 0) {
+    var cat = id.slice(10);
+    var its = M.items.filter(function (i) { return i.cat === cat && !i.active; }).map(function (i) { return i.id; });
+    return { kind: 'activate', scope: 'account', items: its, title: 'Activaste publicidad en publicaciones de ' + cat };
+  }
+  if (id.indexOf('rec-') === 0) {
+    r = M.recs.filter(function (x) { return x.id === id; })[0];
+    if (!r || !r.camp) return null;
+    kind = /-low$/.test(id) ? 'budget_down' : /-cap$/.test(id) ? 'budget_up' : /-mid$/.test(id) ? 'improve' : null;
+    if (!kind) return null;
+    verb = { budget_down: 'Bajaste el presupuesto de ', budget_up: 'Subiste el presupuesto de ', improve: 'Mejoraste las publicaciones de ' }[kind];
+    return { kind: kind, scope: r.camp, title: verb + campName(r.camp) };
+  }
+  if (id.indexOf('low-') === 0) {
+    o = M.lowItems.filter(function (i) { return 'low-' + i.id === id; })[0];
+    if (!o) return null;
+    var pause = /^(Pausar|Probar pausar)/.test(o.reco.short);
+    return { kind: pause ? 'pause' : 'improve', scope: o.camp, item: o.id, title: (pause ? 'Pausaste «' : 'Mejoraste «') + o.name + '»' };
+  }
+  if (id.indexOf('org-') === 0) {
+    o = M.strong.filter(function (i) { return 'org-' + i.id === id; })[0];
+    if (!o) return null;
+    return { kind: 'activate', scope: 'account', items: [o.id], title: 'Activaste «' + o.name + '» en publicidad' };
+  }
+  return null;
+}
+function recordAction(id) {
+  if (S.actions.some(function (a) { return a.key === id; })) return;
+  var a = actionFromId(id); if (!a) return;
+  a.id = id; a.key = id; a.di = DAYS; a.src = 'tuya'; a.at = isoDay(new Date(END.getTime() + 864e5));
+  S.actions.push(a);
+  S.toast = 'Registramos tu acción. Mirá cómo evoluciona en Seguimiento.';
+}
+function removeAction(id) {
+  S.actions = S.actions.filter(function (a) { return !(a.key === id && a.src === 'tuya'); });
+  delete S.sim[id];
+}
+function win(scope, from, to) {
+  var list = scope === 'account' ? CAMPS : CAMPS.filter(function (c) { return c.id === scope; });
+  var s = { spend: 0, sales: 0, clicks: 0, prints: 0, days: to - from };
+  list.forEach(function (c) { for (var i = from; i < to; i++) { var d = c.daily[i]; s.spend += d.spend; s.sales += d.sales; s.clicks += d.clicks; s.prints += d.prints; } });
+  s.roas = s.spend ? s.sales / s.spend : 0;
+  return s;
+}
+function dailySales(scope, from, to) {
+  var list = scope === 'account' ? CAMPS : CAMPS.filter(function (c) { return c.id === scope; }), out = [];
+  for (var i = from; i < to; i++) { var v = 0; list.forEach(function (c) { v += c.daily[i].sales; }); out.push(v); }
+  return out;
+}
+function simAfter(b, act) {
+  var s = { days: b.days, spend: b.spend, clicks: b.clicks, sales: b.sales, prints: b.prints };
+  var f = { budget_up: [1.3, 1.25, 1.2], budget_down: [0.55, 0.57, 0.8], improve: [1, 1.1, 1.15] }[act.kind];
+  if (f) { s.spend *= f[0]; s.clicks *= f[1]; s.prints *= f[1]; s.sales *= f[2]; }
+  else if (act.kind === 'pause') {
+    var sp = 0, sa = 0;
+    if (act.item) { var it = itemById(act.item); sp = it.sp; sa = it.sa; }
+    s.spend *= 1 - sp; s.clicks *= 1 - sp; s.prints *= 1 - sp; s.sales *= 1 - sa;
+  } else {
+    var add = 0;
+    (act.items || []).forEach(function (id) { var it = itemById(id); add += it.units * it.price / 30 * 0.35 * b.days; });
+    s.sales += add; s.spend += add / 5.5; s.clicks += add / 5.5 / 130; s.prints += add / 5.5 / 130 / 0.012;
+  }
+  s.roas = s.spend ? s.sales / s.spend : 0;
+  return s;
+}
+function dp(a, b) { return b ? a / b - 1 : 0; }
+function verdictOf(kind, b, a, t) {
+  var dS = dp(a.sales, b.sales), dR = dp(a.roas, b.roas);
+  if (kind === 'pause') return dR >= 0.02 ? 'mejoro' : dR <= -0.03 ? 'empeoro' : 'igual';
+  if (kind === 'budget_up') return a.roas < t * 0.85 ? 'empeoro' : dS >= 0.08 ? 'mejoro' : 'igual';
+  if (kind === 'budget_down') return dR >= 0.08 ? 'mejoro' : dR <= -0.08 ? 'empeoro' : 'igual';
+  if (kind === 'activate') return a.roas < t * 0.85 ? 'empeoro' : dS >= 0.05 ? 'mejoro' : 'igual';
+  return (dR >= 0.05 || (dS >= 0.1 && dR >= -0.03)) ? 'mejoro' : dR <= -0.05 ? 'empeoro' : 'igual';
+}
+function evolution(act) {
+  var nAfter = Math.max(0, DAYS - act.di), n, b, a, ab, aa, sim = false;
+  if (nAfter >= 3) {
+    n = Math.min(14, nAfter);
+    b = win(act.scope, act.di - n, act.di); a = win(act.scope, act.di, act.di + n);
+    ab = act.scope === 'account' ? b : win('account', act.di - n, act.di);
+    aa = act.scope === 'account' ? a : win('account', act.di, act.di + n);
+  } else if (S.sim[act.id]) {
+    n = 7; sim = true;
+    b = win(act.scope, DAYS - n, DAYS); a = simAfter(b, act);
+    if (act.scope === 'account') { ab = b; aa = a; }
+    else {
+      ab = win('account', DAYS - n, DAYS);
+      aa = { days: n, spend: ab.spend - b.spend + a.spend, sales: ab.sales - b.sales + a.sales, clicks: ab.clicks - b.clicks + a.clicks, prints: ab.prints - b.prints + a.prints };
+      aa.roas = aa.spend ? aa.sales / aa.spend : 0;
+    }
+  } else return { pending: true, nAfter: nAfter };
+  return { n: n, sim: sim, b: b, a: a, ab: ab, aa: aa, verdict: act.kind === 'pause' ? verdictOf(act.kind, ab, aa, targetOf('account')) : verdictOf(act.kind, b, a, targetOf(act.scope)) };
+}
+/*SEG-END*/
+
+var VERD = {
+  mejoro: { label: 'Mejoró', cls: 's-bien', icon: 'check-circle' },
+  igual: { label: 'Sin cambios claros', cls: 's-neu', icon: 'flat' },
+  empeoro: { label: 'Empeoró', cls: 's-revisar', icon: 'x-circle' },
+  pending: { label: 'Muy pronto', cls: 's-neu', icon: 'info' }
+};
+function vpill(k) { var v = VERD[k]; return '<span class="pill ' + v.cls + '">' + icon(v.icon) + v.label + '</span>'; }
+function chg(cur, prev, goodUp) {
+  var d = dp(cur, prev), a = Math.abs(d);
+  if (!prev || a < 0.02) return '<span class="tag">Sin cambio</span>';
+  var up = d > 0, cls = goodUp === null ? '' : (up === goodUp ? 'up' : 'down');
+  return '<span class="tag ' + cls + '">' + icon(up ? 'up' : 'down') + (up ? '+' : '−') + Math.round(a * 100) + '%</span>';
+}
+function dayStr(di) { var d = new Date(END); d.setDate(END.getDate() - (DAYS - 1 - di)); return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }); }
+function evChart(act, ev) {
+  var n = ev.n, W = 600, H = 150, l = 6, r = 6, tp = 24, bt = 8, vals = [], i;
+  var before = ev.sim ? dailySales(act.scope, DAYS - n, DAYS) : dailySales(act.scope, act.di - n, act.di);
+  before.forEach(function (v) { vals.push({ v: v, a: false }); });
+  if (ev.sim) { for (i = 0; i < n; i++) vals.push({ v: ev.a.sales / n * (1 + 0.06 * Math.sin(i * 1.7)), a: true }); }
+  else dailySales(act.scope, act.di, act.di + n).forEach(function (v) { vals.push({ v: v, a: true }); });
+  var max = Math.max.apply(null, vals.map(function (x) { return x.v; })) * 1.08 || 1;
+  var slot = (W - l - r) / vals.length, bw = slot * 0.72, ph = H - tp - bt;
+  var s = '<svg class="evchart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Ventas por día antes y después de la acción">';
+  vals.forEach(function (x, j) {
+    var h = Math.max(1, x.v / max * ph), xx = l + j * slot + (slot - bw) / 2;
+    s += '<rect class="' + (x.a ? 'ba' : 'bb') + '" x="' + xx.toFixed(1) + '" y="' + (tp + ph - h).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="2"><title>' + money(x.v) + '</title></rect>';
+  });
+  var dx = l + n * slot;
+  s += '<line class="dv" x1="' + dx + '" x2="' + dx + '" y1="4" y2="' + (H - bt) + '"/><text x="' + (dx - 8) + '" y="14" text-anchor="end">Antes</text><text x="' + (dx + 8) + '" y="14">' + (ev.sim ? 'Después (simulado)' : 'Después') + '</text></svg>';
+  return s;
+}
+function cmpTable(ev) {
+  var n = ev.n;
+  function row(label, bv, av, fmt, goodUp) { return '<tr><td>' + label + '</td><td>' + fmt(bv) + '</td><td>' + fmt(av) + '</td><td>' + chg(av, bv, goodUp) + '</td></tr>'; }
+  var perDay = function (w, k) { return w[k] / w.days; };
+  var rows = row('Ventas por publicidad (por día)', perDay(ev.b, 'sales'), perDay(ev.a, 'sales'), money, true) +
+    row('Inversión (por día)', perDay(ev.b, 'spend'), perDay(ev.a, 'spend'), money, null) +
+    row('ROAS', ev.b.roas, ev.a.roas, function (v) { return '$' + r1(v); }, true) +
+    row('Clics (por día)', perDay(ev.b, 'clicks'), perDay(ev.a, 'clicks'), function (v) { return r1(v); }, true);
+  if (ev.ab !== ev.b) rows += row('ROAS de toda tu cuenta', ev.ab.roas, ev.aa.roas, function (v) { return '$' + r1(v); }, true);
+  return '<div class="tbl" style="max-height:none"><table><thead><tr><th>Últimos ' + n + ' días</th><th>Antes</th><th>Después</th><th>Cambio</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+function nextStep(act, ev) {
+  var v = ev.verdict;
+  if (v === 'mejoro') return act.kind === 'budget_up' ? 'Las ventas subieron y el ROAS se mantiene sobre tu objetivo. Si seguís con stock, podés probar otro aumento chico y volver a mirar acá.' : 'Funcionó. Probá aplicar lo mismo en otras campañas o publicaciones parecidas.';
+  if (v === 'empeoro') return 'No dio el resultado esperado. Revisá la campaña y pensá si conviene revertir el cambio o probar otra cosa. Cambios de temporada, precio o competencia también pueden influir.';
+  return 'Todavía no se nota una diferencia clara. Dale unos días más antes de decidir: algunos cambios tardan en mostrar efecto.';
+}
+function trackCard(act, ev) {
+  var k = KIND[act.kind], scopeN = act.scope === 'account' ? 'Toda la cuenta' : campName(act.scope);
+  var when = act.src === 'tuya' ? 'Registrada el ' + dayStr(act.di) + ', al marcarla como hecha.' :'Hecha el ' + dayStr(act.di) + ' · hace ' + (DAYS - 1 - act.di) + ' días';
+  var vk = ev.pending ? 'pending' : ev.verdict;
+  var head = '<div class="item-top"><div class="trk-head"><div class="chips"><span class="tag">' + k.tag + '</span><span class="tag">' + scopeN + '</span>' + (act.src === 'ejemplo' ? '<span class="tag warn">Ejemplo</span>' : '<span class="tag up">Tuya</span>') + '</div>' + vpill(vk) + '</div><h3>' + act.title + '</h3><p class="small">' + when + '</p></div>';
+  var goal = '<p class="say"><b>Qué buscábamos:</b> ' + k.goal + '</p>';
+  var body;
+  if (ev.pending) {
+    var base = win(act.scope, DAYS - 7, DAYS);
+    body = goal + '<div class="wait"><span>Ya registramos tu acción. Los primeros resultados aparecen a los 3 días. Hoy, antes del cambio, ' + (act.scope === 'account' ? 'tu cuenta' : 'esta campaña') + ' tiene un ROAS de <b>$' + r1(base.roas) + '</b> y vende ' + money(base.sales / 7) + ' por día con publicidad.</span><button class="btn ghost" data-act="sim" data-id="' + act.id + '">Ver un ejemplo a los 7 días</button></div>';
+  } else {
+    var pa = ev.sim ? 'En 7 días' : 'En los ' + ev.n + ' días siguientes';
+    body = (ev.sim ? '<div class="sim-note">Simulación de ejemplo: así se vería a los 7 días si la acción funciona como se espera. No son datos reales.</div>' : '') + goal + evChart(act, ev) + '<p class="cap">Ventas por publicidad por día. La línea marca cuándo aplicaste la acción.</p>' + cmpTable(ev) +
+      '<p class="say"><b>Qué pasó:</b> ' + pa + ', el ROAS pasó de <b>$' + r1(ev.b.roas) + '</b> a <b>$' + r1(ev.a.roas) + '</b> y las ventas por día de ' + money(ev.b.sales / ev.b.days) + ' a ' + money(ev.a.sales / ev.a.days) + '.' + (ev.ab !== ev.b ? ' En toda tu cuenta, el ROAS pasó de $' + r1(ev.ab.roas) + ' a $' + r1(ev.aa.roas) + '.' : '') + '</p>' +
+      '<div class="reco"><strong>Qué hacer ahora</strong>' + nextStep(act, ev) + '</div>';
+    var btns = (act.scope !== 'account' ? '<button class="btn ghost" data-act="goCamp" data-c="' + act.scope + '">Ver campaña</button>' : '') + (ev.sim ? '<button class="btn ghost" data-act="sim" data-id="' + act.id + '">Quitar la simulación</button>' : '');
+    if (btns) body += '<div class="a-btns">' + btns + '</div>';
+  }
+  return '<article class="item">' + head + body + '</article>';
+}
+function seguimientoHTML() {
+  var list = S.actions.slice().sort(function (a, b) { return b.di - a.di; });
+  var evs = list.map(function (a) { return evolution(a); });
+  var cnt = { mejoro: 0, igual: 0, empeoro: 0, pending: 0 };
+  evs.forEach(function (e) { cnt[e.pending ? 'pending' : e.verdict]++; });
+  var cards = list.length ? list.map(function (a, i) { return trackCard(a, evs[i]); }).join('') :
+    '<div class="card empty">' + icon('info') + '<p>Todavía no registraste ninguna acción. Cuando marques una recomendación o alerta como hecha, la vas a ver acá con su evolución.</p></div>';
+  return '<section aria-labelledby="h-seg"><div class="sec-head"><h2 id="h-seg">Seguimiento de tus acciones</h2><span class="sub">' + pl(list.length, 'acción registrada', 'acciones registradas') + '</span></div>' +
+    '<p class="sub">Cuando marcás una recomendación o una alerta como hecha ("Ya lo hice"), la guardamos con la fecha y comparamos cómo estaba la campaña y tu cuenta antes y después.</p></section>' +
+    '<div class="kpis">' +
+    tile('Mejoraron', cnt.mejoro, '', 'Acciones con mejor resultado que antes.') +
+    tile('Sin cambios claros', cnt.igual, '', 'Todavía no se nota una diferencia.') +
+    tile('Empeoraron', cnt.empeoro, '', 'Acciones para revisar o revertir.') +
+    tile('Muy pronto', cnt.pending, '', 'Registradas hace menos de 3 días.') + '</div>' +
+    '<div class="stack">' + cards + '</div>' +
+    '<p class="small">Mostramos qué pasó después de cada acción. No podemos asegurar que el cambio se deba solo a ella: la temporada, los precios y la competencia también influyen.</p>';
+}
+function toastHTML() {
+  return S.toast ? '<div class="toast" id="toast" role="status"><span>' + S.toast + '</span><button data-act="goTab" data-v="seguimiento">Ver</button><button data-act="closeToast" aria-label="Cerrar aviso">Cerrar</button></div>' : '';
+}
+
+/* ---------- Tendencias ---------- */
+function trendsHTML() {
+  var dim = S.trendDim, list = dim === 'cat' ? M.catG : M.brandG, maxS = Math.max.apply(null, list.map(function (g) { return g.sales; }));
+  var label = dim === 'cat' ? 'categorías' : 'marcas';
+  var hot = list.filter(function (g) { return g.growth >= 0.1 && g.cover < 0.7; })[0];
+  var insight = hot
+    ? '<div class="reco"><strong>Para mirar primero</strong>' + hot.name + ' crece ' + Math.round(hot.growth * 100) + '% y solo ' + hot.act + ' de sus ' + hot.n + ' publicaciones tienen publicidad activa. Revisá la sección Alertas.</div>'
+    : '<div class="reco"><strong>Para mirar primero</strong>Ninguna de tus ' + label + ' crece con poca cobertura de publicidad.</div>';
+  var rows = list.map(function (g) {
+    return '<div class="trow"><div class="trow-top"><b>' + g.name + '</b>' + growthTag(g.growth) + '</div>' +
+      '<div class="tbar" aria-hidden="true"><span style="width:' + (maxS ? g.sales / maxS * 100 : 0) + '%"></span></div>' +
+      '<div class="tnums"><span>Ventas 30 días: <b>' + money(g.sales) + '</b></span><span>30 días previos: <b>' + money(g.prev) + '</b></span><span>Con publicidad: <b>' + g.act + ' de ' + g.n + ' publicaciones</b></span><span>Ventas por publicidad: <b>' + Math.round(g.adShare * 100) + '%</b></span></div></div>';
+  }).join('');
+  return '<section aria-labelledby="h-tend"><div class="sec-head"><h2 id="h-tend">Qué está creciendo en tu cuenta</h2><span class="sub">Últimos 30 días, ventas orgánicas y por publicidad</span></div>' +
+    '<div class="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
+    tile('Ventas totales de la cuenta', money(M.tot30.sales), '', 'Ventas orgánicas más ventas por publicidad en 30 días.') +
+    tile('Parte que vino de publicidad', Math.round(M.tot30.ad / M.tot30.sales * 100) + '%', '', 'El resto son ventas orgánicas, sin anuncios.') +
+    '</div></section>' +
+    '<section class="card" aria-labelledby="h-rank"><div class="sec-head"><h2 id="h-rank">Ranking de ' + label + '</h2><div class="tabs" role="group" aria-label="Agrupar por">' +
+    '<button data-act="dim" data-v="cat" aria-pressed="' + (dim === 'cat') + '">Categorías</button><button data-act="dim" data-v="brand" aria-pressed="' + (dim === 'brand') + '">Marcas</button></div></div>' +
+    insight + '<div style="margin-top:14px">' + rows + '</div>' +
+    '<p class="small" style="margin-top:12px">En alza: crece 10% o más contra los 30 días anteriores. En baja: cae 10% o más.</p></section>';
+}
+
+/* ---------- Glosario ---------- */
+var GLOSSARY = [
+  { g: 'Alcance', terms: [
+    { n: 'Impresiones', api: 'prints', d: 'Cantidad de veces que se mostraron tus anuncios en el sitio.', ex: 'Si tu anuncio apareció 10.000 veces, tuvo 10.000 impresiones.', best: 'Más es mejor, si además te tocan.' },
+    { n: 'Clics', api: 'clicks', d: 'Cantidad de veces que alguien tocó uno de tus anuncios.', ex: '10.000 impresiones y 120 toques son 120 clics.', best: 'Más es mejor.' },
+    { n: 'CTR (tasa de clics)', api: 'ctr', d: 'Click Through Rate. Es el porcentaje de impresiones que terminan en un clic.', ex: '120 clics sobre 10.000 impresiones es un CTR del 1,2%.', best: 'Más alto es mejor.' },
+    { n: 'SOV (participación de las ventas por publicidad)', api: 'sov', d: 'Qué porcentaje de tus ventas totales vino de anuncios. En esta API, SOV no es Share of Voice.', ex: 'Si vendiste $100.000 en total y $40.000 vinieron de anuncios, el SOV es 40%.', best: 'Un valor alto indica que tus ventas dependen más de los anuncios.' },
+    { n: 'Participación de impresiones', api: 'impression_share', d: 'Porcentaje de las veces que tus anuncios se mostraron frente al total de veces que podían mostrarse. Solo viene en el detalle de cada campaña.', ex: 'Un 60% significa que tus anuncios se mostraron en 6 de cada 10 oportunidades.', best: 'Más alto es mejor.' },
+    { n: 'Impresiones perdidas por presupuesto', api: 'lost_impression_share_by_budget', d: 'Porcentaje de oportunidades en las que el anuncio no se mostró porque el presupuesto era muy bajo. Solo viene en el detalle de cada campaña.', ex: 'Un 20% significa que de cada 10 oportunidades, 2 se perdieron por presupuesto.', best: 'Más bajo es mejor. Si es alto y el ROAS está bien, conviene subir el presupuesto.' },
+    { n: 'Impresiones perdidas por ranking', api: 'lost_impression_share_by_ad_rank', d: 'Porcentaje de oportunidades en las que el anuncio no se mostró porque su ranking era menor al de otros vendedores. Solo viene en el detalle de cada campaña.', ex: 'Un 15% significa que 15 de cada 100 oportunidades se perdieron frente a otros anuncios.', best: 'Más bajo es mejor. Se mejora con mejores publicaciones o un ROAS objetivo menos exigente.' }
+  ]},
+  { g: 'Costos', terms: [
+    { n: 'Inversión publicitaria', api: 'cost', d: 'Lo que se descontó por los clics de tus anuncios en el período.', ex: '120 clics a $140 cada uno son $16.800 de inversión.', best: 'Depende de lo que vendas con ella.' },
+    { n: 'CPC (costo por clic)', api: 'cpc', d: 'Cost Per Click. Es lo que pagás en promedio por cada clic.', ex: '$16.800 invertidos en 120 clics es un CPC de $140.', best: 'Más bajo es mejor, si las ventas se mantienen.' },
+    { n: 'Presupuesto diario', api: 'budget', d: 'Promedio diario que podés gastar en una campaña. Si un día no gastás todo, lo que sobra se puede usar en los días siguientes del mes.', ex: 'Con $6.000 por día, si un día gastás $5.000, te quedan $1.000 más para los próximos días.', best: 'Tiene que alcanzar para las campañas que rinden bien.' }
+  ]},
+  { g: 'Eficiencia', terms: [
+    { n: 'ROAS (retorno de la inversión publicitaria)', api: 'roas', d: 'Return On Ad Spend. Cuánto vendés por cada $1 que invertís en publicidad.', ex: 'Invertiste $10.000 y vendiste $60.000 con anuncios: el ROAS es $6 por cada $1.', best: 'Más alto es mejor. Se compara con tu ROAS objetivo.' },
+    { n: 'ROAS objetivo', api: 'acos_target', d: 'El ROAS mínimo que esperás de una campaña. Se configura campaña por campaña en Mercado Libre y Lumo lo lee de ahí. La API lo expone como ACOS objetivo: ROAS objetivo = 100 ÷ ACOS objetivo.', ex: 'Un ACOS objetivo del 20% equivale a un ROAS objetivo de $5.', best: 'Es la vara del semáforo de cada campaña.', check: true },
+    { n: 'ACOS (costo publicitario de ventas)', api: 'acos', d: 'Advertising Cost of Sales. Qué porcentaje de lo vendido con publicidad se fue en anuncios. Es el ROAS al revés.', ex: 'Invertiste $10.000 y vendiste $60.000: el ACOS es 16,7%. Un ROAS de $5 equivale a un ACOS del 20%.', best: 'Más bajo es mejor.' },
+    { n: 'CVR (tasa de conversión)', api: 'cvr', d: 'Conversion Rate. Es el porcentaje de clics que terminan en una compra.', ex: '120 clics y 4 compras es un CVR del 3,3%.', best: 'Más alto es mejor.' }
+  ]},
+  { g: 'Ventas por publicidad', terms: [
+    { n: 'Ventas directas (monto)', api: 'direct_amount', d: 'Valor de las ventas directas en moneda local. Hay una venta directa cuando alguien toca tu anuncio y compra ese mismo producto.', ex: 'Alguien toca el anuncio de una cortina y compra esa cortina.', best: 'Más es mejor.' },
+    { n: 'Ventas asistidas (monto)', api: 'indirect_amount', d: 'Valor de las ventas asistidas en moneda local. Son ventas a las que ayudó tu publicidad sin ser la compra directa del producto anunciado.', ex: 'Alguien toca el anuncio de una cortina y termina comprando un barral.', best: 'Más es mejor.' },
+    { n: 'Ventas totales por publicidad (monto)', api: 'total_amount', d: 'Suma de las ventas directas y asistidas. Es el número que usamos como Ventas por publicidad.', ex: '$40.000 directas más $20.000 asistidas son $60.000.', best: 'Más es mejor.' },
+    { n: 'Unidades directas', api: 'direct_units_quantity', d: 'Cantidad de unidades vendidas de forma directa gracias a tus anuncios.', ex: 'Se vendieron 3 cortinas tocando el anuncio de esa cortina.', best: 'Más es mejor.' },
+    { n: 'Unidades asistidas', api: 'indirect_units_quantity', d: 'Cantidad de unidades vendidas de forma asistida por tus anuncios.', ex: 'Se vendieron 2 barrales después de tocar anuncios de cortinas.', best: 'Más es mejor.' },
+    { n: 'Unidades totales por publicidad', api: 'units_quantity', d: 'Suma de unidades directas y asistidas.', ex: '3 directas y 2 asistidas son 5 unidades.', best: 'Más es mejor.' },
+    { n: 'Cantidad de ventas directas', api: 'direct_items_quantity', d: 'Cantidad de ventas directas que vinieron de tus anuncios.', ex: '4 ventas en las que alguien tocó el anuncio y compró ese mismo producto.', best: 'Más es mejor.' },
+    { n: 'Cantidad de ventas asistidas', api: 'indirect_items_quantity', d: 'Cantidad de ventas asistidas que vinieron de tus anuncios.', ex: '2 ventas en las que alguien tocó un anuncio y terminó comprando otro producto.', best: 'Más es mejor.' },
+    { n: 'Cantidad de ventas por publicidad', api: 'advertising_items_quantity', d: 'Cantidad total de ventas que vinieron de tus anuncios, directas y asistidas.', ex: '4 directas y 2 asistidas son 6 ventas.', best: 'Más es mejor.' }
+  ]},
+  { g: 'Ventas orgánicas', terms: [
+    { n: 'Ventas orgánicas (monto)', api: 'organic_units_amount', d: 'Valor de las ventas que llegaron sin pasar por un anuncio, en moneda local.', ex: 'Alguien encuentra tu manta en una búsqueda normal y la compra.', best: 'Más es mejor. Sirve para comparar con lo que vendés con publicidad.' },
+    { n: 'Unidades orgánicas', api: 'organic_units_quantity', d: 'Cantidad de unidades vendidas sin publicidad.', ex: '31 mantas vendidas sin anuncios en 30 días.', best: 'Más es mejor.' },
+    { n: 'Cantidad de ventas orgánicas', api: 'organic_items_quantity', d: 'Cantidad de ventas que llegaron sin pasar por un anuncio.', ex: '9 ventas sin publicidad en el período.', best: 'Más es mejor.' }
+  ]}
+];
+function glossaryListHTML() {
+  var q = S.q.trim().toLowerCase(), any = false;
+  var html = GLOSSARY.map(function (grp) {
+    var terms = grp.terms.filter(function (t) { return !q || (t.n + ' ' + t.api + ' ' + t.d).toLowerCase().indexOf(q) !== -1; });
+    if (!terms.length) return '';
+    any = true;
+    return '<section class="gl-group" aria-label="' + grp.g + '"><h2>' + grp.g + '</h2>' + terms.map(function (t) {
+      return '<article class="term"><div class="term-top"><h3>' + t.n + '</h3><code>' + t.api + '</code></div><p>' + t.d + '</p><p class="ex"><b>Ejemplo:</b> ' + t.ex + '</p>' +
+        '<div class="meta"><span class="tag">' + t.best + '</span>' + (t.check ? '<span class="tag warn">Definición a confirmar</span>' : '') + '</div></article>';
+    }).join('') + '</section>';
+  }).join('');
+  return any ? html : '<div class="card empty">' + icon('info') + '<p>No encontramos esa métrica. Probá con otra palabra, por ejemplo ROAS o clics.</p></div>';
+}
+function glosarioHTML() {
+  var count = GLOSSARY.reduce(function (a, g) { return a + g.terms.length; }, 0);
+  return '<section aria-labelledby="h-glo"><div class="sec-head"><h2 id="h-glo">Glosario de métricas</h2><span class="sub">' + count + ' métricas de publicidad</span></div>' +
+    '<p class="sub" style="margin-bottom:12px">Cada métrica en palabras simples, con un ejemplo. El código gris es el nombre que usa la API de Product Ads.</p>' +
+    '<input type="search" class="search" id="glq" data-act="glq" placeholder="Buscar una métrica, por ejemplo ROAS" value="' + S.q.replace(/"/g, '&quot;') + '" aria-label="Buscar una métrica"></section>' +
+    '<div class="panel" id="glList" style="gap:22px">' + glossaryListHTML() + '</div>' +
+    '<p class="small">Las definiciones de las métricas con la etiqueta "a confirmar" son una interpretación en palabras simples. Conviene validarlas contra la documentación oficial antes de publicarlas.</p>';
+}
+
+/* ---------- Render ---------- */
+function fkey(el) { return el ? el.dataset.act + '|' + (el.dataset.id || el.dataset.c || el.dataset.v || el.dataset.d || '') : ''; }
+function render() {
+  var ae = document.activeElement, k = ae && ae.dataset && ae.dataset.act && ae.dataset.act !== 'glq' && ae.dataset.act !== 'draft' && ae.dataset.act !== 'cq' ? fkey(ae) : '';
+  var keepGl = ae && ae.id === 'glq', keepDraft = ae && ae.id === 'newTask', keepCq = ae && ae.id === 'cq';
+  M = compute();
+  var panels = { principal: principalHTML, tareas: tareasHTML, alertas: alertasHTML, recomendaciones: recsHTML, seguimiento: seguimientoHTML, tendencias: trendsHTML, glosario: glosarioHTML };
+  $('#dyn').innerHTML = '<div class="wrap">' + topHTML() + navHTML() + '<div id="panel" class="panel" role="tabpanel">' + panels[S.tab]() + '</div></div>' + toastHTML();
+  if (k) { var els = document.querySelectorAll('#dyn [data-act]'); for (var i = 0; i < els.length; i++) { if (fkey(els[i]) === k) { els[i].focus({ preventScroll: true }); break; } } }
+  if (keepGl && $('#glq')) $('#glq').focus({ preventScroll: true });
+  if (keepDraft && $('#newTask')) $('#newTask').focus({ preventScroll: true });
+  if (keepCq && $('#cq')) { var cq = $('#cq'); cq.focus({ preventScroll: true }); cq.setSelectionRange(cq.value.length, cq.value.length); }
+  if (S.toast) { clearTimeout(toastTimer); toastTimer = setTimeout(function () { S.toast = ''; var t = $('#toast'); if (t) t.remove(); }, 8000); }
+  var sel = document.querySelector('.nav [aria-selected="true"]'), nav = $('.nav');
+  if (sel && nav) nav.scrollLeft = sel.offsetLeft - (nav.clientWidth - sel.offsetWidth) / 2;
+  drawChart();
+  saveState();
+}
+function goPanelTop() {
+  var p = $('#panel'); if (!p) return;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (window.matchMedia('(min-width: 900px)').matches) { window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); return; }
+  p.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+}
+
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-act]'); if (!b) return;
+  var a = b.dataset.act;
+  if (a === 'draft' || a === 'glq' || a === 'cq') return;
+  if (a === 'days') S.days = +b.dataset.v;
+  else if (a === 'tab' || a === 'goTab') { S.tab = b.dataset.v; render(); goPanelTop(); return; }
+  else if (a === 'sort') { var col = COLS.filter(function (x) { return x.k === b.dataset.v; })[0]; S.sort = S.sort.k === col.k ? { k: col.k, d: -S.sort.d } : { k: col.k, d: col.d }; }
+  else if (a === 'fstat') S.fstat = b.dataset.v;
+  else if (a === 'clearF') { S.fstat = 'all'; S.cq = ''; }
+  else if (a === 'toggleAll') { var every = M.camps.every(function (c) { return S.open[c.id]; }); M.camps.forEach(function (c) { S.open[c.id] = !every; }); }
+  else if (a === 'metric') S.metric = b.dataset.v;
+  else if (a === 'table') S.table = !S.table;
+  else if (a === 'toggleCamp') S.open[b.dataset.id] = !S.open[b.dataset.id];
+  else if (a === 'done') { S.done[b.dataset.id] = true; recordAction(b.dataset.id); }
+  else if (a === 'undo') { delete S.done[b.dataset.id]; removeAction(b.dataset.id); }
+  else if (a === 'toggleTask') { if (S.done[b.dataset.id]) { delete S.done[b.dataset.id]; removeAction(b.dataset.id); } else { S.done[b.dataset.id] = true; recordAction(b.dataset.id); } }
+  else if (a === 'sim') S.sim[b.dataset.id] = !S.sim[b.dataset.id];
+  else if (a === 'closeToast') S.toast = '';
+  else if (a === 'allLow') S.showAllLow = !S.showAllLow;
+  else if (a === 'dim') S.trendDim = b.dataset.v;
+  else if (a === 'sw') S.sw[b.dataset.id] = !S.sw[b.dataset.id];
+  else if (a === 'goCamp') {
+    S.tab = 'principal'; S.open[b.dataset.c] = true; render();
+    var el = document.getElementById('camp-' + b.dataset.c);
+    if (el) el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    return;
+  } else return;
+  render();
+});
+document.addEventListener('input', function (e) {
+  if (e.target.id === 'newTask') S.draft = e.target.value;
+  if (e.target.id === 'cq') { S.cq = e.target.value; render(); }
+  if (e.target.id === 'glq') { S.q = e.target.value; var l = $('#glList'); if (l) l.innerHTML = glossaryListHTML(); }
+});
+document.addEventListener('submit', function (e) {
+  if (e.target.id !== 'addForm') return;
+  e.preventDefault();
+  var v = S.draft.trim(); if (!v) return;
+  S.custom.push({ id: 'custom-' + Date.now(), title: v.replace(/</g, '&lt;') });
+  S.draft = ''; render();
+});
+
+var hash = (location.hash || '').replace('#', '');
+if (TABS.some(function (t) { return t[0] === hash; })) S.tab = hash;
+render();
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(function () { drawChart(); }).observe(document.querySelector('.page'));
+}
+var dyn = document.getElementById('dyn');
+function say(html) { dyn.innerHTML = '<div class="wrap"><section class="card empty" style="margin-top:12vh;text-align:center">' + html + '</section></div>'; }
+var MSG = {
+  no_ads: '<h2>Tu cuenta todavía no tiene Publicidad habilitada</h2><p class="sub">Entrá a Mercado Libre, Mi perfil, Publicidad, activala y volvé.</p>',
+  forbidden: '<h2>Mercado Libre no dejó leer Product Ads</h2><p class="sub">Puede ser un permiso de la cuenta. <a class="link" href="/connect">Volver a conectar</a></p>',
+  busy: '<h2>Mercado Libre pidió esperar un momento</h2><p class="sub">Probá de nuevo en un minuto. <a class="link" href="/panel">Reintentar</a></p>',
+  api: '<h2>No pudimos leer tus datos</h2><p class="sub">Fue un error de Mercado Libre. <a class="link" href="/panel">Reintentar</a></p>'
+};
+var qs = new URLSearchParams(location.search), want = [];
+if (qs.get('adv')) want.push('adv=' + encodeURIComponent(qs.get('adv')));
+if (qs.get('refresh') === '1') want.push('refresh=1');
+say('<h2>Trayendo tus datos de Mercado Libre…</h2><p class="sub">La primera vez puede tardar unos segundos.</p>');
+fetch('/api/datos' + (want.length ? '?' + want.join('&') : ''), { credentials: 'same-origin' })
+  .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
+  .then(function (x) {
+    if (x.s === 401) { location.href = x.j.error === 'reconnect' ? '/connect' : '/'; return; }
+    if (x.j.error) { say(MSG[x.j.error] || MSG.api); return; }
+    if (!x.j.camps.length) { say('<h2>Todavía no tenés campañas de Product Ads</h2><p class="sub">Cuando crees una en Mercado Libre, va a aparecer acá.</p>'); return; }
+    history.replaceState(null, '', '/panel' + location.hash);
+    boot(x.j);
+  })
+  .catch(function () { say(MSG.api); });
+})();
+</script>
+
+</body></html>

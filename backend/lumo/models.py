@@ -25,3 +25,24 @@ class Account(Base):
     status = Column(String(32), nullable=False, default="connected")
     created_at = Column(DateTime, nullable=False, default=utcnow)
     updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+
+class Snapshot(Base):
+    """Última lectura de datos de Product Ads de una cuenta. Evita volver a pedirlo todo a Mercado Libre en cada visita."""
+
+    __tablename__ = "snapshot"
+
+    user_id = Column(BigInteger, primary_key=True, autoincrement=False)
+    advertiser_id = Column(BigInteger, nullable=False)
+    data = Column(Text, nullable=False)
+    fetched_at = Column(DateTime, nullable=False, default=utcnow)
+
+
+class PanelState(Base):
+    """Lo que la persona marca en el panel: tareas hechas, acciones registradas, tareas propias y avisos."""
+
+    __tablename__ = "panel_state"
+
+    user_id = Column(BigInteger, primary_key=True, autoincrement=False)
+    data = Column(Text, nullable=False)
+    updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)

@@ -2,11 +2,13 @@
 import base64
 import hashlib
 import secrets
+import time
 from urllib.parse import urlencode
 
 import requests
 
 TIMEOUT = 15
+TIMEOUT_API = 30
 
 
 class MLError(Exception):
@@ -80,6 +82,27 @@ def advertisers(cfg: dict, access_token: str) -> list:
     if resp.status_code != 200:
         raise MLError(resp.status_code, str(body.get("error", "error")), str(body.get("message", "")))
     return body.get("advertisers", [])
+
+
+def api_get(cfg: dict, access_token: str, path: str, params: dict = None, version: str = "2"):
+    """GET autenticado. Devuelve el JSON (dict o lista). Reintenta dos veces si Mercado Libre pide bajar el ritmo (429)."""
+    headers = {"Authorization": "Bearer " + access_token, "Content-Type": "application/json"}
+    if version:
+        headers["api-version"] = version
+    for attempt in range(3):
+        resp = requests.get(cfg["ML_API_BASE"] + path, params=params, headers=headers, timeout=TIMEOUT_API)
+        if resp.status_code == 429 and attempt < 2:
+            time.sleep(1.5 * (attempt + 1))
+            continue
+        break
+    try:
+        body = resp.json()
+    except ValueError:
+        body = {}
+    if resp.status_code != 200:
+        err = body if isinstance(body, dict) else {}
+        raise MLError(resp.status_code, str(err.get("error", "error")), str(err.get("message", "")))
+    return body
 
 
 def _json(resp) -> dict:

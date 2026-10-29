@@ -70,11 +70,11 @@ class Flujo(unittest.TestCase):
             r = self.client.get("/callback?code=abc&state=" + state)
         return r, ex
 
-    def test_callback_guarda_tokens_cifrados_y_lista_anunciantes(self):
+    def test_callback_guarda_tokens_cifrados_y_entra_al_panel(self):
         ads = [{"advertiser_id": 1, "site_id": "MLA", "advertiser_name": "Casa Nogal", "account_name": "MLA - X"}]
         r, ex = self._conectar({"return_value": ads})
-        self.assertEqual(r.status_code, 200)
-        self.assertIn("Casa Nogal", r.get_data(as_text=True))
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(r.headers["Location"].endswith("/panel"))
         self.assertTrue(ex.call_args[0][2])  # se envió el code_verifier
         with Session(self.app.extensions["lumo_engine"]) as s:
             acc = s.get(Account, 777)
@@ -82,6 +82,20 @@ class Flujo(unittest.TestCase):
             self.assertNotIn("RT-1", acc.refresh_token)
             self.assertEqual(decrypt(KEY, acc.access_token), "AT-1")
             self.assertEqual(acc.status, "connected")
+        with self.client.session_transaction() as sess:
+            self.assertEqual(sess["uid"], 777)
+
+    def test_sin_refresh_token_muestra_el_aviso_y_deja_entrar(self):
+        loc = self.client.get("/connect").headers["Location"]
+        state = loc.split("state=")[1].split("&")[0]
+        tok = dict(TOK, refresh_token=None)
+        ads = [{"advertiser_id": 1, "site_id": "MLA", "advertiser_name": "Casa Nogal"}]
+        with mock.patch("lumo.ml.exchange_code", return_value=tok), mock.patch("lumo.ml.advertisers", return_value=ads):
+            r = self.client.get("/callback?code=abc&state=" + state)
+        html = r.get_data(as_text=True)
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("refresh token", html)
+        self.assertIn("/panel", html)
 
     def test_publicidad_no_habilitada(self):
         r, _ = self._conectar({"side_effect": ml.MLError(404, "not_found", "No permissions found for user_id")})
