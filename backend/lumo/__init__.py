@@ -268,6 +268,7 @@ def create_app(overrides=None) -> Flask:
             st = s.get(PanelState, uid)
             data["estado"] = json.loads(st.data) if st else {}
             data["admin"] = access.is_admin(cfg, uid)
+            data["uid"] = uid
         return _json(data)
 
     @app.post("/api/estado")
