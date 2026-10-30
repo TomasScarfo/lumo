@@ -92,6 +92,14 @@ class Portada(Base):
     def test_ya_no_hay_envio_por_servidor(self):
         self.assertEqual(self.client.post("/contacto").status_code, 404)
 
+    def test_panel_trae_los_datos_de_contacto_para_la_ayuda(self):
+        self.connect(self.client, 1)  # el 1 es administrador
+        html = self.client.get("/panel").get_data(as_text=True)
+        self.assertIn("window.LUMO_CONTACT=", html)
+        self.assertIn("hola@lumo.test", html)
+        self.assertIn("https://wa.me/5491100000000", html)
+        self.assertIn("function ayudaHTML", html)
+
     def test_sin_datos_de_contacto_no_hay_seccion(self):
         app = create_app(dict(CFG, CONTACT_EMAIL="", CONTACT_WHATSAPP=""))
         html = app.test_client().get("/").get_data(as_text=True)

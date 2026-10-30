@@ -196,7 +196,8 @@ def create_app(overrides=None) -> Flask:
     def panel():
         if not _current_user():
             return redirect("/")
-        resp = Response(PANEL_HTML, mimetype="text/html")
+        data = json.dumps(_contact() or {}).replace("<", "\\u003c")
+        resp = Response(PANEL_HTML.replace("</head>", "<script>window.LUMO_CONTACT=%s;</script></head>" % data, 1), mimetype="text/html")
         resp.headers["Cache-Control"] = "no-store"
         return resp
 
