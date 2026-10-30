@@ -195,6 +195,25 @@ class Rutas(unittest.TestCase):
         r = self.client.get("/api/datos")
         self.assertEqual((r.status_code, r.get_json()["error"]), (404, "no_ads"))
 
+    def test_sin_publicidad_devuelve_lo_que_tiene_la_cuenta(self):
+        self.login()
+        self.advs.side_effect = ml.MLError(404, "not_found", "No permissions found")
+
+        def cuenta(cfg, tok, path, params=None, version="2"):
+            if path == "/users/me":
+                return {"id": 5, "nickname": "CASANOGAL", "site_id": "MLA",
+                        "seller_reputation": {"level_id": "5_green", "transactions": {"completed": 40}}}
+            if path == "/users/5/items/search":
+                return {"paging": {"total": 2}, "results": ["MLA1", "MLA2"]}
+            return fake_ml.api_get(cfg, tok, path, params, version)
+        self.api.side_effect = cuenta
+        c = self.client.get("/api/datos").get_json()["cuenta"]
+        self.assertEqual((c["nick"], c["activas"], c["con_stock"], c["ventas"]), ("CASANOGAL", 2, 2, 40))
+        self.assertEqual(c["categorias"][0]["nombre"], "Comedor")
+        estados = {r["titulo"]: r["estado"] for r in c["requisitos"]}
+        self.assertEqual(estados["Reputación del vendedor"], "ok")
+        self.assertEqual(estados["Publicidad activada en tu perfil"], "falta")
+
     def test_un_404_en_otra_ruta_no_se_confunde_con_falta_de_publicidad(self):
         self.login()
 
