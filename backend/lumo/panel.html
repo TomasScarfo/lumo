@@ -314,7 +314,11 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .term .meta { display: flex; gap: 6px; flex-wrap: wrap; }
 .foot { font-size: .82rem; color: var(--ink-3); text-align: center; margin-top: 28px; }
 
-/* Sin Publicidad */
+/* Sin Publicidad: una sola columna centrada; en pantallas anchas no usa la grilla con menú lateral */
+.wrap.na { display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; }
+.wrap.na > * { grid-column: auto; }
+@media (min-width: 900px) { .wrap.na { gap: 20px; } .na-hero { padding: 24px; } }
+@media (max-width: 480px) { .na-hero { flex-direction: column; } .req { flex-direction: column; gap: 8px; } .na-actions .btn { width: 100%; justify-content: center; } }
 .na-hero { background: var(--warn-soft); border-color: transparent; display: flex; gap: 14px; align-items: flex-start; }
 .na-hero .hero-ic { background: var(--warn); color: var(--bg); }
 .na-hero h1 { font-size: clamp(1.4rem, 5vw, 1.9rem); font-weight: 700; }
@@ -1316,7 +1320,7 @@ function noAds(c) {
     h += '<p class="sub">No pudimos leer tus publicaciones. Cuando las veamos, te vamos a sugerir qué productos y categorías anunciar primero.</p>';
   }
   h += '</section>';
-  dyn.innerHTML = '<div class="wrap">' + h + '</div>';
+  dyn.innerHTML = '<div class="wrap na">' + h + '</div>';
 }
 var MSG = {
   no_ads: '<h2>Todavía no tenés Publicidad activada</h2><p class="sub">Entrá a Mercado Libre, andá a Mi perfil y después a Publicidad para activarla. Cuando esté lista, volvé acá.</p>',
