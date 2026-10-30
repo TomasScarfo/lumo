@@ -102,6 +102,19 @@ class Portada(Base):
         self.assertIn("wa.me/5491100000000", html)
         self.assertIn("mailto:hola@lumo.test", html)
 
+    def test_solo_se_usa_el_logo_nuevo(self):
+        """El logo es el amanecer (semicírculo sobre una línea). La "L" vieja no tiene que aparecer en ningún lado."""
+        raiz = os.path.join(os.path.dirname(__file__), "..", "..")
+        archivos = ["backend/lumo/panel.html", "backend/lumo/static/logo.svg", "design/lumo-prototipo.html", "design/logo/lumo-logo.svg"]
+        archivos += ["backend/lumo/templates/" + f for f in os.listdir(os.path.join(raiz, "backend/lumo/templates"))]
+        for f in archivos:
+            texto = open(os.path.join(raiz, f), encoding="utf-8").read()
+            self.assertNotIn("M9 4.5v14h7.5", texto, f)
+            self.assertNotIn("M370 230", texto, f)
+        panel = open(os.path.join(raiz, "backend/lumo/panel.html"), encoding="utf-8").read()
+        self.assertIn('<link rel="icon" href="/static/logo.svg"', panel)
+        self.assertEqual(panel.count('<img class="brand-mark" src="/static/logo.svg"'), 2)  # encabezado del panel y pantalla sin Publicidad
+
     def test_estaticos(self):
         for path in ("/static/site.css", "/static/logo.svg", "/static/logo.png"):
             self.assertEqual(self.client.get(path).status_code, 200, path)
