@@ -184,7 +184,7 @@ a.card.contact .go svg { width: 18px; height: 18px; }
 
 .brand { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 14px; color: #fff; }
 .brand svg { width: 28px; height: 28px; }
-.brand.wa { background: #25D366; } .brand.mail { background: #EA4335; } .brand.in { background: #0A66C2; }
+.brand.wa { background: #25D366; } .brand.mail { background: #EA4335; }
 .inquiry { margin: 22px auto 0; max-width: 720px; display: grid; gap: 14px; }
 .inquiry .sub { color: var(--ink-2); margin-top: -8px; }
 .inquiry label { display: grid; gap: 6px; font-weight: 600; font-size: .93rem; }

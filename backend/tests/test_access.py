@@ -13,7 +13,7 @@ from lumo.tokens import save_tokens
 KEY = "clave-de-prueba-larga-y-aleatoria"
 CFG = {"ML_CLIENT_ID": "123", "ML_CLIENT_SECRET": "secreto-de-prueba", "REDIRECT_URI": "https://lumo.test/callback",
        "ENCRYPTION_KEY": KEY, "SECRET_KEY": "otra-clave-de-sesion", "DATABASE_URL": "sqlite://", "ADMIN_USER_IDS": "1, 2;x",
-       "CONTACT_EMAIL": "hola@lumo.test", "CONTACT_WHATSAPP": "+54 9 11 0000-0000", "CONTACT_LINKEDIN": "https://www.linkedin.com/in/prueba/"}
+       "CONTACT_EMAIL": "hola@lumo.test", "CONTACT_WHATSAPP": "+54 9 11 0000-0000"}
 ADS = [{"advertiser_id": 9, "site_id": "MLA", "advertiser_name": "Negocio"}]
 
 
@@ -70,17 +70,16 @@ class Portada(Base):
         self.assertIn("Ejemplo con datos ficticios", html)
         self.assertIn("no está afiliada", html)
 
-    def test_seccion_de_contacto_con_los_tres_canales(self):
+    def test_seccion_de_contacto_con_whatsapp_y_email(self):
         html = self.client.get("/").get_data(as_text=True)
         self.assertIn('id="contacto"', html)
         self.assertIn("mailto:hola@lumo.test", html)
         self.assertIn("https://wa.me/5491100000000?text=", html)
         self.assertIn("+54 9 11 0000 0000", html)
-        self.assertIn("https://www.linkedin.com/in/prueba/", html)
 
     def test_contacto_con_logos_de_marca(self):
         html = self.client.get("/").get_data(as_text=True)
-        for marca in ("b-wa", "b-mail", "b-in"):
+        for marca in ("b-wa", "b-mail"):
             self.assertIn('href="#%s"' % marca, html)
 
     def _enviar(self, **datos):
@@ -125,14 +124,10 @@ class Portada(Base):
         self.assertIn("No pudimos enviar", r.get_data(as_text=True))
 
     def test_sin_datos_de_contacto_no_hay_seccion(self):
-        app = create_app(dict(CFG, CONTACT_EMAIL="", CONTACT_WHATSAPP="", CONTACT_LINKEDIN=""))
+        app = create_app(dict(CFG, CONTACT_EMAIL="", CONTACT_WHATSAPP=""))
         html = app.test_client().get("/").get_data(as_text=True)
-        for texto in ("mailto:", "wa.me", 'id="contacto"', "linkedin.com"):
+        for texto in ("mailto:", "wa.me", 'id="contacto"'):
             self.assertNotIn(texto, html)
-
-    def test_solo_acepta_linkedin_https(self):
-        app = create_app(dict(CFG, CONTACT_LINKEDIN="javascript:alert(1)"))
-        self.assertNotIn("javascript:", app.test_client().get("/").get_data(as_text=True))
 
     def test_contacto_por_defecto(self):
         from lumo import load_config
@@ -141,7 +136,6 @@ class Portada(Base):
             cfg = load_config()
         self.assertEqual(cfg["CONTACT_EMAIL"], "lumoads.ml@gmail.com")
         self.assertEqual(cfg["CONTACT_WHATSAPP"], "5491145597516")
-        self.assertEqual(cfg["CONTACT_LINKEDIN"], "https://www.linkedin.com/in/tomas-scarfo/")
 
     def test_pagina_sin_acceso_ofrece_whatsapp_y_email(self):
         html = Ingreso.denied_html(self)

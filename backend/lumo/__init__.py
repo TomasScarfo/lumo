@@ -58,7 +58,6 @@ def load_config(overrides=None) -> dict:
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com"),
         "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
-        "CONTACT_LINKEDIN": os.environ.get("CONTACT_LINKEDIN", "https://www.linkedin.com/in/tomas-scarfo/"),
         # Para que el formulario de la portada llegue a CONTACT_EMAIL. Con Gmail: una "contraseña de aplicación".
         "SMTP_HOST": os.environ.get("SMTP_HOST", "smtp.gmail.com"),
         "SMTP_PORT": os.environ.get("SMTP_PORT", "587"),
@@ -110,7 +109,7 @@ def create_app(overrides=None) -> Flask:
     def _contact():
         """Datos de contacto para la portada. Si no hay ninguno configurado, no se muestra la sección."""
         out = {}
-        email, wa, linkedin = cfg.get("CONTACT_EMAIL"), cfg.get("CONTACT_WHATSAPP"), cfg.get("CONTACT_LINKEDIN")
+        email, wa = cfg.get("CONTACT_EMAIL"), cfg.get("CONTACT_WHATSAPP")
         if email:
             out["email"] = email
             out["mailto"] = "mailto:%s?subject=%s" % (email, quote("Acceso a Lumo"))
@@ -118,8 +117,6 @@ def create_app(overrides=None) -> Flask:
         if digits:
             out["whatsapp"] = "https://wa.me/%s?text=%s" % (digits, quote("Hola, quiero probar Lumo"))
             out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
-        if linkedin and linkedin.startswith("https://"):
-            out["linkedin"] = linkedin
         return out or None
 
     def _landing(**extra):
