@@ -50,7 +50,7 @@
         </form>
         <p style="margin-top:10px;font-size:.9rem">Usá el mismo email con el que entrás a Mercado Pago.</p>
       {% else %}
-        <p style="margin-top:14px">El pago en línea todavía no está habilitado.{% if contact %} <a href="{{ contact }}">Escribinos</a> y te ayudamos a activar tu cuenta.{% endif %}</p>
+        <p style="margin-top:14px">El pago en línea todavía no está habilitado.{% if contact %} <a href="{{ contact.whatsapp or contact.mailto or contact.linkedin }}">Escribinos</a> y te ayudamos a activar tu cuenta.{% endif %}</p>
       {% endif %}
     {% endif %}
 

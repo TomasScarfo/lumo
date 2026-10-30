@@ -249,6 +249,7 @@ class SinCobro(Base):
         self.expire_trial(840)
         html = self.client.get("/suscripcion").get_data(as_text=True)
         self.assertIn("todavía no está habilitado", html)
+        self.assertIn('href="https://wa.me/5491100000000', html)
         self.assertEqual(self.subscribe().status_code, 503)
 
 

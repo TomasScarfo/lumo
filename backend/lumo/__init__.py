@@ -1,9 +1,11 @@
 import json
 import logging
 import os
+import re
 import secrets
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import quote
 
 from flask import Flask, Response, abort, jsonify, redirect, render_template, render_template_string, request, session
 from sqlalchemy import create_engine, delete, inspect, select, text
@@ -51,7 +53,9 @@ def load_config(overrides=None) -> dict:
         "ML_AUTH_BASE": os.environ.get("ML_AUTH_BASE", "https://auth.mercadolibre.com.ar"),
         "ML_API_BASE": os.environ.get("ML_API_BASE", "https://api.mercadolibre.com"),
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
-        "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", ""),
+        "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "tomas.scarfo@gmail.com"),
+        "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
+        "CONTACT_LINKEDIN": os.environ.get("CONTACT_LINKEDIN", "https://www.linkedin.com/in/tomas-scarfo/"),
         # Cobro con Mercado Pago. Sin MP_ACCESS_TOKEN o sin PLAN_PRICE, la prueba gratis funciona igual pero no se puede pagar.
         "MP_ACCESS_TOKEN": os.environ.get("MP_ACCESS_TOKEN", ""),
         "MP_WEBHOOK_SECRET": os.environ.get("MP_WEBHOOK_SECRET", ""),
@@ -103,8 +107,19 @@ def create_app(overrides=None) -> Flask:
         return redirect("/static/logo.png")
 
     def _contact():
-        email = cfg.get("CONTACT_EMAIL")
-        return "mailto:%s?subject=Acceso%%20a%%20Lumo" % email if email else None
+        """Datos de contacto para la portada. Si no hay ninguno configurado, no se muestra la sección."""
+        out = {}
+        email, wa, linkedin = cfg.get("CONTACT_EMAIL"), cfg.get("CONTACT_WHATSAPP"), cfg.get("CONTACT_LINKEDIN")
+        if email:
+            out["email"] = email
+            out["mailto"] = "mailto:%s?subject=%s" % (email, quote("Acceso a Lumo"))
+        digits = re.sub(r"\D", "", wa or "")
+        if digits:
+            out["whatsapp"] = "https://wa.me/%s?text=%s" % (digits, quote("Hola, quiero probar Lumo"))
+            out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
+        if linkedin and linkedin.startswith("https://"):
+            out["linkedin"] = linkedin
+        return out or None
 
     def _offer():
         return {"contact": _contact(), "trial_days": billing.trial_days(cfg), "price": billing.price_label(cfg)}
@@ -535,28 +550,26 @@ def _esc(text) -> str:
 
 def _result_body(cfg: dict, tok: dict, user_id: int):
     """Devuelve (html, ok). ok es True cuando se puede pasar directo al panel."""
-    lines = ["<h1>Conectado</h1><p class='ok'>Lumo ya puede leer tu cuenta de Mercado Libre.</p>"]
-    lines.append("<p>Cuenta: <code>%s</code></p>" % user_id)
-    lines.append("<p>Permisos recibidos: <code>%s</code></p>" % _esc(tok.get("scope") or "sin dato"))
+    lines = ["<h1>¡Listo, tu cuenta está conectada!</h1><p class='ok'>Lumo ya puede mostrarte cómo van tus publicidades de Mercado Libre.</p>"]
     has_refresh = bool(tok.get("refresh_token"))
     if not has_refresh:
-        lines.append("<p class='bad'>Mercado Libre no entregó un refresh token. Hay que activar el acceso offline en la app para que Lumo pueda renovar el permiso sola.</p>")
+        lines.append("<p class='bad'>La conexión quedó a medias: Mercado Libre no nos dio permiso para mantenerla activa, así que se vencería en unas horas.</p><p>Si ves este mensaje, avisanos y lo resolvemos.</p>")
     try:
         found = ml.advertisers(cfg, tok["access_token"])
     except ml.MLError as exc:
         if exc.status == 404:
-            lines.append("<p class='bad'>Tu cuenta todavía no tiene Publicidad habilitada.</p><p>Entrá a Mercado Libre, Mi perfil, Publicidad, activala y volvé a conectar.</p>")
+            lines.append("<p class='bad'>Todavía no tenés Publicidad activada en Mercado Libre.</p><p>Para activarla entrá a Mercado Libre, andá a <b>Mi perfil</b> y después a <b>Publicidad</b>. Cuando esté lista, volvé acá y conectá tu cuenta de nuevo.</p>")
         elif exc.status in (401, 403):
-            lines.append("<p class='bad'>Mercado Libre no dejó que Lumo lea Product Ads con esta cuenta (error %s).</p><p>Puede ser un permiso restringido a desarrolladores autorizados.</p>" % exc.status)
+            lines.append("<p class='bad'>Mercado Libre no nos dejó ver tus publicidades con esta cuenta.</p><p>Probá conectar de nuevo con la cuenta principal de tu negocio. Si sigue igual, escribinos.</p>")
         else:
-            lines.append("<p class='bad'>La consulta de anunciantes falló (error %s, <code>%s</code>).</p>" % (exc.status, _esc(exc.code)))
+            lines.append("<p class='bad'>No pudimos traer tus publicidades en este momento.</p><p>Probá de nuevo en unos minutos. Si sigue pasando, escribinos.</p>")
         return "".join(lines), False
     if not found:
-        lines.append("<p>No encontramos anunciantes de Product Ads en esta cuenta.</p>")
+        lines.append("<p>Tu cuenta está conectada, pero todavía no encontramos publicidades en ella.</p><p>Cuando crees tu primera campaña en Mercado Libre, va a aparecer acá.</p>")
         return "".join(lines), False
-    lines.append("<p>Anunciantes de Product Ads:</p><ul>")
+    lines.append("<p>Encontramos estas cuentas de publicidad:</p><ul>")
     for a in found:
-        lines.append("<li><b>%s</b> · sitio <code>%s</code> · id <code>%s</code></li>" % (_esc(a.get("advertiser_name", "")), _esc(a.get("site_id", "")), _esc(a.get("advertiser_id", ""))))
+        lines.append("<li><b>%s</b></li>" % _esc(a.get("advertiser_name", "")))
     lines.append("</ul>")
     if not has_refresh:
         lines.append("<a class='btn' href='/panel'>Entrar igual al panel</a>")

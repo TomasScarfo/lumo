@@ -98,16 +98,16 @@ class Flujo(unittest.TestCase):
             r = self.client.get("/callback?code=abc&state=" + state)
         html = r.get_data(as_text=True)
         self.assertEqual(r.status_code, 200)
-        self.assertIn("refresh token", html)
+        self.assertIn("quedó a medias", html)
         self.assertIn("/panel", html)
 
     def test_publicidad_no_habilitada(self):
         r, _ = self._conectar({"side_effect": ml.MLError(404, "not_found", "No permissions found for user_id")})
-        self.assertIn("Publicidad habilitada", r.get_data(as_text=True))
+        self.assertIn("Todavía no tenés Publicidad activada", r.get_data(as_text=True))
 
     def test_permiso_restringido(self):
         r, _ = self._conectar({"side_effect": ml.MLError(403, "forbidden")})
-        self.assertIn("error 403", r.get_data(as_text=True))
+        self.assertIn("no nos dejó ver tus publicidades", r.get_data(as_text=True))
 
     def test_scope_admite_listas_largas(self):
         # Mercado Libre devuelve más de 255 caracteres; en Postgres un varchar(255) rompía el guardado.
