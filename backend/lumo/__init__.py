@@ -3,6 +3,9 @@ import logging
 import os
 import re
 import secrets
+import smtplib
+import time
+from email.message import EmailMessage
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import quote
@@ -56,6 +59,11 @@ def load_config(overrides=None) -> dict:
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "tomas.scarfo@gmail.com"),
         "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
         "CONTACT_LINKEDIN": os.environ.get("CONTACT_LINKEDIN", "https://www.linkedin.com/in/tomas-scarfo/"),
+        # Para que el formulario de la portada llegue a CONTACT_EMAIL. Con Gmail: una "contraseña de aplicación".
+        "SMTP_HOST": os.environ.get("SMTP_HOST", "smtp.gmail.com"),
+        "SMTP_PORT": os.environ.get("SMTP_PORT", "587"),
+        "SMTP_USER": os.environ.get("SMTP_USER", ""),
+        "SMTP_PASSWORD": os.environ.get("SMTP_PASSWORD", ""),
     }
     cfg.update(overrides or {})
     return cfg
@@ -114,6 +122,49 @@ def create_app(overrides=None) -> Flask:
             out["linkedin"] = linkedin
         return out or None
 
+    def _landing(**extra):
+        return render_template("landing.html", contact=_contact(), invited=False, label=None, csrf=_csrf(), **extra)
+
+    def _send_inquiry(name, email, fields):
+        user, password, to = cfg.get("SMTP_USER"), cfg.get("SMTP_PASSWORD"), cfg.get("CONTACT_EMAIL")
+        if not (user and password and to):
+            log.warning("Consulta recibida pero falta configurar SMTP_USER / SMTP_PASSWORD")
+            return False
+        msg = EmailMessage()
+        msg["Subject"] = "Consulta desde Lumo: %s" % (name or email)
+        msg["From"] = user
+        msg["To"] = to
+        msg["Reply-To"] = email
+        msg.set_content("\n".join("%s: %s" % (k, v) for k, v in fields if v) + "\n")
+        try:
+            with smtplib.SMTP(cfg["SMTP_HOST"], int(cfg["SMTP_PORT"]), timeout=15) as smtp:
+                smtp.starttls()
+                smtp.login(user, password)
+                smtp.send_message(msg)
+        except (OSError, smtplib.SMTPException):
+            log.exception("No se pudo enviar la consulta")
+            return False
+        return True
+
+    @app.post("/contacto")
+    def contacto():
+        _check_csrf()
+        if request.form.get("web"):  # campo trampa: solo lo completan los robots
+            return redirect("/?enviado=1#contacto")
+        def field(key, n):
+            return request.form.get(key, "").strip()[:n]
+        name, email, phone = field("name", 120), field("email", 200), field("phone", 60)
+        sells, interests, message = field("sells", 500), field("interests", 500), field("message", 3000)
+        keep = {"form_" + k: v for k, v in dict(name=name, email=email, phone=phone, sells=sells, interests=interests, message=message).items()}
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+            return _landing(form_error="Escribí un email válido para poder responderte.", **keep), 400
+        if time.time() - session.get("inquiry_at", 0) < 30:
+            return _landing(form_error="Ya enviaste una consulta hace un momento. Probá de nuevo en unos segundos.", **keep), 429
+        if not _send_inquiry(name, email, [("Nombre", name), ("Email", email), ("Teléfono", phone), ("Qué vende en Mercado Libre", sells), ("Intereses", interests), ("Mensaje", message)]):
+            return _landing(form_error="No pudimos enviar tu consulta. Escribime por WhatsApp o email y te respondo enseguida.", **keep), 502
+        session["inquiry_at"] = time.time()
+        return redirect("/?enviado=1#contacto")
+
     @app.get("/")
     def index():
         miss = missing_config()
@@ -122,7 +173,7 @@ def create_app(overrides=None) -> Flask:
         uid = _current_user()
         if uid:
             return redirect("/admin" if access.is_admin(cfg, uid) else "/panel")
-        return render_template("landing.html", contact=_contact(), invited=False, label=None)
+        return _landing(form_sent=bool(request.args.get("enviado")))
 
     @app.get("/invitacion/<token>")
     def invitacion(token):
@@ -130,9 +181,9 @@ def create_app(overrides=None) -> Flask:
             inv = access.valid_invite(s, token)
             label = inv.label if inv else None
         if inv is None:
-            return render_template("landing.html", contact=_contact(), invited=False, label=None, invite_error=True), 404
+            return render_template("landing.html", contact=_contact(), invited=False, label=None, invite_error=True, csrf=_csrf()), 404
         session["invite"] = token
-        return render_template("landing.html", contact=_contact(), invited=True, label=label)
+        return render_template("landing.html", contact=_contact(), invited=True, label=label, csrf=_csrf())
 
     @app.get("/connect")
     def connect():

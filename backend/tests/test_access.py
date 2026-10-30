@@ -78,6 +78,52 @@ class Portada(Base):
         self.assertIn("+54 9 11 0000 0000", html)
         self.assertIn("https://www.linkedin.com/in/prueba/", html)
 
+    def test_contacto_con_logos_de_marca(self):
+        html = self.client.get("/").get_data(as_text=True)
+        for marca in ("b-wa", "b-mail", "b-in"):
+            self.assertIn('href="#%s"' % marca, html)
+
+    def _enviar(self, **datos):
+        with self.client.session_transaction() as sess:
+            sess["csrf"] = "tok"
+        base = {"csrf": "tok", "name": "Ana", "email": "ana@ej.com", "message": "Quiero probar Lumo", "web": ""}
+        return self.client.post("/contacto", data=dict(base, **datos))
+
+    def test_formulario_envia_la_consulta_por_email(self):
+        app = create_app(dict(CFG, SMTP_USER="lumo@ej.com", SMTP_PASSWORD="x"))
+        self.client = app.test_client()
+        with mock.patch("lumo.smtplib.SMTP") as smtp:
+            r = self._enviar()
+        self.assertEqual(r.status_code, 302)
+        msg = smtp.return_value.__enter__.return_value.send_message.call_args[0][0]
+        self.assertEqual(msg["To"], "hola@lumo.test")
+        self.assertEqual(msg["Reply-To"], "ana@ej.com")
+        self.assertIn("Quiero probar Lumo", msg.get_content())
+
+    def test_formulario_solo_exige_el_email(self):
+        app = create_app(dict(CFG, SMTP_USER="lumo@ej.com", SMTP_PASSWORD="x"))
+        self.client = app.test_client()
+        with mock.patch("lumo.smtplib.SMTP") as smtp:
+            r = self._enviar(name="", message="", sells="Zapatillas", interests="Bajar costos")
+        self.assertEqual(r.status_code, 302)
+        cuerpo = smtp.return_value.__enter__.return_value.send_message.call_args[0][0].get_content()
+        self.assertIn("Qué vende en Mercado Libre: Zapatillas", cuerpo)
+        self.assertIn("Intereses: Bajar costos", cuerpo)
+
+    def test_formulario_rechaza_datos_invalidos_robots_y_csrf(self):
+        app = create_app(dict(CFG, SMTP_USER="lumo@ej.com", SMTP_PASSWORD="x"))
+        self.client = app.test_client()
+        with mock.patch("lumo.smtplib.SMTP") as smtp:
+            self.assertEqual(self._enviar(email="no-es-email").status_code, 400)
+            self._enviar(web="spam")
+            self.assertEqual(self.client.post("/contacto", data={"csrf": "mal"}).status_code, 400)
+            smtp.assert_not_called()
+
+    def test_formulario_sin_smtp_avisa_que_no_se_pudo(self):
+        r = self._enviar()
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("No pudimos enviar", r.get_data(as_text=True))
+
     def test_sin_datos_de_contacto_no_hay_seccion(self):
         app = create_app(dict(CFG, CONTACT_EMAIL="", CONTACT_WHATSAPP="", CONTACT_LINKEDIN=""))
         html = app.test_client().get("/").get_data(as_text=True)

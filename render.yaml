@@ -28,3 +28,8 @@ services:
       # IDs de Mercado Libre de quienes administran Lumo (separados por coma). Sin esto, nadie puede crear invitaciones.
       - key: ADMIN_USER_IDS
         sync: false
+      # Para que el formulario de contacto llegue a CONTACT_EMAIL (Gmail: contraseña de aplicación).
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
