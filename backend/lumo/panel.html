@@ -313,6 +313,30 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .term .ex { font-size: .88rem; color: var(--ink); background: var(--surface-2); border-radius: 8px; padding: 7px 10px; }
 .term .meta { display: flex; gap: 6px; flex-wrap: wrap; }
 .foot { font-size: .82rem; color: var(--ink-3); text-align: center; margin-top: 28px; }
+
+/* Sin Publicidad */
+.na-hero { background: var(--warn-soft); border-color: transparent; display: flex; gap: 14px; align-items: flex-start; }
+.na-hero .hero-ic { background: var(--warn); color: var(--bg); }
+.na-hero h1 { font-size: clamp(1.4rem, 5vw, 1.9rem); font-weight: 700; }
+.na-hero .sub { color: var(--ink); margin-top: 6px; }
+.na-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.na-actions .btn { text-decoration: none; display: inline-flex; align-items: center; }
+.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 12px; }
+.steps li { counter-increment: s; display: flex; gap: 12px; align-items: flex-start; }
+.steps li::before { content: counter(s); flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; display: grid; place-items: center; font-size: .9rem; }
+.steps b { display: block; }
+.req { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--line); }
+.req:first-of-type { border-top: 0; padding-top: 0; }
+.req > div { min-width: 0; }
+.req b { display: block; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.kpi { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
+.kpi b { display: block; font-family: var(--font-display); font-size: 1.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.kpi span { font-size: .85rem; color: var(--ink-2); }
+.prod { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.prod:first-of-type { border-top: 0; }
+.prod > div { min-width: 0; }
+.prod b { display: block; overflow-wrap: anywhere; }
 /* Seguimiento */
 .s-neu { background: var(--surface-2); color: var(--ink-2); }
 .trk-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px 12px; flex-wrap: wrap; }
@@ -1250,6 +1274,50 @@ if (typeof ResizeObserver !== 'undefined') new ResizeObserver(function () { draw
 var dyn = document.getElementById('dyn');
 function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function say(html) { dyn.innerHTML = '<div class="wrap"><section class="card empty" style="margin-top:12vh;text-align:center">' + html + '</section></div>'; }
+function noAds(c) {
+  c = c || {};
+  var ST2 = { ok: ['bien', 'check', 'Listo'], falta: ['revisar', 'x-circle', 'Falta'], revisar: ['atencion', 'alert', 'Revisar'], sindato: ['sindatos', 'info', 'Sin dato'] };
+  function badge(k) { var t = ST2[k] || ST2.sindato; return '<span class="pill s-' + t[0] + '"><svg class="ic"><use href="#i-' + t[1] + '"/></svg>' + t[2] + '</span>'; }
+  function num(v) { return v == null ? '—' : String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  var h = '<header class="top"><div class="brand"><div class="brand-mark"><svg class="ic"><use href="#i-lumo"/></svg></div><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(c.nick || 'Tu cuenta') + (c.site ? ' · ' + esc(c.site) : '') + '</div></div></div></header>';
+  h += '<section class="card na-hero"><div class="hero-ic"><svg class="ic"><use href="#i-alert"/></svg></div><div><h1>Tu cuenta todavía no tiene Publicidad activada</h1>' +
+    '<p class="sub">Todavía no hay campañas para analizar. Mirá qué tenés listo, qué te falta y por dónde empezar.</p>' +
+    '<div class="na-actions"><a class="btn" href="/panel?refresh=1">Ya la activé, actualizar</a></div></div></section>';
+  h += '<section class="card"><div class="sec-head"><h2>Cómo activarla</h2></div><ol class="steps">' +
+    '<li><div><b>Entrá a Mercado Libre</b><span class="sub">Con la misma cuenta con la que iniciaste sesión en Lumo.</span></div></li>' +
+    '<li><div><b>Andá a Mi perfil y después a Publicidad</b><span class="sub">Ahí aparece la opción para activar Product Ads.</span></div></li>' +
+    '<li><div><b>Aceptá las condiciones y elegí un presupuesto</b><span class="sub">Podés empezar con uno chico y cambiarlo cuando quieras.</span></div></li>' +
+    '<li><div><b>Volvé a Lumo y tocá “Ya la activé”</b><span class="sub">Los datos de las campañas pueden tardar hasta un día en aparecer.</span></div></li></ol></section>';
+  var rq = c.requisitos || [];
+  if (rq.length) {
+    h += '<section class="card"><div class="sec-head"><h2>Requisitos para tener Publicidad</h2><span class="small">Según lo que vemos en tu cuenta</span></div>' +
+      rq.map(function (r) { return '<div class="req"><div><b>' + esc(r.titulo) + '</b><span class="sub">' + esc(r.detalle) + '</span></div>' + badge(r.estado) + '</div>'; }).join('') +
+      '<p class="small" style="margin-top:12px">Mercado Libre puede pedir condiciones adicionales al activarla.</p></section>';
+  }
+  h += '<section class="card"><div class="sec-head"><h2>Tu cuenta hoy</h2></div><div class="kpis">' +
+    '<div class="kpi"><b>' + num(c.activas) + '</b><span>Publicaciones activas</span></div>' +
+    '<div class="kpi"><b>' + num(c.con_stock) + '</b><span>Con stock</span></div>' +
+    '<div class="kpi"><b>' + num(c.ventas) + '</b><span>Ventas concretadas</span></div>' +
+    '<div class="kpi"><b>' + (c.reputacion && c.reputacion.nombre ? esc(c.reputacion.nombre) : '—') + '</b><span>Reputación</span></div></div></section>';
+  var cats = c.categorias || [], prods = c.productos || [];
+  h += '<section class="card"><div class="sec-head"><h2>Dónde enfocarte cuando la actives</h2></div>';
+  if (cats.length || prods.length) {
+    h += '<p class="sub" style="margin-bottom:12px">Conviene empezar anunciando lo que ya se vende y tiene stock: es donde más rápido se nota la inversión.</p>';
+    var max = Math.max.apply(null, cats.map(function (k) { return k.vendidas || k.publicaciones; }).concat([1]));
+    if (cats.length) h += '<div class="stack">' + cats.map(function (k) {
+      var v = k.vendidas || k.publicaciones;
+      return '<div class="trow" style="padding:0;border:0"><div class="trow-top"><b>' + esc(k.nombre) + '</b><span class="small">' + num(k.vendidas) + ' vendidas · ' + num(k.publicaciones) + ' publicaciones</span></div><div class="tbar"><span style="width:' + Math.max(4, Math.round(100 * v / max)) + '%"></span></div></div>';
+    }).join('') + '</div>';
+    if (prods.length) h += '<h3 style="font-size:1.05rem;margin:18px 0 6px">Productos para empezar</h3>' + prods.map(function (p) {
+      return '<div class="prod"><div><b>' + esc(p.titulo) + '</b><span class="small">' + num(p.vendidas) + ' vendidas · ' + num(p.stock) + ' en stock</span></div></div>';
+    }).join('');
+    h += '<p class="small" style="margin-top:12px">Una vez activa, Lumo te dice qué campañas gastan de más y cuáles conviene potenciar.</p>';
+  } else {
+    h += '<p class="sub">No pudimos leer tus publicaciones. Cuando las veamos, te vamos a sugerir qué productos y categorías anunciar primero.</p>';
+  }
+  h += '</section>';
+  dyn.innerHTML = '<div class="wrap">' + h + '</div>';
+}
 var MSG = {
   no_ads: '<h2>Todavía no tenés Publicidad activada</h2><p class="sub">Entrá a Mercado Libre, andá a Mi perfil y después a Publicidad para activarla. Cuando esté lista, volvé acá.</p>',
   forbidden: '<h2>Mercado Libre no nos dejó ver tus publicidades</h2><p class="sub">Probá conectar de nuevo con la cuenta principal de tu negocio. <a class="link" href="/connect">Volver a conectar</a></p>',
@@ -1264,6 +1332,7 @@ fetch('/api/datos' + (want.length ? '?' + want.join('&') : ''), { credentials: '
   .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
   .then(function (x) {
     if (x.s === 401) { location.href = x.j.error === 'reconnect' ? '/connect' : '/'; return; }
+    if (x.j.error === 'no_ads') { noAds(x.j.cuenta); return; }
     if (x.j.error) { say((MSG[x.j.error] || MSG.api) + (x.j.detail ? '<p class="small">Detalle técnico: <code>' + esc(x.j.detail) + '</code></p>' : '')); return; }
     if (!x.j.camps.length) { say('<h2>Todavía no tenés campañas de publicidad</h2><p class="sub">Cuando crees la primera en Mercado Libre, va a aparecer acá.</p>'); return; }
     history.replaceState(null, '', '/panel' + location.hash);

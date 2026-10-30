@@ -12,7 +12,7 @@ from sqlalchemy import create_engine, delete, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from . import access, ads, ml
+from . import access, ads, cuenta, ml
 from .models import Access, Account, Base, Invite, PanelState, Snapshot, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
@@ -222,6 +222,11 @@ def create_app(overrides=None) -> Flask:
         detail = ("%s %s %s" % (exc.status, exc.code, exc.path or "/advertising/advertisers")).strip()
         return _json({"error": kind, "detail": detail}, 503 if kind == "busy" else 502)
 
+    def _no_ads(token):
+        """Sin Publicidad: se responde con lo que tiene y lo que le falta a la cuenta, para que el panel lo explique."""
+        get = lambda path, params=None, version="2": ml.api_get(cfg, token, path, params, version)
+        return _json({"error": "no_ads", "cuenta": cuenta.build(get)}, 404)
+
     @app.get("/api/datos")
     def api_datos():
         uid = _current_user()
@@ -245,9 +250,11 @@ def create_app(overrides=None) -> Flask:
                     advs = ml.advertisers(cfg, token)
                 except ml.MLError as exc:
                     log.warning("anunciantes falló: %s %s", exc.status, exc.code)
+                    if exc.status == 404:
+                        return _no_ads(token)
                     return _api_error(exc, advertisers=True)
                 if not advs:
-                    return _json({"error": "no_ads"}, 404)
+                    return _no_ads(token)
                 adv = next((a for a in advs if a["advertiser_id"] == want), advs[0])
                 get = lambda path, params=None, version="2": ml.api_get(cfg, token, path, params, version)
                 try:
