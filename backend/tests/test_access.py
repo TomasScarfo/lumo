@@ -89,36 +89,37 @@ class Portada(Base):
         return self.client.post("/contacto", data=dict(base, **datos))
 
     def test_formulario_envia_la_consulta_por_email(self):
-        app = create_app(dict(CFG, SMTP_USER="lumo@ej.com", SMTP_PASSWORD="x"))
+        app = create_app(dict(CFG, RESEND_API_KEY="re_test"))
         self.client = app.test_client()
-        with mock.patch("lumo.smtplib.SMTP") as smtp:
+        with mock.patch("lumo.requests.post") as post:
             r = self._enviar()
         self.assertEqual(r.status_code, 302)
-        msg = smtp.return_value.__enter__.return_value.send_message.call_args[0][0]
-        self.assertEqual(msg["To"], "hola@lumo.test")
-        self.assertEqual(msg["Reply-To"], "ana@ej.com")
-        self.assertIn("Quiero probar Lumo", msg.get_content())
+        body = post.call_args.kwargs["json"]
+        self.assertEqual(body["to"], ["hola@lumo.test"])
+        self.assertEqual(body["reply_to"], "ana@ej.com")
+        self.assertIn("Quiero probar Lumo", body["text"])
+        self.assertEqual(post.call_args.kwargs["headers"]["Authorization"], "Bearer re_test")
 
     def test_formulario_solo_exige_el_email(self):
-        app = create_app(dict(CFG, SMTP_USER="lumo@ej.com", SMTP_PASSWORD="x"))
+        app = create_app(dict(CFG, RESEND_API_KEY="re_test"))
         self.client = app.test_client()
-        with mock.patch("lumo.smtplib.SMTP") as smtp:
+        with mock.patch("lumo.requests.post") as post:
             r = self._enviar(name="", message="", sells="Zapatillas", interests="Bajar costos")
         self.assertEqual(r.status_code, 302)
-        cuerpo = smtp.return_value.__enter__.return_value.send_message.call_args[0][0].get_content()
+        cuerpo = post.call_args.kwargs["json"]["text"]
         self.assertIn("Qué vende en Mercado Libre: Zapatillas", cuerpo)
         self.assertIn("Intereses: Bajar costos", cuerpo)
 
     def test_formulario_rechaza_datos_invalidos_robots_y_csrf(self):
-        app = create_app(dict(CFG, SMTP_USER="lumo@ej.com", SMTP_PASSWORD="x"))
+        app = create_app(dict(CFG, RESEND_API_KEY="re_test"))
         self.client = app.test_client()
-        with mock.patch("lumo.smtplib.SMTP") as smtp:
+        with mock.patch("lumo.requests.post") as post:
             self.assertEqual(self._enviar(email="no-es-email").status_code, 400)
             self._enviar(web="spam")
             self.assertEqual(self.client.post("/contacto", data={"csrf": "mal"}).status_code, 400)
-            smtp.assert_not_called()
+            post.assert_not_called()
 
-    def test_formulario_sin_smtp_avisa_que_no_se_pudo(self):
+    def test_formulario_sin_clave_avisa_que_no_se_pudo(self):
         r = self._enviar()
         self.assertEqual(r.status_code, 502)
         self.assertIn("No pudimos enviar", r.get_data(as_text=True))

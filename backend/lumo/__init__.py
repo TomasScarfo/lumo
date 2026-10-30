@@ -3,13 +3,12 @@ import logging
 import os
 import re
 import secrets
-import smtplib
 import time
-from email.message import EmailMessage
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import quote
 
+import requests
 from flask import Flask, Response, abort, jsonify, redirect, render_template, render_template_string, request, session
 from sqlalchemy import create_engine, delete, inspect, select, text
 from sqlalchemy.orm import Session
@@ -58,11 +57,9 @@ def load_config(overrides=None) -> dict:
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com"),
         "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
-        # Para que el formulario de la portada llegue a CONTACT_EMAIL. Con Gmail: una "contraseña de aplicación".
-        "SMTP_HOST": os.environ.get("SMTP_HOST", "smtp.gmail.com"),
-        "SMTP_PORT": os.environ.get("SMTP_PORT", "587"),
-        "SMTP_USER": os.environ.get("SMTP_USER", ""),
-        "SMTP_PASSWORD": os.environ.get("SMTP_PASSWORD", ""),
+        # Para que el formulario de la portada llegue a CONTACT_EMAIL (clave de API de resend.com, solo envío).
+        "RESEND_API_KEY": os.environ.get("RESEND_API_KEY", ""),
+        "RESEND_FROM": os.environ.get("RESEND_FROM", "Lumo <onboarding@resend.dev>"),
     }
     cfg.update(overrides or {})
     return cfg
@@ -123,22 +120,17 @@ def create_app(overrides=None) -> Flask:
         return render_template("landing.html", contact=_contact(), invited=False, label=None, csrf=_csrf(), **extra)
 
     def _send_inquiry(name, email, fields):
-        user, password, to = cfg.get("SMTP_USER"), cfg.get("SMTP_PASSWORD"), cfg.get("CONTACT_EMAIL")
-        if not (user and password and to):
-            log.warning("Consulta recibida pero falta configurar SMTP_USER / SMTP_PASSWORD")
+        key, to = cfg.get("RESEND_API_KEY"), cfg.get("CONTACT_EMAIL")
+        if not (key and to):
+            log.warning("Consulta recibida pero falta configurar RESEND_API_KEY")
             return False
-        msg = EmailMessage()
-        msg["Subject"] = "Consulta desde Lumo: %s" % (name or email)
-        msg["From"] = user
-        msg["To"] = to
-        msg["Reply-To"] = email
-        msg.set_content("\n".join("%s: %s" % (k, v) for k, v in fields if v) + "\n")
+        body = {"from": cfg["RESEND_FROM"], "to": [to], "reply_to": email,
+                "subject": "Consulta desde Lumo: %s" % (name or email),
+                "text": "\n".join("%s: %s" % (k, v) for k, v in fields if v) + "\n"}
         try:
-            with smtplib.SMTP(cfg["SMTP_HOST"], int(cfg["SMTP_PORT"]), timeout=15) as smtp:
-                smtp.starttls()
-                smtp.login(user, password)
-                smtp.send_message(msg)
-        except (OSError, smtplib.SMTPException):
+            r = requests.post("https://api.resend.com/emails", json=body, headers={"Authorization": "Bearer " + key}, timeout=15)
+            r.raise_for_status()
+        except requests.RequestException:
             log.exception("No se pudo enviar la consulta")
             return False
         return True
