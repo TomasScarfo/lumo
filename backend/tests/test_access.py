@@ -137,6 +137,35 @@ class Portada(Base):
             self.assertEqual(self.client.get(path).status_code, 200, path)
 
 
+class Presentacion(unittest.TestCase):
+    """Reglas que evitan cajas solapadas y números que cambian según el navegador."""
+    RAIZ = os.path.join(os.path.dirname(__file__), "..", "lumo")
+
+    def leer(self, ruta):
+        with open(os.path.join(self.RAIZ, ruta), encoding="utf-8") as f:
+            return f.read()
+
+    def test_numeros_con_formato_argentino_fijo(self):
+        panel = self.leer("panel.html")
+        self.assertIn("function fmtNum(", panel)
+        self.assertNotIn("Intl.NumberFormat", panel)  # el de Intl no agrupa los números de 4 cifras
+        self.assertNotIn("toLocaleString", panel)
+
+    def test_ninguna_grilla_usa_1fr_sin_minmax(self):
+        import re
+        for ruta in ("panel.html", "static/site.css"):
+            for linea in self.leer(ruta).splitlines():
+                if "grid-template-columns" in linea:
+                    sin_minmax = re.sub(r"minmax\([^)]*\)", "", linea)  # un 1fr suelto crece con su contenido y empuja la página
+                    self.assertNotRegex(sin_minmax, r"\b\d*\.?\d*fr\b", "%s: %s" % (ruta, linea.strip()))
+
+    def test_las_pantallas_no_se_salen_del_ancho(self):
+        for ruta in ("panel.html", "static/site.css"):
+            css = self.leer(ruta)
+            self.assertIn("body { overflow-x: clip; }", css, ruta)
+            self.assertIn("overflow-wrap: break-word", css, ruta)
+
+
 class Invitaciones(Base):
     def test_enlace_valido_muestra_la_invitacion(self):
         token = self.invite("Casa Nogal")

@@ -46,6 +46,15 @@
 }
 
 * { box-sizing: border-box; }
+/* Que nada se salga de la pantalla: ninguna caja ni texto largo puede ensanchar la página. */
+html { -webkit-text-size-adjust: 100%; }
+html, body { max-width: 100%; }
+body { overflow-x: clip; }
+img, svg, video, canvas { max-width: 100%; }
+code { overflow-wrap: anywhere; max-width: 100%; }
+.card, .kpi, .panel > *, .wrap, .wrap > *, section, article, .grid > *, .kpis > *, .hgrid > * { min-width: 0; }
+.card, .kpi, .term, .alert, .task, h1, h2, h3, p, li, label, a { overflow-wrap: break-word; }
+.meta, .term-top, .sec-head, .row, .hero-head { flex-wrap: wrap; }
 body {
   margin: 0;
   background: var(--bg);
@@ -105,14 +114,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .sub { color: var(--ink-2); font-size: .95rem; }
 .small { font-size: .85rem; color: var(--ink-3); }
 .stack { display: flex; flex-direction: column; gap: 12px; }
-.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: nowrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: normal; max-width: 100%; }
 .pill .ic { width: 1.05em; height: 1.05em; }
 .s-excelente { background: var(--good); color: var(--on-good); }
 .s-bien { background: var(--good-soft); color: var(--good); }
 .s-atencion { background: var(--warn-soft); color: var(--warn); }
 .s-revisar { background: var(--bad-soft); color: var(--bad); }
 .s-sindatos { background: var(--surface-2); color: var(--ink-2); }
-.tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--surface-2); color: var(--ink-2); white-space: normal; max-width: 100%; }
 .tag.up { background: var(--good-soft); color: var(--good); }
 .tag.down { background: var(--bad-soft); color: var(--bad); }
 .tag.warn { background: var(--warn-soft); color: var(--warn); }
@@ -394,6 +403,12 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 
 <script>
 (function () {
+/* Formato argentino fijo (1.234,5), igual en todos los navegadores: el de Intl no agrupa los números de 4 cifras. */
+function fmtNum(n, d) {
+  var t = Math.abs(n).toFixed(d), p = t.split('.');
+  p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (n < 0 && +t !== 0 ? '-' : '') + p.join(',');
+}
 function boot(D) {
 /*DATA-START*/
 var DAYS = D.days;
@@ -445,10 +460,10 @@ function saveState() {
 /*LOGIC-START*/
 var S = { days: 7, metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
   showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
-var nf0 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
-var r1 = function (n) { return n.toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); };
-var r2 = function (n) { return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+var r1 = function (n) { return fmtNum(n, 1); };
+var r2 = function (n) { return fmtNum(n, 2); };
 var pct1 = function (n) { return r1(n * 100) + '%'; };
 var pctN = function (v) { return v == null ? '—' : Math.round(v * 100) + '%'; };
 var short = function (n) { return n >= 1e6 ? '$' + r1(n / 1e6) + ' M' : n >= 1e3 ? '$' + nf0.format(Math.round(n / 1000)) + ' mil' : '$' + nf0.format(n); };
@@ -1327,7 +1342,7 @@ function noAds(c) {
   c = c || {};
   var ST2 = { ok: ['bien', 'check', 'Listo'], falta: ['revisar', 'x-circle', 'Falta'], revisar: ['atencion', 'alert', 'Revisar'], sindato: ['sindatos', 'info', 'Sin dato'] };
   function badge(k) { var t = ST2[k] || ST2.sindato; return '<span class="pill s-' + t[0] + '"><svg class="ic"><use href="#i-' + t[1] + '"/></svg>' + t[2] + '</span>'; }
-  function num(v) { return v == null ? '—' : String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function num(v) { return v == null ? '—' : fmtNum(v, 0); }
   var h = '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(c.nick || 'Tu cuenta') + (c.site ? ' · ' + esc(c.site) : '') + '</div></div></div></header>';
   h += '<section class="card na-hero"><div class="hero-ic"><svg class="ic"><use href="#i-alert"/></svg></div><div><h1>Tu cuenta todavía no tiene Publicidad activada</h1>' +
     '<p class="sub">Todavía no hay campañas para analizar. Mirá qué tenés listo, qué te falta y por dónde empezar.</p>' +

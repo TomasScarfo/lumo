@@ -422,10 +422,16 @@ var SEED_ACTIONS = [
 /*LOGIC-START*/
 var S = { days: 7, metric: 'sales', tab: 'principal', open: {}, done: {}, table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
   showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: [], draft: '', q: '', sw: { sw1: true, sw2: true, sw3: false } };
-var nf0 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+/* Formato argentino fijo (1.234,5), igual en todos los navegadores: el de Intl no agrupa los números de 4 cifras. */
+function fmtNum(n, d) {
+  var t = Math.abs(n).toFixed(d), p = t.split('.');
+  p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (n < 0 && +t !== 0 ? '-' : '') + p.join(',');
+}
+var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
-var r1 = function (n) { return n.toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); };
-var r2 = function (n) { return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+var r1 = function (n) { return fmtNum(n, 1); };
+var r2 = function (n) { return fmtNum(n, 2); };
 var pct1 = function (n) { return r1(n * 100) + '%'; };
 var short = function (n) { return n >= 1e6 ? '$' + r1(n / 1e6) + ' M' : n >= 1e3 ? '$' + nf0.format(Math.round(n / 1000)) + ' mil' : '$' + nf0.format(n); };
 var pl = function (n, a, b) { return n + ' ' + (n === 1 ? a : b); };

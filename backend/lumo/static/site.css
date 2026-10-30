@@ -75,7 +75,7 @@ p { margin: 0; }
 .mk-hero .ic svg { width: 22px; height: 22px; }
 .mk-hero b { display: block; font: 700 1.05rem var(--font-display); }
 .mk-hero span { font-size: .85rem; color: var(--ink-2); }
-.mk-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+.mk-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
 .mk-kpi { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
 .mk-kpi small { display: block; color: var(--ink-3); font-size: .72rem; font-weight: 600; }
 .mk-kpi b { font: 700 1.15rem var(--font-display); }
@@ -189,9 +189,18 @@ a.card.contact .go svg { width: 18px; height: 18px; }
 .inquiry .sub { color: var(--ink-2); margin-top: -8px; }
 .inquiry label { display: grid; gap: 6px; font-weight: 600; font-size: .93rem; }
 .inquiry .f2 { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 640px) { .inquiry .f2 { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 640px) { .inquiry .f2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .inquiry input, .inquiry textarea { min-height: 44px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 400 1rem var(--font-body); width: 100%; }
 .inquiry textarea { resize: vertical; }
 .inquiry .btn { justify-self: start; }
 .trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .inquiry label small { font-weight: 400; color: var(--ink-3); }
+
+/* Que nada se salga de la pantalla: ninguna caja ni texto largo puede ensanchar la página. */
+html, body { max-width: 100%; }
+body { overflow-x: clip; }
+img, svg, video { max-width: 100%; }
+.card, .grid > *, .wrap > *, .cta-box, .panel, .idbox { min-width: 0; }
+.card, h1, h2, h3, p, li, label, a, code { overflow-wrap: break-word; }
+.row, .foot-top, .linkbox { flex-wrap: wrap; }
+@media (max-width: 420px) { .mk-kpis { grid-template-columns: minmax(0, 1fr); } }
