@@ -1,9 +1,11 @@
 import json
 import logging
 import os
+import re
 import secrets
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import quote
 
 from flask import Flask, Response, abort, jsonify, redirect, render_template, render_template_string, request, session
 from sqlalchemy import create_engine, delete, inspect, select, text
@@ -51,7 +53,9 @@ def load_config(overrides=None) -> dict:
         "ML_AUTH_BASE": os.environ.get("ML_AUTH_BASE", "https://auth.mercadolibre.com.ar"),
         "ML_API_BASE": os.environ.get("ML_API_BASE", "https://api.mercadolibre.com"),
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
-        "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", ""),
+        "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "tomas.scarfo@gmail.com"),
+        "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
+        "CONTACT_LINKEDIN": os.environ.get("CONTACT_LINKEDIN", "https://www.linkedin.com/in/tomas-scarfo/"),
     }
     cfg.update(overrides or {})
     return cfg
@@ -96,8 +100,19 @@ def create_app(overrides=None) -> Flask:
         return redirect("/static/logo.png")
 
     def _contact():
-        email = cfg.get("CONTACT_EMAIL")
-        return "mailto:%s?subject=Acceso%%20a%%20Lumo" % email if email else None
+        """Datos de contacto para la portada. Si no hay ninguno configurado, no se muestra la sección."""
+        out = {}
+        email, wa, linkedin = cfg.get("CONTACT_EMAIL"), cfg.get("CONTACT_WHATSAPP"), cfg.get("CONTACT_LINKEDIN")
+        if email:
+            out["email"] = email
+            out["mailto"] = "mailto:%s?subject=%s" % (email, quote("Acceso a Lumo"))
+        digits = re.sub(r"\D", "", wa or "")
+        if digits:
+            out["whatsapp"] = "https://wa.me/%s?text=%s" % (digits, quote("Hola, quiero probar Lumo"))
+            out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
+        if linkedin and linkedin.startswith("https://"):
+            out["linkedin"] = linkedin
+        return out or None
 
     @app.get("/")
     def index():

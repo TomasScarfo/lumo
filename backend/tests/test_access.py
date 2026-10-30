@@ -13,7 +13,7 @@ from lumo.tokens import save_tokens
 KEY = "clave-de-prueba-larga-y-aleatoria"
 CFG = {"ML_CLIENT_ID": "123", "ML_CLIENT_SECRET": "secreto-de-prueba", "REDIRECT_URI": "https://lumo.test/callback",
        "ENCRYPTION_KEY": KEY, "SECRET_KEY": "otra-clave-de-sesion", "DATABASE_URL": "sqlite://", "ADMIN_USER_IDS": "1, 2;x",
-       "CONTACT_EMAIL": "hola@lumo.test"}
+       "CONTACT_EMAIL": "hola@lumo.test", "CONTACT_WHATSAPP": "+54 9 11 0000-0000", "CONTACT_LINKEDIN": "https://www.linkedin.com/in/prueba/"}
 ADS = [{"advertiser_id": 9, "site_id": "MLA", "advertiser_name": "Negocio"}]
 
 
@@ -67,13 +67,40 @@ class Portada(Base):
         html = r.get_data(as_text=True)
         self.assertEqual(r.status_code, 200)
         self.assertIn("Ingresar con Mercado Libre", html)
-        self.assertIn("mailto:hola@lumo.test", html)
         self.assertIn("Ejemplo con datos ficticios", html)
         self.assertIn("no está afiliada", html)
 
-    def test_sin_email_de_contacto_no_hay_enlace_mailto(self):
-        app = create_app(dict(CFG, CONTACT_EMAIL=""))
-        self.assertNotIn("mailto:", app.test_client().get("/").get_data(as_text=True))
+    def test_seccion_de_contacto_con_los_tres_canales(self):
+        html = self.client.get("/").get_data(as_text=True)
+        self.assertIn('id="contacto"', html)
+        self.assertIn("mailto:hola@lumo.test", html)
+        self.assertIn("https://wa.me/5491100000000?text=", html)
+        self.assertIn("+54 9 11 0000 0000", html)
+        self.assertIn("https://www.linkedin.com/in/prueba/", html)
+
+    def test_sin_datos_de_contacto_no_hay_seccion(self):
+        app = create_app(dict(CFG, CONTACT_EMAIL="", CONTACT_WHATSAPP="", CONTACT_LINKEDIN=""))
+        html = app.test_client().get("/").get_data(as_text=True)
+        for texto in ("mailto:", "wa.me", 'id="contacto"', "linkedin.com"):
+            self.assertNotIn(texto, html)
+
+    def test_solo_acepta_linkedin_https(self):
+        app = create_app(dict(CFG, CONTACT_LINKEDIN="javascript:alert(1)"))
+        self.assertNotIn("javascript:", app.test_client().get("/").get_data(as_text=True))
+
+    def test_contacto_por_defecto(self):
+        from lumo import load_config
+        quitar = {k: v for k, v in os.environ.items() if not k.startswith("CONTACT_")}
+        with mock.patch.dict(os.environ, quitar, clear=True):
+            cfg = load_config()
+        self.assertEqual(cfg["CONTACT_EMAIL"], "tomas.scarfo@gmail.com")
+        self.assertEqual(cfg["CONTACT_WHATSAPP"], "5491145597516")
+        self.assertEqual(cfg["CONTACT_LINKEDIN"], "https://www.linkedin.com/in/tomas-scarfo/")
+
+    def test_pagina_sin_acceso_ofrece_whatsapp_y_email(self):
+        html = Ingreso.denied_html(self)
+        self.assertIn("wa.me/5491100000000", html)
+        self.assertIn("mailto:hola@lumo.test", html)
 
     def test_estaticos(self):
         for path in ("/static/site.css", "/static/logo.svg", "/static/logo.png"):
@@ -105,6 +132,13 @@ class Invitaciones(Base):
 
 
 class Ingreso(Base):
+    def denied_html(self):
+        return Base.connect(self, self.client, 999).get_data(as_text=True)
+
+    def test_la_pantalla_principal_ordena_metricas_graficos_y_campanas(self):
+        fuente = open(os.path.join(os.path.dirname(__file__), "..", "lumo", "panel.html"), encoding="utf-8").read()
+        self.assertIn("function principalHTML() { return heroHTML() + kpiHTML() + chartsHTML() + campsHTML(); }", fuente)
+
     def test_sin_invitacion_no_entra_ni_se_guardan_sus_datos(self):
         r = self.connect(self.client, 999)
         html = r.get_data(as_text=True)

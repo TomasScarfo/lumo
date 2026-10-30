@@ -19,7 +19,7 @@ python -m unittest discover -s tests
 
 1. Subir esta carpeta a un repositorio de GitHub.
 2. En Supabase, copiar la cadena de conexión "Session pooler" (Project Settings, Database).
-3. En Render: New, Blueprint, elegir el repositorio. Cargar `ML_CLIENT_ID`, `ML_CLIENT_SECRET`, `REDIRECT_URI`, `DATABASE_URL` y `ADMIN_USER_IDS` (tu ID de Mercado Libre; opcional `CONTACT_EMAIL`).
+3. En Render: New, Blueprint, elegir el repositorio. Cargar `ML_CLIENT_ID`, `ML_CLIENT_SECRET`, `REDIRECT_URI`, `DATABASE_URL` y `ADMIN_USER_IDS`. Opcionales: `CONTACT_EMAIL`, `CONTACT_WHATSAPP` y `CONTACT_LINKEDIN` (ya tienen valores por defecto).
 4. En Mercado Libre: poner en la app la misma dirección que `REDIRECT_URI` (la dirección de Render más `/callback`).
 5. Abrir la dirección de Render, ingresar con Mercado Libre y crear invitaciones en `/admin`.
 

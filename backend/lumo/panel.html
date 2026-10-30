@@ -253,6 +253,13 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .rbar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; }
 .rbar .fill.revisar { background: var(--bad); }
 .rbar .fill.atencion { background: var(--warn); }
+.rbar .fill.bien { background: var(--good); opacity: .75; }
+.rbar .fill.excelente { background: var(--good); }
+.rbar .fill.sindatos { background: var(--ink-3); }
+.rbar.lg { height: 14px; margin: 8px 0 6px; }
+.rrow { padding: 12px 0; border-top: 1px solid var(--line); }
+.rrow-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rname { font-weight: 700; }
 .rbar .mark { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--ink); border-radius: 2px; }
 .rlab { display: flex; justify-content: space-between; gap: 10px; font-size: .8rem; color: var(--ink-2); flex-wrap: wrap; }
 .impact { font-size: .9rem; color: var(--ink-2); }
@@ -778,7 +785,24 @@ function campsHTML() {
     '<div class="ctw"><table class="ct"><thead><tr>' + COLS.map(th).join('') + '</tr></thead><tbody>' + body + '</tbody></table></div>' +
     '</section>';
 }
-function principalHTML() { return heroHTML() + kpiHTML() + campsHTML() + chartCardHTML(); }
+/* Gráfico: el ROAS de cada campaña contra su objetivo (la marca negra). */
+function roasChartHTML() {
+  var list = M.camps.filter(function (c) { return c.cur.spend > 0; }).sort(function (a, b) { return b.cur.spend - a.cur.spend; });
+  if (!list.length) return '';
+  var max = Math.max.apply(null, list.map(function (c) { return Math.max(c.roas, c.target); })) * 1.15 || 1;
+  var rows = list.map(function (c) {
+    return '<div class="rrow"><div class="rrow-h"><span class="rname">' + c.name + '</span>' + pill(c.status) + '</div>' +
+      '<div class="rbar lg" aria-hidden="true"><span class="fill ' + c.status + '" style="width:' + Math.max(1, c.roas / max * 100) + '%"></span><i class="mark" style="left:' + (c.target / max * 100) + '%"></i></div>' +
+      '<div class="rlab"><span>ROAS $' + r1(c.roas) + ': por cada $1 vendés $' + r1(c.roas) + '</span><span>Objetivo $' + r1(c.target) + '</span></div></div>';
+  }).join('');
+  return '<section class="card" aria-labelledby="h-roas"><div class="sec-head"><h2 id="h-roas">ROAS de cada campaña contra su objetivo</h2><span class="sub">Últimos ' + S.days + ' días</span></div>' +
+    '<p class="sub">La marca negra es el ROAS objetivo de la campaña. Si la barra la pasa, la campaña cumple.</p>' + rows + '</section>';
+}
+function chartsHTML() {
+  return '<div class="group-t" style="margin-top:4px">Gráficos</div><div class="stack">' + chartCardHTML() + roasChartHTML() + '</div>';
+}
+/* Orden de la pantalla principal: primero las métricas, después los gráficos y al final las campañas. */
+function principalHTML() { return heroHTML() + kpiHTML() + chartsHTML() + campsHTML(); }
 
 /* ---------- Tareas ---------- */
 function taskRow(x) {

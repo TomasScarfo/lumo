@@ -18,7 +18,8 @@
     <p>Si recibiste un enlace de invitación, abrilo y conectá desde ahí. Si no, pedí acceso y compartí este número para que te habiliten:</p>
     <div class="idbox">ID de tu cuenta de Mercado Libre: <code>{{ user_id }}</code></div>
     <div class="row">
-      {% if contact %}<a class="btn" href="{{ contact }}">Pedir acceso por email</a>{% endif %}
+      {% if contact and contact.whatsapp %}<a class="btn" href="{{ contact.whatsapp }}" target="_blank" rel="noopener">Pedir acceso por WhatsApp</a>{% endif %}
+      {% if contact and contact.email %}<a class="btn ghost" href="{{ contact.mailto }}">Pedir por email</a>{% endif %}
       <a class="btn ghost" href="/">Volver al inicio</a>
     </div>
   </div>
