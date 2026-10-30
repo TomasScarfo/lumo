@@ -392,28 +392,26 @@ def _esc(text) -> str:
 
 def _result_body(cfg: dict, tok: dict, user_id: int):
     """Devuelve (html, ok). ok es True cuando se puede pasar directo al panel."""
-    lines = ["<h1>Conectado</h1><p class='ok'>Lumo ya puede leer tu cuenta de Mercado Libre.</p>"]
-    lines.append("<p>Cuenta: <code>%s</code></p>" % user_id)
-    lines.append("<p>Permisos recibidos: <code>%s</code></p>" % _esc(tok.get("scope") or "sin dato"))
+    lines = ["<h1>¡Listo, tu cuenta está conectada!</h1><p class='ok'>Lumo ya puede mostrarte cómo van tus publicidades de Mercado Libre.</p>"]
     has_refresh = bool(tok.get("refresh_token"))
     if not has_refresh:
-        lines.append("<p class='bad'>Mercado Libre no entregó un refresh token. Hay que activar el acceso offline en la app para que Lumo pueda renovar el permiso sola.</p>")
+        lines.append("<p class='bad'>La conexión quedó a medias: Mercado Libre no nos dio permiso para mantenerla activa, así que se vencería en unas horas.</p><p>Si ves este mensaje, avisanos y lo resolvemos.</p>")
     try:
         found = ml.advertisers(cfg, tok["access_token"])
     except ml.MLError as exc:
         if exc.status == 404:
-            lines.append("<p class='bad'>Tu cuenta todavía no tiene Publicidad habilitada.</p><p>Entrá a Mercado Libre, Mi perfil, Publicidad, activala y volvé a conectar.</p>")
+            lines.append("<p class='bad'>Todavía no tenés Publicidad activada en Mercado Libre.</p><p>Para activarla entrá a Mercado Libre, andá a <b>Mi perfil</b> y después a <b>Publicidad</b>. Cuando esté lista, volvé acá y conectá tu cuenta de nuevo.</p>")
         elif exc.status in (401, 403):
-            lines.append("<p class='bad'>Mercado Libre no dejó que Lumo lea Product Ads con esta cuenta (error %s).</p><p>Puede ser un permiso restringido a desarrolladores autorizados.</p>" % exc.status)
+            lines.append("<p class='bad'>Mercado Libre no nos dejó ver tus publicidades con esta cuenta.</p><p>Probá conectar de nuevo con la cuenta principal de tu negocio. Si sigue igual, escribinos.</p>")
         else:
-            lines.append("<p class='bad'>La consulta de anunciantes falló (error %s, <code>%s</code>).</p>" % (exc.status, _esc(exc.code)))
+            lines.append("<p class='bad'>No pudimos traer tus publicidades en este momento.</p><p>Probá de nuevo en unos minutos. Si sigue pasando, escribinos.</p>")
         return "".join(lines), False
     if not found:
-        lines.append("<p>No encontramos anunciantes de Product Ads en esta cuenta.</p>")
+        lines.append("<p>Tu cuenta está conectada, pero todavía no encontramos publicidades en ella.</p><p>Cuando crees tu primera campaña en Mercado Libre, va a aparecer acá.</p>")
         return "".join(lines), False
-    lines.append("<p>Anunciantes de Product Ads:</p><ul>")
+    lines.append("<p>Encontramos estas cuentas de publicidad:</p><ul>")
     for a in found:
-        lines.append("<li><b>%s</b> · sitio <code>%s</code> · id <code>%s</code></li>" % (_esc(a.get("advertiser_name", "")), _esc(a.get("site_id", "")), _esc(a.get("advertiser_id", ""))))
+        lines.append("<li><b>%s</b></li>" % _esc(a.get("advertiser_name", "")))
     lines.append("</ul>")
     if not has_refresh:
         lines.append("<a class='btn' href='/panel'>Entrar igual al panel</a>")

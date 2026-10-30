@@ -1251,7 +1251,7 @@ var dyn = document.getElementById('dyn');
 function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function say(html) { dyn.innerHTML = '<div class="wrap"><section class="card empty" style="margin-top:12vh;text-align:center">' + html + '</section></div>'; }
 var MSG = {
-  no_ads: '<h2>Tu cuenta todavía no tiene Publicidad habilitada</h2><p class="sub">Entrá a Mercado Libre, Mi perfil, Publicidad, activala y volvé.</p>',
+  no_ads: '<h2>Todavía no tenés Publicidad activada</h2><p class="sub">Entrá a Mercado Libre, andá a Mi perfil y después a Publicidad para activarla. Cuando esté lista, volvé acá.</p>',
   forbidden: '<h2>Mercado Libre no dejó leer Product Ads</h2><p class="sub">Puede ser un permiso de la cuenta. <a class="link" href="/connect">Volver a conectar</a></p>',
   busy: '<h2>Mercado Libre pidió esperar un momento</h2><p class="sub">Probá de nuevo en un minuto. <a class="link" href="/panel">Reintentar</a></p>',
   api: '<h2>No pudimos leer tus datos</h2><p class="sub">Fue un error de Mercado Libre. <a class="link" href="/panel">Reintentar</a></p>'
