@@ -347,7 +347,7 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 
 <main class="page">
   <div id="dyn"></div>
-  <p class="foot">Lumo solo lee tus datos de Product Ads. Nada de lo que ves acá modifica tus campañas.</p>
+  <p class="foot">Lumo solo lee tus datos. Nada de lo que ves acá modifica tus campañas.</p>
 </main>
 
 <script>
@@ -1252,9 +1252,9 @@ function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').repla
 function say(html) { dyn.innerHTML = '<div class="wrap"><section class="card empty" style="margin-top:12vh;text-align:center">' + html + '</section></div>'; }
 var MSG = {
   no_ads: '<h2>Todavía no tenés Publicidad activada</h2><p class="sub">Entrá a Mercado Libre, andá a Mi perfil y después a Publicidad para activarla. Cuando esté lista, volvé acá.</p>',
-  forbidden: '<h2>Mercado Libre no dejó leer Product Ads</h2><p class="sub">Puede ser un permiso de la cuenta. <a class="link" href="/connect">Volver a conectar</a></p>',
-  busy: '<h2>Mercado Libre pidió esperar un momento</h2><p class="sub">Probá de nuevo en un minuto. <a class="link" href="/panel">Reintentar</a></p>',
-  api: '<h2>No pudimos leer tus datos</h2><p class="sub">Fue un error de Mercado Libre. <a class="link" href="/panel">Reintentar</a></p>'
+  forbidden: '<h2>Mercado Libre no nos dejó ver tus publicidades</h2><p class="sub">Probá conectar de nuevo con la cuenta principal de tu negocio. <a class="link" href="/connect">Volver a conectar</a></p>',
+  busy: '<h2>Mercado Libre nos pidió esperar un momento</h2><p class="sub">Probá de nuevo en un minuto. <a class="link" href="/panel">Reintentar</a></p>',
+  api: '<h2>No pudimos traer tus datos</h2><p class="sub">Hubo un problema del lado de Mercado Libre. <a class="link" href="/panel">Reintentar</a></p>'
 };
 var qs = new URLSearchParams(location.search), want = [];
 if (qs.get('adv')) want.push('adv=' + encodeURIComponent(qs.get('adv')));
@@ -1265,7 +1265,7 @@ fetch('/api/datos' + (want.length ? '?' + want.join('&') : ''), { credentials: '
   .then(function (x) {
     if (x.s === 401) { location.href = x.j.error === 'reconnect' ? '/connect' : '/'; return; }
     if (x.j.error) { say((MSG[x.j.error] || MSG.api) + (x.j.detail ? '<p class="small">Detalle técnico: <code>' + esc(x.j.detail) + '</code></p>' : '')); return; }
-    if (!x.j.camps.length) { say('<h2>Todavía no tenés campañas de Product Ads</h2><p class="sub">Cuando crees una en Mercado Libre, va a aparecer acá.</p>'); return; }
+    if (!x.j.camps.length) { say('<h2>Todavía no tenés campañas de publicidad</h2><p class="sub">Cuando crees la primera en Mercado Libre, va a aparecer acá.</p>'); return; }
     history.replaceState(null, '', '/panel' + location.hash);
     boot(x.j);
   })
