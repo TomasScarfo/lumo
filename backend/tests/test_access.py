@@ -139,7 +139,7 @@ class Portada(Base):
         quitar = {k: v for k, v in os.environ.items() if not k.startswith("CONTACT_")}
         with mock.patch.dict(os.environ, quitar, clear=True):
             cfg = load_config()
-        self.assertEqual(cfg["CONTACT_EMAIL"], "tomas.scarfo@gmail.com")
+        self.assertEqual(cfg["CONTACT_EMAIL"], "lumoads.ml@gmail.com")
         self.assertEqual(cfg["CONTACT_WHATSAPP"], "5491145597516")
         self.assertEqual(cfg["CONTACT_LINKEDIN"], "https://www.linkedin.com/in/tomas-scarfo/")
 
