@@ -631,7 +631,13 @@ function topHTML() {
   }).join('');
   return '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(D.advertiser.name) + ' · ' + esc(D.advertiser.site) + '</div></div></div>' +
     '<div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div></header>' +
-    '<div class="notice">' + icon('info') + '<span>Datos reales de Mercado Libre hasta el ' + dayLong(END) + '. Se actualizan una vez por día. El período elegido cambia las métricas de publicidad; las ventas orgánicas y las tendencias miran siempre los últimos 30 días. <a class="link" href="/panel?refresh=1">Actualizar ahora</a> · <a class="link" href="/salir">Salir</a>' + (D.admin ? ' · <a class="link" href="/admin">Administrar</a>' : '') + '</span></div>' + notesHTML();
+    '<div class="notice">' + icon('info') + '<span>Datos reales de Mercado Libre hasta el ' + dayLong(END) + '. Se actualizan una vez por día. El período elegido cambia las métricas de publicidad; las ventas orgánicas y las tendencias miran siempre los últimos 30 días. <a class="link" href="/panel?refresh=1">Actualizar ahora</a> · <a class="link" href="/salir">Salir</a>' + (D.admin ? ' · <a class="link" href="/admin">Administrar</a>' : '') + planHTML() + '</span></div>' + notesHTML();
+}
+function planHTML() {
+  var p = D.plan || {};
+  if (p.kind === 'trial') return ' · <b>Prueba gratis: ' + (p.days === 1 ? 'queda 1 día' : 'quedan ' + p.days + ' días') + '</b> <a class="link" href="/suscripcion">Suscribirme</a>';
+  if (p.kind === 'paid') return ' · <a class="link" href="/suscripcion">Mi suscripción</a>';
+  return '';
 }
 var TABS = [['principal', 'Principal'], ['tareas', 'Tareas'], ['alertas', 'Alertas'], ['recomendaciones', 'Recomendaciones'], ['seguimiento', 'Seguimiento'], ['tendencias', 'Tendencias'], ['glosario', 'Glosario']];
 function navHTML() {
@@ -1335,6 +1341,7 @@ say('<h2>Trayendo tus datos de Mercado Libre…</h2><p class="sub">La primera ve
 fetch('/api/datos' + (want.length ? '?' + want.join('&') : ''), { credentials: 'same-origin' })
   .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
   .then(function (x) {
+    if (x.s === 402) { location.href = '/suscripcion'; return; }
     if (x.s === 401) { location.href = x.j.error === 'reconnect' ? '/connect' : '/'; return; }
     if (x.j.error === 'no_ads') { noAds(x.j.cuenta); return; }
     if (x.j.error) { say((MSG[x.j.error] || MSG.api) + (x.j.detail ? '<p class="small">Detalle técnico: <code>' + esc(x.j.detail) + '</code></p>' : '')); return; }

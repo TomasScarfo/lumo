@@ -17,7 +17,7 @@
   </div>
 
   <h2 id="invitaciones">Invitaciones</h2>
-  <p class="sub">Creá un enlace por persona. Se usa una sola vez y vence a los 14 días. Quien lo abra conecta su cuenta de Mercado Libre y queda con acceso.</p>
+  <p class="sub">Para dar acceso sin cargo (sin prueba ni suscripción). Creá un enlace por persona: se usa una sola vez y vence a los 14 días. Quien lo abra conecta su cuenta de Mercado Libre y queda con acceso gratis.</p>
   <form method="post" action="/admin/invitar" class="row" style="margin-bottom:16px">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <input type="text" name="label" maxlength="120" placeholder="Nombre de la persona o del negocio" aria-label="Nombre de la persona o del negocio">
@@ -46,8 +46,31 @@
     {% else %}<p class="empty">Todavía no creaste invitaciones.</p>{% endif %}
   </div>
 
-  <h2 id="accesos">Cuentas con acceso</h2>
-  <p class="sub">Las cuentas de esta lista pueden entrar a Lumo. También podés habilitar una por su ID de Mercado Libre, sin invitación.</p>
+  <h2 id="suscripciones">Pruebas y suscripciones</h2>
+  <p class="sub">Cada cuenta nueva empieza una prueba gratis al conectarse. {% if billing_on %}El cobro con Mercado Pago está activo.{% else %}<b>El cobro está desactivado:</b> faltan <code>MP_ACCESS_TOKEN</code> o <code>PLAN_PRICE</code> en Render.{% endif %}</p>
+  <div class="tw">
+    {% if subs %}
+    <table>
+      <thead><tr><th>Cuenta</th><th>Estado</th><th>Email de pago</th></tr></thead>
+      <tbody>
+      {% for x in subs %}
+        <tr>
+          <td><code>{{ x.user_id }}</code></td>
+          <td>{% if x.kind == 'paid' and x.status == 'authorized' %}<span class="pill ex">Pagando</span>{% if x.paid_until %}<br><small>próximo cobro {{ x.paid_until.strftime('%d/%m') }}</small>{% endif %}
+              {% elif x.kind == 'paid' %}<span class="pill at">Canceló</span><br><small>acceso hasta {{ x.paid_until.strftime('%d/%m') }}</small>
+              {% elif x.kind == 'trial' %}<span class="pill pe">En prueba</span><br><small>{{ x.days }} días restantes</small>
+              {% elif x.kind in ('free', 'admin') %}<span class="pill bi">Acceso sin cargo</span>
+              {% else %}<span class="pill us">{{ 'Cancelada' if x.status == 'cancelled' else 'Prueba vencida' }}</span>{% endif %}</td>
+          <td>{{ x.email or '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="empty">Todavía nadie empezó una prueba.</p>{% endif %}
+  </div>
+
+  <h2 id="accesos">Cuentas con acceso sin cargo</h2>
+  <p class="sub">Las cuentas de esta lista entran gratis, sin suscripción. También podés habilitar una por su ID de Mercado Libre, sin invitación.</p>
   <form method="post" action="/admin/acceso/agregar" class="row" style="margin-bottom:16px">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <input type="text" name="user_id" inputmode="numeric" pattern="[0-9]+" placeholder="ID de Mercado Libre (solo números)" aria-label="ID de Mercado Libre" required>
@@ -75,7 +98,7 @@
     </table>
     {% if not members and not admins %}<p class="empty">Todavía no hay cuentas.</p>{% endif %}
   </div>
-  <p class="sub" style="margin-top:14px">Quitar el acceso borra los permisos guardados, la copia de datos y las tareas de esa cuenta. Para volver a entrar necesitará una invitación nueva.</p>
+  <p class="sub" style="margin-top:14px">Quitar el acceso borra los permisos guardados, la copia de datos y las tareas de esa cuenta, y cancela su suscripción si tenía una. Para volver a entrar tendrá que suscribirse o recibir una invitación nueva.</p>
 </main>
 <script>
 document.addEventListener('click', function (e) {

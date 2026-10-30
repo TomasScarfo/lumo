@@ -28,3 +28,15 @@ services:
       # IDs de Mercado Libre de quienes administran Lumo (separados por coma). Sin esto, nadie puede crear invitaciones.
       - key: ADMIN_USER_IDS
         sync: false
+      # Cobro con Mercado Pago (Access Token de producción y clave secreta de Webhooks).
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: MP_WEBHOOK_SECRET
+        sync: false
+      # Precio mensual, solo el número (por ejemplo 15000).
+      - key: PLAN_PRICE
+        sync: false
+      - key: PLAN_CURRENCY
+        value: ARS
+      - key: TRIAL_DAYS
+        value: "14"
