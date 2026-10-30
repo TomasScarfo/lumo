@@ -3,12 +3,10 @@ import logging
 import os
 import re
 import secrets
-import time
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import quote
 
-import requests
 from flask import Flask, Response, abort, jsonify, redirect, render_template, render_template_string, request, session
 from sqlalchemy import create_engine, delete, inspect, select, text
 from sqlalchemy.orm import Session
@@ -57,9 +55,6 @@ def load_config(overrides=None) -> dict:
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com"),
         "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
-        # Para que el formulario de la portada llegue a CONTACT_EMAIL (clave de API de resend.com, solo envío).
-        "RESEND_API_KEY": os.environ.get("RESEND_API_KEY", ""),
-        "RESEND_FROM": os.environ.get("RESEND_FROM", "Lumo <onboarding@resend.dev>"),
     }
     cfg.update(overrides or {})
     return cfg
@@ -116,44 +111,6 @@ def create_app(overrides=None) -> Flask:
             out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
         return out or None
 
-    def _landing(**extra):
-        return render_template("landing.html", contact=_contact(), invited=False, label=None, csrf=_csrf(), **extra)
-
-    def _send_inquiry(name, email, fields):
-        key, to = cfg.get("RESEND_API_KEY"), cfg.get("CONTACT_EMAIL")
-        if not (key and to):
-            log.warning("Consulta recibida pero falta configurar RESEND_API_KEY")
-            return False
-        body = {"from": cfg["RESEND_FROM"], "to": [to], "reply_to": email,
-                "subject": "Consulta desde Lumo: %s" % (name or email),
-                "text": "\n".join("%s: %s" % (k, v) for k, v in fields if v) + "\n"}
-        try:
-            r = requests.post("https://api.resend.com/emails", json=body, headers={"Authorization": "Bearer " + key}, timeout=15)
-            r.raise_for_status()
-        except requests.RequestException:
-            log.exception("No se pudo enviar la consulta")
-            return False
-        return True
-
-    @app.post("/contacto")
-    def contacto():
-        _check_csrf()
-        if request.form.get("web"):  # campo trampa: solo lo completan los robots
-            return redirect("/?enviado=1#contacto")
-        def field(key, n):
-            return request.form.get(key, "").strip()[:n]
-        name, email, phone = field("name", 120), field("email", 200), field("phone", 60)
-        sells, interests, message = field("sells", 500), field("interests", 500), field("message", 3000)
-        keep = {"form_" + k: v for k, v in dict(name=name, email=email, phone=phone, sells=sells, interests=interests, message=message).items()}
-        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
-            return _landing(form_error="Escribí un email válido para poder responderte.", **keep), 400
-        if time.time() - session.get("inquiry_at", 0) < 30:
-            return _landing(form_error="Ya enviaste una consulta hace un momento. Probá de nuevo en unos segundos.", **keep), 429
-        if not _send_inquiry(name, email, [("Nombre", name), ("Email", email), ("Teléfono", phone), ("Qué vende en Mercado Libre", sells), ("Intereses", interests), ("Mensaje", message)]):
-            return _landing(form_error="No pudimos enviar tu consulta. Escribime por WhatsApp o email y te respondo enseguida.", **keep), 502
-        session["inquiry_at"] = time.time()
-        return redirect("/?enviado=1#contacto")
-
     @app.get("/")
     def index():
         miss = missing_config()
@@ -162,7 +119,7 @@ def create_app(overrides=None) -> Flask:
         uid = _current_user()
         if uid:
             return redirect("/admin" if access.is_admin(cfg, uid) else "/panel")
-        return _landing(form_sent=bool(request.args.get("enviado")))
+        return render_template("landing.html", contact=_contact(), invited=False, label=None)
 
     @app.get("/invitacion/<token>")
     def invitacion(token):
@@ -170,9 +127,9 @@ def create_app(overrides=None) -> Flask:
             inv = access.valid_invite(s, token)
             label = inv.label if inv else None
         if inv is None:
-            return render_template("landing.html", contact=_contact(), invited=False, label=None, invite_error=True, csrf=_csrf()), 404
+            return render_template("landing.html", contact=_contact(), invited=False, label=None, invite_error=True), 404
         session["invite"] = token
-        return render_template("landing.html", contact=_contact(), invited=True, label=label, csrf=_csrf())
+        return render_template("landing.html", contact=_contact(), invited=True, label=label)
 
     @app.get("/connect")
     def connect():

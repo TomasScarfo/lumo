@@ -201,23 +201,33 @@
         {% if contact.whatsapp %}<a class="card contact" href="{{ contact.whatsapp }}" target="_blank" rel="noopener"><div class="brand wa"><svg><use href="#b-wa"/></svg></div><h3>WhatsApp</h3><p>{{ contact.phone }}</p><span class="go">Escribir un mensaje <svg><use href="#i-arrow"/></svg></span></a>{% endif %}
         {% if contact.email %}<a class="card contact" href="{{ contact.mailto }}"><div class="brand mail"><svg><use href="#b-mail"/></svg></div><h3>Email</h3><p>{{ contact.email }}</p><span class="go">Enviar un email <svg><use href="#i-arrow"/></svg></span></a>{% endif %}
       </div>
-      <form class="card inquiry" method="post" action="/contacto" id="consulta">
+      <form class="card inquiry" id="consulta" data-to="{{ contact.email }}">
         <h3>O dejame tu consulta</h3>
-                {% if form_sent %}<div class="invite-note ok" role="status">¡Listo! Recibí tu consulta y te respondo pronto.</div>{% endif %}
-        {% if form_error %}<div class="invite-note bad" role="alert">{{ form_error }}</div>{% endif %}
-        <input type="hidden" name="csrf" value="{{ csrf }}">
-        <div class="trap" aria-hidden="true"><label>No completar <input type="text" name="web" tabindex="-1" autocomplete="off"></label></div>
-        <p class="sub">Solo el email es obligatorio; el resto me ayuda a prepararme.</p>
+        <p class="sub">Solo el email es obligatorio; el resto me ayuda a prepararme. Al enviar se abre tu programa de mail con el mensaje listo para mandar.</p>
         <div class="f2">
-          <label>Tu email<input type="email" name="email" required maxlength="200" autocomplete="email" value="{{ form_email or '' }}"></label>
-          <label>Tu nombre <small>(opcional)</small><input type="text" name="name" maxlength="120" autocomplete="name" value="{{ form_name or '' }}"></label>
+          <label>Tu email<input type="email" name="email" required maxlength="200" autocomplete="email"></label>
+          <label>Tu nombre <small>(opcional)</small><input type="text" name="name" maxlength="120" autocomplete="name"></label>
         </div>
-        <label>Teléfono o WhatsApp <small>(opcional)</small><input type="tel" name="phone" maxlength="60" autocomplete="tel" value="{{ form_phone or '' }}"></label>
-        <label>¿Qué vendés en Mercado Libre? <small>(opcional)</small><input type="text" name="sells" maxlength="500" placeholder="Ej: accesorios para celulares, ropa deportiva…" value="{{ form_sells or '' }}"></label>
-        <label>¿Qué te interesa de Lumo? <small>(opcional)</small><input type="text" name="interests" maxlength="500" placeholder="Ej: bajar el costo de publicidad, entender mis campañas…" value="{{ form_interests or '' }}"></label>
-        <label>Algo más que quieras contarme <small>(opcional)</small><textarea name="message" maxlength="3000" rows="3">{{ form_message or '' }}</textarea></label>
-        <button class="btn" type="submit">Enviar consulta</button>
+        <label>Teléfono o WhatsApp <small>(opcional)</small><input type="tel" name="phone" maxlength="60" autocomplete="tel"></label>
+        <label>¿Qué vendés en Mercado Libre? <small>(opcional)</small><input type="text" name="sells" maxlength="500" placeholder="Ej: accesorios para celulares, ropa deportiva…"></label>
+        <label>¿Qué te interesa de Lumo? <small>(opcional)</small><input type="text" name="interests" maxlength="500" placeholder="Ej: bajar el costo de publicidad, entender mis campañas…"></label>
+        <label>Algo más que quieras contarme <small>(opcional)</small><textarea name="message" maxlength="3000" rows="3"></textarea></label>
+        <button class="btn" type="submit">Preparar el mail</button>
       </form>
+      <script>
+        (function () {
+          var f = document.getElementById("consulta");
+          if (!f) return;
+          f.addEventListener("submit", function (e) {
+            e.preventDefault();
+            var v = function (n) { return f.elements[n].value.trim(); };
+            var rows = [["Nombre", v("name")], ["Email", v("email")], ["Teléfono", v("phone")],
+                        ["Qué vendo en Mercado Libre", v("sells")], ["Qué me interesa", v("interests")], ["Mensaje", v("message")]];
+            var body = rows.filter(function (r) { return r[1]; }).map(function (r) { return r[0] + ": " + r[1]; }).join("\n");
+            window.location.href = "mailto:" + f.dataset.to + "?subject=" + encodeURIComponent("Consulta sobre Lumo") + "&body=" + encodeURIComponent(body);
+          });
+        })();
+      </script>
     </div>
   </section>
   {% endif %}
