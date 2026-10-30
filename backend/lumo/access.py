@@ -1,10 +1,12 @@
-"""Quién puede usar Lumo: administradores (variable de entorno), cuentas con acceso e invitaciones de un solo uso."""
+"""Quién puede usar Lumo: administradores (variable de entorno), cuentas con acceso sin cargo, invitaciones de un solo uso
+y cuentas en prueba gratis o con la suscripción al día."""
 import secrets
 from datetime import timedelta
 
 from sqlalchemy import update
 
-from .models import Access, Invite, utcnow
+from . import billing
+from .models import Access, Invite, Subscription, utcnow
 
 INVITE_DAYS = 14
 
@@ -22,10 +24,27 @@ def is_admin(cfg: dict, user_id) -> bool:
     return user_id is not None and int(user_id) in admin_ids(cfg)
 
 
-def has_access(db, cfg: dict, user_id) -> bool:
+def plan(db, cfg: dict, user_id) -> dict:
+    """Por qué entra (o no) una cuenta: admin, free (acceso sin cargo), paid, trial, expired o none (nunca ingresó)."""
     if user_id is None:
-        return False
-    return is_admin(cfg, user_id) or db.get(Access, int(user_id)) is not None
+        return {"kind": "none"}
+    if is_admin(cfg, user_id):
+        return {"kind": "admin"}
+    if db.get(Access, int(user_id)) is not None:
+        return {"kind": "free"}
+    sub = db.get(Subscription, int(user_id))
+    if sub is None:
+        return {"kind": "none"}
+    now = utcnow()
+    if sub.status == "authorized" or (sub.paid_until and sub.paid_until > now):
+        return {"kind": "paid", "status": sub.status, "until": sub.paid_until}
+    if sub.trial_ends_at > now:
+        return {"kind": "trial", "days": billing.days_left(sub.trial_ends_at), "ends": sub.trial_ends_at, "status": sub.status}
+    return {"kind": "expired", "status": sub.status}
+
+
+def has_access(db, cfg: dict, user_id) -> bool:
+    return plan(db, cfg, user_id)["kind"] in ("admin", "free", "paid", "trial")
 
 
 def create_invite(db, label: str, days: int = INVITE_DAYS) -> Invite:

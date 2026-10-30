@@ -165,7 +165,7 @@ footer a { color: var(--ink-2); }
 .adm h2 { font-size: 1.35rem; margin: 34px 0 6px; }
 .adm .sub { color: var(--ink-2); margin-bottom: 14px; }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-input[type=text], input[type=search] { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 400 1rem var(--font-body); flex: 1 1 200px; }
+input[type=text], input[type=search], input[type=email] { min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 400 1rem var(--font-body); flex: 1 1 200px; }
 .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 .tw table { width: 100%; border-collapse: collapse; font-size: .93rem; }
 .tw th { text-align: left; padding: 10px 14px; color: var(--ink-3); font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; }

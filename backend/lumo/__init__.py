@@ -10,8 +10,8 @@ from sqlalchemy import create_engine, delete, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from . import access, ads, ml
-from .models import Access, Account, Base, Invite, PanelState, Snapshot, utcnow
+from . import access, ads, billing, ml
+from .models import Access, Account, Base, Invite, PanelState, Snapshot, Subscription, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
 log = logging.getLogger("lumo")
@@ -52,6 +52,13 @@ def load_config(overrides=None) -> dict:
         "ML_API_BASE": os.environ.get("ML_API_BASE", "https://api.mercadolibre.com"),
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", ""),
+        # Cobro con Mercado Pago. Sin MP_ACCESS_TOKEN o sin PLAN_PRICE, la prueba gratis funciona igual pero no se puede pagar.
+        "MP_ACCESS_TOKEN": os.environ.get("MP_ACCESS_TOKEN", ""),
+        "MP_WEBHOOK_SECRET": os.environ.get("MP_WEBHOOK_SECRET", ""),
+        "MP_API_BASE": os.environ.get("MP_API_BASE", "https://api.mercadopago.com"),
+        "PLAN_PRICE": os.environ.get("PLAN_PRICE", ""),
+        "PLAN_CURRENCY": os.environ.get("PLAN_CURRENCY", "ARS"),
+        "TRIAL_DAYS": os.environ.get("TRIAL_DAYS", "14"),
     }
     cfg.update(overrides or {})
     return cfg
@@ -99,6 +106,9 @@ def create_app(overrides=None) -> Flask:
         email = cfg.get("CONTACT_EMAIL")
         return "mailto:%s?subject=Acceso%%20a%%20Lumo" % email if email else None
 
+    def _offer():
+        return {"contact": _contact(), "trial_days": billing.trial_days(cfg), "price": billing.price_label(cfg)}
+
     @app.get("/")
     def index():
         miss = missing_config()
@@ -107,7 +117,9 @@ def create_app(overrides=None) -> Flask:
         uid = _current_user()
         if uid:
             return redirect("/admin" if access.is_admin(cfg, uid) else "/panel")
-        return render_template("landing.html", contact=_contact(), invited=False, label=None)
+        if _session_uid():
+            return redirect("/suscripcion")
+        return render_template("landing.html", invited=False, label=None, **_offer())
 
     @app.get("/invitacion/<token>")
     def invitacion(token):
@@ -115,9 +127,9 @@ def create_app(overrides=None) -> Flask:
             inv = access.valid_invite(s, token)
             label = inv.label if inv else None
         if inv is None:
-            return render_template("landing.html", contact=_contact(), invited=False, label=None, invite_error=True), 404
+            return render_template("landing.html", invited=False, label=None, invite_error=True, **_offer()), 404
         session["invite"] = token
-        return render_template("landing.html", contact=_contact(), invited=True, label=label)
+        return render_template("landing.html", invited=True, label=label, **_offer())
 
     @app.get("/connect")
     def connect():
@@ -152,16 +164,17 @@ def create_app(overrides=None) -> Flask:
                     inv = s.get(Invite, invite_token)
                     access.grant(s, user_id, inv.label)
                     allowed = True
-            if not allowed:
-                s.rollback()
-                session.clear()
-                log.info("acceso denegado a la cuenta %s", user_id)
-                return render_template("denied.html", user_id=user_id, contact=_contact()), 403
-            save_tokens(s, cfg, user_id, tok)  # los tokens solo se guardan si la cuenta tiene acceso
+            if not allowed and s.get(Subscription, user_id) is None:
+                billing.start_trial(s, cfg, user_id)  # primer ingreso: empieza la prueba gratis, una sola por cuenta
+                allowed = True
+            save_tokens(s, cfg, user_id, tok)
             s.commit()
         session.clear()
         session["uid"] = user_id  # Lumo recuerda a la persona en este navegador
         session.permanent = True
+        if not allowed:
+            log.info("la cuenta %s no tiene la suscripción al día", user_id)
+            return redirect("/suscripcion")
         body, ok = _result_body(cfg, tok, user_id)
         if ok:
             return redirect("/panel")
@@ -169,21 +182,27 @@ def create_app(overrides=None) -> Flask:
             return redirect("/admin")
         return page(body)
 
-    def _current_user():
-        """El id de la cuenta de esta sesión, solo si está conectada y sigue teniendo acceso."""
+    def _session_uid():
+        """El id de la cuenta de esta sesión, si está conectada (tenga o no la suscripción al día)."""
         uid = session.get("uid")
         if not uid:
             return None
         with Session(engine) as s:
             acc = s.get(Account, uid)
-            if acc and acc.status == "connected" and access.has_access(s, cfg, uid):
-                return uid
-        return None
+            return uid if acc and acc.status == "connected" else None
+
+    def _current_user():
+        """El id de la cuenta de esta sesión, solo si está conectada y sigue teniendo acceso."""
+        uid = _session_uid()
+        if not uid:
+            return None
+        with Session(engine) as s:
+            return uid if access.has_access(s, cfg, uid) else None
 
     @app.get("/panel")
     def panel():
         if not _current_user():
-            return redirect("/")
+            return redirect("/suscripcion" if _session_uid() else "/")
         resp = Response(PANEL_HTML, mimetype="text/html")
         resp.headers["Cache-Control"] = "no-store"
         return resp
@@ -211,7 +230,7 @@ def create_app(overrides=None) -> Flask:
     def api_datos():
         uid = _current_user()
         if not uid:
-            return _json({"error": "login"}, 401)
+            return _json({"error": "plan"}, 402) if _session_uid() else _json({"error": "login"}, 401)
         want = request.args.get("adv", type=int)
         refresh = request.args.get("refresh") == "1"
         with Session(engine) as s:
@@ -248,6 +267,8 @@ def create_app(overrides=None) -> Flask:
             st = s.get(PanelState, uid)
             data["estado"] = json.loads(st.data) if st else {}
             data["admin"] = access.is_admin(cfg, uid)
+            p = access.plan(s, cfg, uid)
+            data["plan"] = {"kind": p["kind"], "days": p.get("days")}
         return _json(data)
 
     @app.post("/api/estado")
@@ -307,7 +328,13 @@ def create_app(overrides=None) -> Flask:
                         pass
                 members.append({"user_id": row.user_id, "note": row.note, "since": row.created_at,
                                 "status": acc.status if acc else "sin conectar", "advertiser": name})
-        return render_template("admin.html", csrf=_csrf(), invites=invites, members=members, admins=sorted(access.admin_ids(cfg)))
+            subs = []
+            for sub in s.execute(select(Subscription).order_by(Subscription.created_at.desc())).scalars():
+                p = access.plan(s, cfg, sub.user_id)
+                subs.append({"user_id": sub.user_id, "kind": p["kind"], "days": p.get("days"), "status": sub.status,
+                             "email": sub.payer_email, "trial_ends": sub.trial_ends_at, "paid_until": sub.paid_until})
+        return render_template("admin.html", csrf=_csrf(), invites=invites, members=members, subs=subs, admins=sorted(access.admin_ids(cfg)),
+                               billing_on=billing.enabled(cfg))
 
     @app.post("/admin/invitar")
     def admin_invitar():
@@ -346,8 +373,139 @@ def create_app(overrides=None) -> Flask:
             with Session(engine) as s:
                 for model in (Access, Account, Snapshot, PanelState):
                     s.execute(delete(model).where(model.user_id == uid))
+                _end_subscription(s, uid)  # sin una nueva prueba gratis: para volver tiene que suscribirse
                 s.commit()
         return redirect("/admin#accesos")
+
+    def _end_subscription(s, uid):
+        sub = s.get(Subscription, uid)
+        if sub is None:
+            sub = Subscription(user_id=uid, trial_ends_at=utcnow())
+            s.add(sub)
+        if sub.mp_preapproval_id and sub.status in ("pending", "authorized", "paused") and billing.enabled(cfg):
+            try:
+                billing.cancel(cfg, sub.mp_preapproval_id)
+            except billing.MPError as exc:
+                log.warning("no se pudo cancelar la suscripción de %s en Mercado Pago: %s", uid, exc.status)
+        sub.status, sub.paid_until = "cancelled", None
+        sub.trial_ends_at = min(sub.trial_ends_at, utcnow())
+
+    # ---------- Suscripción con Mercado Pago ----------
+    def _base_url():
+        uri = cfg["REDIRECT_URI"]
+        return uri[: -len("/callback")] if uri.endswith("/callback") else request.url_root.rstrip("/")
+
+    def _suscripcion_page(uid, error=None, status=200):
+        with Session(engine) as s:
+            p = access.plan(s, cfg, uid)
+            sub = s.get(Subscription, uid)
+            email = sub.payer_email if sub else ""
+            can_cancel = bool(sub and sub.mp_preapproval_id and sub.status in ("pending", "authorized", "paused"))
+        return render_template("suscripcion.html", plan=p, email=email or "", csrf=_csrf(), error=error, can_cancel=can_cancel,
+                               pending=request.args.get("estado") == "pendiente", billing_on=billing.enabled(cfg), **_offer()), status
+
+    @app.get("/suscripcion")
+    def suscripcion():
+        uid = _session_uid()
+        if not uid:
+            return redirect("/")
+        return _suscripcion_page(uid)
+
+    @app.post("/suscripcion")
+    def suscripcion_pagar():
+        uid = _session_uid()
+        if not uid:
+            return redirect("/")
+        _check_csrf()
+        if not billing.enabled(cfg):
+            return _suscripcion_page(uid, "El pago todavía no está disponible.", 503)
+        email = request.form.get("email", "").strip()
+        if not billing.EMAIL_RE.match(email) or len(email) > 254:
+            return _suscripcion_page(uid, "Revisá el email: tiene que ser el de tu cuenta de Mercado Pago.", 400)
+        with Session(engine) as s:
+            if access.plan(s, cfg, uid)["kind"] in ("admin", "free"):
+                return redirect("/panel")
+            sub = s.get(Subscription, uid)
+            if sub is None:
+                sub = Subscription(user_id=uid, trial_ends_at=utcnow())
+                s.add(sub)
+            if sub.status == "authorized":
+                return redirect("/suscripcion")
+            try:
+                url = billing.create_checkout(cfg, sub, email, _base_url() + "/suscripcion/listo")
+            except billing.MPError as exc:
+                log.warning("crear suscripción falló para %s: %s %s", uid, exc.status, exc.message)
+                return _suscripcion_page(uid, "Mercado Pago no pudo iniciar el pago. Probá de nuevo en unos minutos.", 502)
+            sub.status = "pending"
+            s.commit()
+        return redirect(url)
+
+    @app.get("/suscripcion/listo")
+    def suscripcion_listo():
+        """Mercado Pago vuelve acá después del pago, con el id de la suscripción."""
+        uid = _session_uid()
+        if not uid:
+            return redirect("/")
+        pid = request.args.get("preapproval_id", "")
+        if pid and billing.enabled(cfg):
+            try:
+                pre = billing.fetch(cfg, pid)
+            except billing.MPError as exc:
+                log.warning("consultar suscripción falló: %s", exc.status)
+                pre = None
+            if pre and str(pre.get("external_reference")) == str(uid):
+                with Session(engine) as s:
+                    sub = s.get(Subscription, uid)
+                    if sub:
+                        billing.apply(sub, pre)
+                        s.commit()
+        if _current_user():
+            with Session(engine) as s:
+                sub = s.get(Subscription, uid)
+                if sub and sub.status == "authorized":
+                    return redirect("/panel")
+        return redirect("/suscripcion?estado=pendiente")
+
+    @app.post("/suscripcion/cancelar")
+    def suscripcion_cancelar():
+        uid = _session_uid()
+        if not uid:
+            return redirect("/")
+        _check_csrf()
+        with Session(engine) as s:
+            sub = s.get(Subscription, uid)
+            if sub and sub.mp_preapproval_id and billing.enabled(cfg):
+                try:
+                    billing.apply(sub, billing.cancel(cfg, sub.mp_preapproval_id))
+                except billing.MPError as exc:
+                    log.warning("cancelar suscripción falló para %s: %s", uid, exc.status)
+                    return _suscripcion_page(uid, "No pudimos cancelar en Mercado Pago. Probá de nuevo o escribinos.", 502)
+                sub.status = "cancelled"  # sigue entrando hasta la fecha ya paga
+                s.commit()
+        return redirect("/suscripcion")
+
+    @app.post("/webhooks/mercadopago")
+    def webhook_mp():
+        """Avisos de Mercado Pago. No se confía en el contenido: se vuelve a consultar la suscripción con el token de Lumo."""
+        body = request.get_json(silent=True) or {}
+        kind = body.get("type") or request.args.get("type") or request.args.get("topic") or ""
+        data_id = str((body.get("data") or {}).get("id") or request.args.get("data.id") or request.args.get("id") or "")
+        if not billing.valid_signature(cfg, request.headers, data_id):
+            return _json({"error": "firma"}, 401)
+        if kind in ("subscription_preapproval", "preapproval") and data_id and billing.enabled(cfg):
+            try:
+                pre = billing.fetch(cfg, data_id)
+            except billing.MPError as exc:
+                log.warning("webhook: consultar suscripción falló: %s", exc.status)
+                return _json({"error": "mp"}, 502)  # Mercado Pago reintenta
+            ref = str(pre.get("external_reference") or "")
+            if ref.isdigit():
+                with Session(engine) as s:
+                    sub = s.get(Subscription, int(ref))
+                    if sub and (sub.mp_preapproval_id in (None, data_id)):
+                        billing.apply(sub, pre)
+                        s.commit()
+        return _json({"ok": True})
 
     return app
 

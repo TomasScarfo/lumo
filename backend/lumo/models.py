@@ -70,3 +70,19 @@ class Invite(Base):
     revoked = Column(Boolean, nullable=False, default=False)
     used_by = Column(BigInteger, nullable=True)
     used_at = Column(DateTime, nullable=True)
+
+
+class Subscription(Base):
+    """Prueba gratis y suscripción paga de una cuenta. Se crea al primer ingreso y no se borra: la prueba es una sola por cuenta."""
+
+    __tablename__ = "subscription"
+
+    user_id = Column(BigInteger, primary_key=True, autoincrement=False)
+    trial_ends_at = Column(DateTime, nullable=False)
+    # trial | pending | authorized | paused | cancelled (los últimos cuatro son los estados de Mercado Pago)
+    status = Column(String(32), nullable=False, default="trial")
+    mp_preapproval_id = Column(String(64), nullable=True)
+    payer_email = Column(String(254), nullable=True)
+    paid_until = Column(DateTime, nullable=True)  # próximo cobro informado por Mercado Pago: hasta ahí ya está pago
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+    updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
