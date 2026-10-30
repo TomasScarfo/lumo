@@ -2,6 +2,7 @@
 <title>Lumo</title>
 <meta name="robots" content="noindex">
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
@@ -360,7 +361,6 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <symbol id="i-lumo" viewBox="0 0 24 24"><path d="M9 4.5v14h7.5"/><circle cx="17" cy="7" r="1.7" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17.3h.01"/></symbol>
@@ -629,7 +629,7 @@ function topHTML() {
   var seg = [7, 14, 30].map(function (v) {
     return '<button data-act="days" data-v="' + v + '" aria-pressed="' + (S.days === v) + '">' + v + ' días</button>';
   }).join('');
-  return '<header class="top"><div class="brand"><div class="brand-mark">' + icon('lumo') + '</div><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(D.advertiser.name) + ' · ' + esc(D.advertiser.site) + '</div></div></div>' +
+  return '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(D.advertiser.name) + ' · ' + esc(D.advertiser.site) + '</div></div></div>' +
     '<div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div></header>' +
     '<div class="notice">' + icon('info') + '<span>Datos reales de Mercado Libre hasta el ' + dayLong(END) + '. Se actualizan una vez por día. El período elegido cambia las métricas de publicidad; las ventas orgánicas y las tendencias miran siempre los últimos 30 días. <a class="link" href="/panel?refresh=1">Actualizar ahora</a> · <a class="link" href="/salir">Salir</a>' + (D.admin ? ' · <a class="link" href="/admin">Administrar</a>' : '') + planHTML() + '</span></div>' + notesHTML();
 }
@@ -1289,7 +1289,7 @@ function noAds(c) {
   var ST2 = { ok: ['bien', 'check', 'Listo'], falta: ['revisar', 'x-circle', 'Falta'], revisar: ['atencion', 'alert', 'Revisar'], sindato: ['sindatos', 'info', 'Sin dato'] };
   function badge(k) { var t = ST2[k] || ST2.sindato; return '<span class="pill s-' + t[0] + '"><svg class="ic"><use href="#i-' + t[1] + '"/></svg>' + t[2] + '</span>'; }
   function num(v) { return v == null ? '—' : String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
-  var h = '<header class="top"><div class="brand"><div class="brand-mark"><svg class="ic"><use href="#i-lumo"/></svg></div><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(c.nick || 'Tu cuenta') + (c.site ? ' · ' + esc(c.site) : '') + '</div></div></div></header>';
+  var h = '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(c.nick || 'Tu cuenta') + (c.site ? ' · ' + esc(c.site) : '') + '</div></div></div></header>';
   h += '<section class="card na-hero"><div class="hero-ic"><svg class="ic"><use href="#i-alert"/></svg></div><div><h1>Tu cuenta todavía no tiene Publicidad activada</h1>' +
     '<p class="sub">Todavía no hay campañas para analizar. Mirá qué tenés listo, qué te falta y por dónde empezar.</p>' +
     '<div class="na-actions"><a class="btn" href="/panel?refresh=1">Ya la activé, actualizar</a></div></div></section>';
