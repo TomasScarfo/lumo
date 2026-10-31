@@ -1,4 +1,14 @@
 services:
+  # Portada estática: no se duerme y carga al instante. Sus botones despiertan y abren la app (servicio "lumo").
+  # Al publicar, Render reemplaza __APP_URL__ por la dirección de la app (variable APP_URL, sin barra al final).
+  - type: web
+    name: lumo-sitio
+    runtime: static
+    buildCommand: test -n "$APP_URL" && sed -i "s#__APP_URL__#${APP_URL%/}#g" site/index.html
+    staticPublishPath: ./site
+    envVars:
+      - key: APP_URL
+        sync: false
   - type: web
     name: lumo
     runtime: python
@@ -40,3 +50,6 @@ services:
         value: ARS
       - key: TRIAL_DAYS
         value: "14"
+      # Dirección de la portada estática (servicio "lumo-sitio"). Con esto, quien entra a la app sin sesión va a la portada.
+      - key: SITE_URL
+        sync: false

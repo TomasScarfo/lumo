@@ -4,7 +4,8 @@ Lee tus métricas de Product Ads y te dice qué mejorar con palabras simples.
 
 - `backend/`: servidor (Python, Flask). Conecta con Mercado Libre, guarda los tokens cifrados, lee Product Ads y sirve el panel (`backend/lumo/panel.html`).
 - `design/`: prototipo de la interfaz con datos de ejemplo y logos.
-- `render.yaml`: configuración para publicar en Render.
+- `site/`: la portada estática, generada con `backend/build_site.py`. Se publica aparte para que cargue al instante aunque el servidor esté dormido.
+- `render.yaml`: configuración para publicar en Render (la app y la portada).
 
 ## Probar en tu computadora
 
@@ -35,3 +36,21 @@ python -m unittest discover -s tests
 - Para probar pagos sin dinero real, usar las credenciales y usuarios de prueba de Mercado Pago.
 
 Los secretos se cargan solo en Render. Nunca van en GitHub ni en el chat.
+
+## Portada estática
+
+En el plan gratuito, Render apaga la app cuando nadie la usa y al volver muestra su pantalla de espera. Por eso la portada se publica aparte, como sitio estático (servicio `lumo-sitio`), que nunca se apaga:
+
+- Al abrir la portada, despierta la app en segundo plano.
+- Si alguien toca "Ingresar" antes de que la app esté lista, ve la espera de Lumo ("Abriendo Lumo…") en vez de la de Render, y entra solo cuando la app responde.
+
+Para activarla en Render:
+
+1. En el servicio `lumo-sitio`, cargar `APP_URL` con la dirección de la app (por ejemplo `https://lumo-xxxx.onrender.com`).
+2. En el servicio `lumo`, cargar `SITE_URL` con la dirección de `lumo-sitio`. Así quien entra a la app sin sesión (o sale) va a la portada.
+
+Después de cambiar la portada, los estilos o el logo, regenerarla (un test avisa si quedó vieja):
+
+```bash
+cd backend && python build_site.py
+```

@@ -62,6 +62,8 @@ def load_config(overrides=None) -> dict:
         "PLAN_PRICE": os.environ.get("PLAN_PRICE", ""),
         "PLAN_CURRENCY": os.environ.get("PLAN_CURRENCY", "ARS"),
         "TRIAL_DAYS": os.environ.get("TRIAL_DAYS", "14"),
+        # Dirección de la portada publicada aparte (servicio estático de Render). Vacía: la app sirve la portada.
+        "SITE_URL": os.environ.get("SITE_URL", "").rstrip("/"),
     }
     cfg.update(overrides or {})
     return cfg
@@ -99,7 +101,10 @@ def create_app(overrides=None) -> Flask:
 
     @app.get("/healthz")
     def healthz():
-        return {"ok": True}
+        resp = jsonify({"ok": True})
+        resp.headers["Access-Control-Allow-Origin"] = "*"  # la portada publicada aparte lo consulta para despertar al servidor
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
 
     @app.get("/favicon.ico")
     def favicon():
@@ -120,6 +125,7 @@ def create_app(overrides=None) -> Flask:
 
     def _offer():
         return {"contact": _contact(), "trial_days": billing.trial_days(cfg), "price": billing.price_label(cfg)}
+    app.extensions["lumo_offer"] = _offer  # build_site.py la usa para generar la portada estática
 
     @app.get("/")
     def index():
@@ -131,6 +137,8 @@ def create_app(overrides=None) -> Flask:
             return redirect("/admin" if access.is_admin(cfg, uid) else "/panel")
         if _session_uid():
             return redirect("/suscripcion")
+        if cfg.get("SITE_URL", "").startswith("https://"):
+            return redirect(cfg["SITE_URL"])  # la portada vive aparte y carga al instante
         return render_template("landing.html", invited=False, label=None, **_offer())
 
     @app.get("/invitacion/<token>")
