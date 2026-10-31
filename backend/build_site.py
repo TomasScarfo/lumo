@@ -21,10 +21,11 @@ APP_PLACEHOLDER = "__APP_URL__"
 
 
 def render() -> str:
-    # Solo hace falta lo mínimo para armar la app; el contacto sale de los valores por defecto de load_config.
+    # Solo hace falta lo mínimo para armar la app. El contacto, el precio (PLAN_PRICE) y los días de prueba (TRIAL_DAYS)
+    # salen de load_config: de las variables de entorno si están, o de sus valores por defecto.
     app = create_app({"DATABASE_URL": "sqlite://", "SECRET_KEY": "build", "ML_CLIENT_ID": "build"})
     with app.test_request_context("/"):
-        return render_template("landing.html", contact=app.extensions["lumo_contact"](), invited=False, label=None, app=APP_PLACEHOLDER)
+        return render_template("landing.html", invited=False, label=None, app=APP_PLACEHOLDER, **app.extensions["lumo_offer"]())
 
 
 def build() -> None:

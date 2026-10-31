@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Tu suscripción · Lumo</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<main class="page">
+  <div class="row" style="justify-content:space-between">
+    <a class="logo" href="/"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
+    <div class="row">{% if plan.kind in ('trial', 'paid', 'admin', 'free') %}<a class="btn ghost sm" href="/panel">Ir al panel</a>{% endif %}<a class="btn ghost sm" href="/salir">Salir</a></div>
+  </div>
+  <div class="panel" style="margin-top:24px">
+    {% if plan.kind in ('admin', 'free') %}
+      <h1>Tu cuenta tiene acceso sin cargo</h1>
+      <p>No necesitás suscribirte para usar Lumo.</p>
+    {% elif plan.kind == 'paid' %}
+      {% if plan.status == 'authorized' %}
+        <h1>Tu suscripción está activa</h1>
+        <p>Mercado Pago cobra {{ price or 'el plan' }} por mes{% if plan.until %}. Próximo cobro: <b>{{ plan.until.strftime('%d/%m/%Y') }}</b>{% endif %}.</p>
+      {% else %}
+        <h1>Cancelaste tu suscripción</h1>
+        <p>Seguís teniendo acceso hasta el <b>{{ plan.until.strftime('%d/%m/%Y') }}</b>. Después podés volver a suscribirte cuando quieras.</p>
+      {% endif %}
+    {% elif plan.kind == 'trial' %}
+      <h1>Te {{ 'queda' if plan.days == 1 else 'quedan' }} {{ plan.days }} {{ 'día' if plan.days == 1 else 'días' }} de prueba gratis</h1>
+      <p>Tu prueba termina el <b>{{ plan.ends.strftime('%d/%m/%Y') }}</b>. Si te suscribís ahora, el primer cobro se hace recién ese día.</p>
+    {% else %}
+      <h1>Tu prueba gratis terminó</h1>
+      <p>Para seguir viendo tus campañas, recomendaciones y tareas, suscribite. Tus datos y lo que marcaste en el panel te esperan.</p>
+    {% endif %}
+
+    {% if pending and plan.kind != 'paid' %}
+      <p class="invite-note" role="status"><b>Estamos esperando la confirmación de Mercado Pago.</b> Suele tardar unos segundos; actualizá esta página en un momento.</p>
+    {% endif %}
+    {% if error %}<p class="invite-note bad" role="alert"><b>{{ error }}</b></p>{% endif %}
+
+    {% if plan.kind in ('trial', 'expired') or (plan.kind == 'paid' and plan.status != 'authorized') %}
+      {% if billing_on %}
+        <div class="idbox"><b>Plan mensual: {{ price }}</b><br>Se cobra automáticamente cada mes con Mercado Pago. Podés cancelar cuando quieras desde esta página.</div>
+        <form method="post" action="/suscripcion" class="row">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="email" name="email" value="{{ email }}" required maxlength="254" autocomplete="email" placeholder="Email de tu cuenta de Mercado Pago" aria-label="Email de tu cuenta de Mercado Pago">
+          <button class="btn" type="submit">Suscribirme con Mercado Pago</button>
+        </form>
+        <p style="margin-top:10px;font-size:.9rem">Usá el mismo email con el que entrás a Mercado Pago.</p>
+      {% else %}
+        <p style="margin-top:14px">El pago en línea todavía no está habilitado.{% if contact %} <a href="{{ contact.whatsapp or contact.mailto }}">Escribinos</a> y te ayudamos a activar tu cuenta.{% endif %}</p>
+      {% endif %}
+    {% endif %}
+
+    {% if can_cancel and plan.kind == 'paid' and plan.status == 'authorized' %}
+      <form method="post" action="/suscripcion/cancelar" style="margin-top:22px" onsubmit="return confirm('¿Cancelar la suscripción? Seguís teniendo acceso hasta la fecha ya paga.')">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="btn danger sm" type="submit">Cancelar suscripción</button>
+      </form>
+    {% endif %}
+  </div>
+</main>
+</body>
+</html>
