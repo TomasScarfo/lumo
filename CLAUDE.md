@@ -1,5 +1,9 @@
 # Lumo
 
+## La idea
+
+Lumo muestra **luz y claridad entre tantos números**. Todo lo que se diseñe o se escriba tiene que transmitir eso: pantallas despejadas, palabras simples, lo importante primero y un toque de luz (el logo que se enciende, el brillo cálido) en vez de ruido.
+
 ## Logo
 
 El logo de Lumo es el **amanecer**: un semicírculo blanco sobre una línea blanca, en un cuadrado azul `#2446D6` con esquinas redondeadas.
