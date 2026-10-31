@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-label="Lumo">
+  <rect width="1000" height="1000" rx="220" fill="#2446D6"/>
+  <path d="M250 640a250 250 0 0 1 500 0z" fill="#fff"/>
+  <rect x="158" y="688" width="684" height="64" rx="32" fill="#fff"/>
+</svg>

@@ -9,6 +9,11 @@ El logo de Lumo es el **amanecer**: un semicírculo blanco sobre una línea blan
 - El logo viejo con la **"L"** ya no se usa. No volver a ponerlo en ninguna pantalla, ícono, favicon ni documento.
 - Cualquier pantalla nueva usa `/static/logo.svg` (y `<link rel="icon" href="/static/logo.svg">`).
 
+## Portada estática
+
+- `site/` se genera con `cd backend && python build_site.py`. Regenerarla siempre que cambie `landing.html`, `site.css` o el logo; un test falla si quedó vieja.
+- En `landing.html`, los enlaces a la app llevan el prefijo `{{ app }}` y el atributo `data-app`.
+
 ## Tests
 
 ```bash

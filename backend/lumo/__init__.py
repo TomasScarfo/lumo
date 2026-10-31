@@ -55,6 +55,8 @@ def load_config(overrides=None) -> dict:
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com"),
         "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
+        # Dirección de la portada publicada aparte (servicio estático de Render). Vacía: la app sirve la portada.
+        "SITE_URL": os.environ.get("SITE_URL", "").rstrip("/"),
     }
     cfg.update(overrides or {})
     return cfg
@@ -92,7 +94,10 @@ def create_app(overrides=None) -> Flask:
 
     @app.get("/healthz")
     def healthz():
-        return {"ok": True}
+        resp = jsonify({"ok": True})
+        resp.headers["Access-Control-Allow-Origin"] = "*"  # la portada publicada aparte lo consulta para despertar al servidor
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
 
     @app.get("/favicon.ico")
     def favicon():
@@ -111,6 +116,8 @@ def create_app(overrides=None) -> Flask:
             out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
         return out or None
 
+    app.extensions["lumo_contact"] = _contact  # build_site.py la usa para generar la portada estática
+
     @app.get("/")
     def index():
         miss = missing_config()
@@ -119,6 +126,8 @@ def create_app(overrides=None) -> Flask:
         uid = _current_user()
         if uid:
             return redirect("/admin" if access.is_admin(cfg, uid) else "/panel")
+        if cfg.get("SITE_URL", "").startswith("https://"):
+            return redirect(cfg["SITE_URL"])  # la portada vive aparte y carga al instante
         return render_template("landing.html", contact=_contact(), invited=False, label=None)
 
     @app.get("/invitacion/<token>")
