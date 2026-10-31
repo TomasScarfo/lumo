@@ -205,13 +205,58 @@ img, svg, video { max-width: 100%; }
 .row, .foot-top, .linkbox { flex-wrap: wrap; }
 @media (max-width: 420px) { .mk-kpis { grid-template-columns: minmax(0, 1fr); } }
 
-/* Espera mientras el servidor despierta (solo en la portada publicada aparte) */
-.waking { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); }
+/* Espera mientras el servidor despierta (solo en la portada publicada aparte).
+   Primero el logo se enciende como una lamparita; después aparece en transparente el panel que se va a ver. */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.waking { position: fixed; inset: 0; z-index: 100; background: var(--bg); overflow: hidden; animation: wk-in .25s ease-out both; }
 .waking[hidden] { display: none; }
-.waking-box { display: grid; justify-items: center; gap: 10px; text-align: center; max-width: 340px; padding: 32px 28px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
-.waking-box img { border-radius: 14px; }
-.waking-box b { font: 800 1.3rem var(--font-display); }
-.waking-box span { color: var(--ink-2); font-size: .95rem; }
-.waking-bar { display: block; width: 100%; height: 6px; margin-top: 8px; border-radius: 999px; background: linear-gradient(90deg, var(--accent-soft) 0 30%, var(--accent) 30% 60%, var(--accent-soft) 60%) 0 0 / 200% 100%; animation: waking 1.2s linear infinite; }
-@keyframes waking { to { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce) { .waking-bar { animation: none; background: var(--accent); } }
+.wk-logo { position: absolute; left: 50%; top: 50%; width: 112px; height: 112px; margin: -56px 0 0 -56px; animation: wk-logo-out .55s ease-in 1.75s both; }
+.wk-logo svg { position: relative; display: block; border-radius: 25px; box-shadow: 0 12px 40px rgba(36,70,214,.35); }
+.wk-line { transform-box: fill-box; transform-origin: center; animation: wk-line .45s cubic-bezier(.2,.8,.2,1) both; }
+.wk-sun { transform-box: fill-box; animation: wk-rise .7s cubic-bezier(.2,.8,.2,1) .3s both, wk-flicker .55s linear 1s both; }
+.wk-halo { position: absolute; inset: -60px; border-radius: 50%; background: radial-gradient(circle, rgba(255,214,102,.55), rgba(36,70,214,.18) 45%, transparent 70%); opacity: 0; animation: wk-halo 1.6s ease-out 1s both; }
+@keyframes wk-in { from { opacity: 0; } }
+@keyframes wk-line { from { transform: scaleX(0); } }
+@keyframes wk-rise { from { transform: translateY(130%); } }
+@keyframes wk-flicker { 0% { opacity: .35; } 20% { opacity: 1; } 35% { opacity: .5; } 55% { opacity: 1; } 70% { opacity: .75; } 100% { opacity: 1; } }
+@keyframes wk-halo { 0% { opacity: 0; transform: scale(.5); } 40% { opacity: 1; } 100% { opacity: 0; transform: scale(1.35); } }
+@keyframes wk-logo-out { to { opacity: 0; transform: scale(.6); } }
+
+.wk-skel { max-width: 1120px; margin: 0 auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 22px; opacity: 0; animation: wk-skel-in .7s ease-out 1.95s both; }
+@keyframes wk-skel-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+.wk-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.wk-brand { display: flex; align-items: center; gap: 10px; }
+.wk-brand > div { display: grid; gap: 6px; }
+.wk-brand img { border-radius: 10px; animation: wk-glow 2.4s ease-in-out 2s infinite; }
+@keyframes wk-glow { 50% { box-shadow: 0 0 0 6px rgba(36,70,214,.12), 0 0 22px rgba(255,214,102,.45); } }
+.wk-body { display: flex; flex-direction: column; gap: 18px; }
+.wk-nav { display: flex; gap: 8px; overflow: hidden; }
+.wk-nav .sk { flex: 0 0 84px; height: 34px; border-radius: 999px; }
+.wk-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.wk-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.wk-rows { display: grid; gap: 10px; }
+.wk-rows .sk { height: 44px; border-radius: 12px; }
+@media (min-width: 720px) { .wk-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 960px) {
+  .wk-skel { padding: 32px 24px; }
+  .wk-body { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; align-items: start; }
+  .wk-nav { flex-direction: column; gap: 14px; padding-top: 6px; }
+  .wk-nav .sk { flex: none; height: 14px; border-radius: 7px; }
+}
+/* Cajas en transparente que titilan suave, cada una un poco desfasada */
+.sk { display: block; height: 12px; border-radius: 6px; background: color-mix(in srgb, var(--ink) 9%, transparent); animation: wk-pulse 1.8s ease-in-out infinite; }
+.sk.sm { height: 10px; }
+.sk.pill { height: 38px; border-radius: 999px; }
+.sk.box { height: 96px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 6%, transparent); border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent); }
+.sk.hero { height: 128px; border-radius: 18px; background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.sk.chart { height: 200px; }
+.wk-kpis .sk:nth-child(2), .wk-rows .sk:nth-child(2), .wk-nav .sk:nth-child(2) { animation-delay: .2s; }
+.wk-kpis .sk:nth-child(3), .wk-rows .sk:nth-child(3), .wk-nav .sk:nth-child(3) { animation-delay: .4s; }
+.wk-kpis .sk:nth-child(4), .wk-rows .sk:nth-child(4), .wk-nav .sk:nth-child(4) { animation-delay: .6s; }
+.sk.chart { animation-delay: .3s; }
+@keyframes wk-pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .waking, .wk-logo, .wk-line, .wk-sun, .wk-halo, .wk-skel, .wk-brand img, .sk { animation: none !important; }
+  .wk-logo { display: none; }
+  .wk-skel { opacity: 1; }
+}
