@@ -46,6 +46,15 @@
 }
 
 * { box-sizing: border-box; }
+/* Que nada se salga de la pantalla: ninguna caja ni texto largo puede ensanchar la página. */
+html { -webkit-text-size-adjust: 100%; }
+html, body { max-width: 100%; }
+body { overflow-x: clip; }
+img, svg, video, canvas { max-width: 100%; }
+code { overflow-wrap: anywhere; max-width: 100%; }
+.card, .kpi, .panel > *, .wrap, .wrap > *, section, article, .grid > *, .kpis > *, .hgrid > * { min-width: 0; }
+.card, .kpi, .term, .alert, .task, h1, h2, h3, p, li, label, a { overflow-wrap: break-word; }
+.meta, .term-top, .sec-head, .row, .hero-head { flex-wrap: wrap; }
 body {
   margin: 0;
   background: var(--bg);
@@ -105,14 +114,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .sub { color: var(--ink-2); font-size: .95rem; }
 .small { font-size: .85rem; color: var(--ink-3); }
 .stack { display: flex; flex-direction: column; gap: 12px; }
-.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: nowrap; }
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: normal; max-width: 100%; }
 .pill .ic { width: 1.05em; height: 1.05em; }
 .s-excelente { background: var(--good); color: var(--on-good); }
 .s-bien { background: var(--good-soft); color: var(--good); }
 .s-atencion { background: var(--warn-soft); color: var(--warn); }
 .s-revisar { background: var(--bad-soft); color: var(--bad); }
 .s-sindatos { background: var(--surface-2); color: var(--ink-2); }
-.tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--surface-2); color: var(--ink-2); white-space: normal; max-width: 100%; }
 .tag.up { background: var(--good-soft); color: var(--good); }
 .tag.down { background: var(--bad-soft); color: var(--bad); }
 .tag.warn { background: var(--warn-soft); color: var(--warn); }
@@ -358,6 +367,20 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20; background: var(--ink); color: var(--bg); padding: 12px 16px; border-radius: 12px; display: flex; gap: 14px; align-items: center; width: max-content; max-width: calc(100vw - 32px); font-size: .92rem; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
 .toast button { background: none; border: 0; color: var(--bg); text-decoration: underline; text-underline-offset: 3px; font-weight: 700; padding: 4px 0; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* Ayuda */
+.hgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.hcard { display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: inherit; }
+.hcard:hover { border-color: var(--accent); }
+.hcard span { color: var(--ink-2); word-break: break-word; }
+.hcard .link { color: var(--accent); font-weight: 700; margin-top: 6px; }
+.brand { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 8px; color: #fff; }
+.brand svg { width: 26px; height: 26px; }
+.brand.wa { background: #25D366; } .brand.mail { background: #EA4335; }
+.hform { display: grid; gap: 12px; margin-top: 14px; }
+.hform label { display: grid; gap: 6px; font-weight: 600; font-size: .92rem; }
+.hform label small { font-weight: 400; color: var(--ink-3); }
+.hform input, .hform textarea { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); width: 100%; }
+.hform .btn { justify-self: start; }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -380,6 +403,12 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 
 <script>
 (function () {
+/* Formato argentino fijo (1.234,5), igual en todos los navegadores: el de Intl no agrupa los números de 4 cifras. */
+function fmtNum(n, d) {
+  var t = Math.abs(n).toFixed(d), p = t.split('.');
+  p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (n < 0 && +t !== 0 ? '-' : '') + p.join(',');
+}
 function boot(D) {
 /*DATA-START*/
 var DAYS = D.days;
@@ -431,10 +460,10 @@ function saveState() {
 /*LOGIC-START*/
 var S = { days: 7, metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
   showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
-var nf0 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
-var r1 = function (n) { return n.toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); };
-var r2 = function (n) { return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+var r1 = function (n) { return fmtNum(n, 1); };
+var r2 = function (n) { return fmtNum(n, 2); };
 var pct1 = function (n) { return r1(n * 100) + '%'; };
 var pctN = function (v) { return v == null ? '—' : Math.round(v * 100) + '%'; };
 var short = function (n) { return n >= 1e6 ? '$' + r1(n / 1e6) + ' M' : n >= 1e3 ? '$' + nf0.format(Math.round(n / 1000)) + ' mil' : '$' + nf0.format(n); };
@@ -639,7 +668,7 @@ function planHTML() {
   if (p.kind === 'paid') return ' · <a class="link" href="/suscripcion">Mi suscripción</a>';
   return '';
 }
-var TABS = [['principal', 'Principal'], ['tareas', 'Tareas'], ['alertas', 'Alertas'], ['recomendaciones', 'Recomendaciones'], ['seguimiento', 'Seguimiento'], ['tendencias', 'Tendencias'], ['glosario', 'Glosario']];
+var TABS = [['principal', 'Principal'], ['tareas', 'Tareas'], ['alertas', 'Alertas'], ['recomendaciones', 'Recomendaciones'], ['seguimiento', 'Seguimiento'], ['tendencias', 'Tendencias'], ['glosario', 'Glosario'], ['ayuda', 'Ayuda']];
 function navHTML() {
   var badge = { tareas: M.openTasks.length, alertas: M.openAlerts, recomendaciones: M.openRecs, seguimiento: S.actions.length };
   return '<nav class="nav" role="tablist" aria-label="Secciones">' + TABS.map(function (t) {
@@ -1209,13 +1238,36 @@ function glosarioHTML() {
     '<p class="small">Las definiciones de las métricas con la etiqueta "a confirmar" son una interpretación en palabras simples. Conviene validarlas contra la documentación oficial antes de publicarlas.</p>';
 }
 
+/* ---------- Ayuda ---------- */
+var BRAND = {
+  wa: ['wa', 'M12 2.2a9.8 9.8 0 0 0-8.4 14.8L2.2 21.8l4.9-1.3A9.8 9.8 0 1 0 12 2.2zm0 1.9a7.9 7.9 0 1 1-4.2 14.6l-.3-.2-2.8.8.8-2.7-.2-.3A7.9 7.9 0 0 1 12 4.1zM8.7 7.6c-.2 0-.5.1-.7.4-.3.3-1 1-1 2.4s1 2.8 1.200 3c.1.200 2 3.100 4.900 4.300 2.400 1 2.900.8 3.400.7.500-.1 1.700-.7 1.900-1.400.2-.7.2-1.200.2-1.400-.1-.1-.3-.2-.7-.4l-1.800-.9c-.3-.1-.5-.1-.7.1l-.9 1.100c-.2.200-.3.200-.6.100-.3-.2-1.200-.4-2.300-1.400-.8-.8-1.400-1.700-1.500-2-.2-.3 0-.4.100-.6l.4-.5c.1-.1.200-.3.300-.5.100-.2 0-.4 0-.5l-.8-2c-.2-.5-.4-.5-.6-.5z'],
+  mail: ['mail', 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 2v.5l8 5.300 8-5.300V7zm16 2.900l-8 5.300-8-5.300V17h16z']
+};
+function brandIcon(k) { return '<div class="brand ' + BRAND[k][0] + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="' + BRAND[k][1] + '"/></svg></div>'; }
+function ayudaHTML() {
+  var c = window.LUMO_CONTACT || {};
+  var cards = '';
+  if (c.whatsapp) cards += '<a class="card hcard" href="' + esc(c.whatsapp) + '" target="_blank" rel="noopener">' + brandIcon('wa') + '<b>WhatsApp</b><span>' + esc(c.phone) + '</span><span class="link">Escribir un mensaje</span></a>';
+  if (c.email) cards += '<a class="card hcard" href="' + esc(c.mailto) + '">' + brandIcon('mail') + '<b>Email</b><span>' + esc(c.email) + '</span><span class="link">Enviar un email</span></a>';
+  var form = c.email ? '<form class="card hform" id="helpForm" data-to="' + esc(c.email) + '" data-account="' + esc(D.advertiser.name) + '"><div class="sec-head" style="margin-bottom:0"><h2>Mandanos tu consulta</h2></div>' +
+    '<p class="sub">Contanos qué necesitás. Al enviar se abre tu programa de mail con el mensaje listo para mandar.</p>' +
+    '<label><span>Tu nombre <small>(opcional)</small></span><input type="text" name="name" maxlength="120" autocomplete="name"></label>' +
+    '<label><span>Tu email <small>(opcional)</small></span><input type="email" name="email" maxlength="200" autocomplete="email"></label>' +
+    '<label><span>¿En qué te ayudamos?</span><textarea name="message" required maxlength="3000" rows="5"></textarea></label>' +
+    '<button class="btn" type="submit">Preparar el mail</button></form>' : '';
+  return '<section aria-labelledby="h-ayuda"><div class="sec-head"><h2 id="h-ayuda">Ayuda</h2><span class="sub">Estamos para darte una mano</span></div>' +
+    '<p class="sub" style="margin-bottom:12px">Si algo no se entiende, una métrica no cierra o querés sugerir una mejora, escribinos.</p>' +
+    (cards ? '<div class="hgrid">' + cards + '</div>' : '') + '</section>' + form +
+    (D.uid ? '<p class="small" style="margin-top:14px">ID de tu cuenta de Mercado Libre: <code>' + esc(D.uid) + '</code></p>' : '');
+}
+
 /* ---------- Render ---------- */
 function fkey(el) { return el ? el.dataset.act + '|' + (el.dataset.id || el.dataset.c || el.dataset.v || el.dataset.d || '') : ''; }
 function render() {
   var ae = document.activeElement, k = ae && ae.dataset && ae.dataset.act && ae.dataset.act !== 'glq' && ae.dataset.act !== 'draft' && ae.dataset.act !== 'cq' ? fkey(ae) : '';
   var keepGl = ae && ae.id === 'glq', keepDraft = ae && ae.id === 'newTask', keepCq = ae && ae.id === 'cq';
   M = compute();
-  var panels = { principal: principalHTML, tareas: tareasHTML, alertas: alertasHTML, recomendaciones: recsHTML, seguimiento: seguimientoHTML, tendencias: trendsHTML, glosario: glosarioHTML };
+  var panels = { principal: principalHTML, tareas: tareasHTML, alertas: alertasHTML, recomendaciones: recsHTML, seguimiento: seguimientoHTML, tendencias: trendsHTML, glosario: glosarioHTML, ayuda: ayudaHTML };
   $('#dyn').innerHTML = '<div class="wrap">' + topHTML() + navHTML() + '<div id="panel" class="panel" role="tabpanel">' + panels[S.tab]() + '</div></div>' + toastHTML();
   if (k) { var els = document.querySelectorAll('#dyn [data-act]'); for (var i = 0; i < els.length; i++) { if (fkey(els[i]) === k) { els[i].focus({ preventScroll: true }); break; } } }
   if (keepGl && $('#glq')) $('#glq').focus({ preventScroll: true });
@@ -1269,6 +1321,14 @@ document.addEventListener('input', function (e) {
   if (e.target.id === 'glq') { S.q = e.target.value; var l = $('#glList'); if (l) l.innerHTML = glossaryListHTML(); }
 });
 document.addEventListener('submit', function (e) {
+  if (e.target.id === 'helpForm') {
+    e.preventDefault();
+    var f = e.target, v = function (n) { return f.elements[n].value.trim(); };
+    var rows = [['Cuenta de Mercado Libre', f.dataset.account], ['Nombre', v('name')], ['Email', v('email')], ['Consulta', v('message')]];
+    var body = rows.filter(function (r) { return r[1]; }).map(function (r) { return r[0] + ': ' + r[1]; }).join('\n');
+    window.location.href = 'mailto:' + f.dataset.to + '?subject=' + encodeURIComponent('Ayuda con Lumo') + '&body=' + encodeURIComponent(body);
+    return;
+  }
   if (e.target.id !== 'addForm') return;
   e.preventDefault();
   var v = S.draft.trim(); if (!v) return;
@@ -1288,7 +1348,7 @@ function noAds(c) {
   c = c || {};
   var ST2 = { ok: ['bien', 'check', 'Listo'], falta: ['revisar', 'x-circle', 'Falta'], revisar: ['atencion', 'alert', 'Revisar'], sindato: ['sindatos', 'info', 'Sin dato'] };
   function badge(k) { var t = ST2[k] || ST2.sindato; return '<span class="pill s-' + t[0] + '"><svg class="ic"><use href="#i-' + t[1] + '"/></svg>' + t[2] + '</span>'; }
-  function num(v) { return v == null ? '—' : String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function num(v) { return v == null ? '—' : fmtNum(v, 0); }
   var h = '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(c.nick || 'Tu cuenta') + (c.site ? ' · ' + esc(c.site) : '') + '</div></div></div></header>';
   h += '<section class="card na-hero"><div class="hero-ic"><svg class="ic"><use href="#i-alert"/></svg></div><div><h1>Tu cuenta todavía no tiene Publicidad activada</h1>' +
     '<p class="sub">Todavía no hay campañas para analizar. Mirá qué tenés listo, qué te falta y por dónde empezar.</p>' +

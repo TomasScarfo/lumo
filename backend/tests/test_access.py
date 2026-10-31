@@ -13,7 +13,7 @@ from lumo.tokens import save_tokens
 KEY = "clave-de-prueba-larga-y-aleatoria"
 CFG = {"ML_CLIENT_ID": "123", "ML_CLIENT_SECRET": "secreto-de-prueba", "REDIRECT_URI": "https://lumo.test/callback",
        "ENCRYPTION_KEY": KEY, "SECRET_KEY": "otra-clave-de-sesion", "DATABASE_URL": "sqlite://", "ADMIN_USER_IDS": "1, 2;x",
-       "CONTACT_EMAIL": "hola@lumo.test", "CONTACT_WHATSAPP": "+54 9 11 0000-0000", "CONTACT_LINKEDIN": "https://www.linkedin.com/in/prueba/"}
+       "CONTACT_EMAIL": "hola@lumo.test", "CONTACT_WHATSAPP": "+54 9 11 0000-0000"}
 ADS = [{"advertiser_id": 9, "site_id": "MLA", "advertiser_name": "Negocio"}]
 
 
@@ -74,32 +74,49 @@ class Portada(Base):
         self.assertIn("Ejemplo con datos ficticios", html)
         self.assertIn("no está afiliada", html)
 
-    def test_seccion_de_contacto_con_los_tres_canales(self):
+    def test_seccion_de_contacto_con_whatsapp_y_email(self):
         html = self.client.get("/").get_data(as_text=True)
         self.assertIn('id="contacto"', html)
         self.assertIn("mailto:hola@lumo.test", html)
         self.assertIn("https://wa.me/5491100000000?text=", html)
         self.assertIn("+54 9 11 0000 0000", html)
-        self.assertIn("https://www.linkedin.com/in/prueba/", html)
+
+    def test_contacto_con_logos_de_marca(self):
+        html = self.client.get("/").get_data(as_text=True)
+        for marca in ("b-wa", "b-mail"):
+            self.assertIn('href="#%s"' % marca, html)
+
+    def test_formulario_arma_el_mail_hacia_lumo_con_solo_el_email_obligatorio(self):
+        html = self.client.get("/").get_data(as_text=True)
+        self.assertIn('id="consulta" data-to="hola@lumo.test"', html)
+        self.assertEqual(html.count("required"), 1)
+        for campo in ("email", "name", "phone", "sells", "interests", "message"):
+            self.assertIn('name="%s"' % campo, html)
+
+    def test_ya_no_hay_envio_por_servidor(self):
+        self.assertEqual(self.client.post("/contacto").status_code, 404)
+
+    def test_panel_trae_los_datos_de_contacto_para_la_ayuda(self):
+        self.connect(self.client, 1)  # el 1 es administrador
+        html = self.client.get("/panel").get_data(as_text=True)
+        self.assertIn("window.LUMO_CONTACT=", html)
+        self.assertIn("hola@lumo.test", html)
+        self.assertIn("https://wa.me/5491100000000", html)
+        self.assertIn("function ayudaHTML", html)
 
     def test_sin_datos_de_contacto_no_hay_seccion(self):
-        app = create_app(dict(CFG, CONTACT_EMAIL="", CONTACT_WHATSAPP="", CONTACT_LINKEDIN=""))
+        app = create_app(dict(CFG, CONTACT_EMAIL="", CONTACT_WHATSAPP=""))
         html = app.test_client().get("/").get_data(as_text=True)
-        for texto in ("mailto:", "wa.me", 'id="contacto"', "linkedin.com"):
+        for texto in ("mailto:", "wa.me", 'id="contacto"'):
             self.assertNotIn(texto, html)
-
-    def test_solo_acepta_linkedin_https(self):
-        app = create_app(dict(CFG, CONTACT_LINKEDIN="javascript:alert(1)"))
-        self.assertNotIn("javascript:", app.test_client().get("/").get_data(as_text=True))
 
     def test_contacto_por_defecto(self):
         from lumo import load_config
         quitar = {k: v for k, v in os.environ.items() if not k.startswith("CONTACT_")}
         with mock.patch.dict(os.environ, quitar, clear=True):
             cfg = load_config()
-        self.assertEqual(cfg["CONTACT_EMAIL"], "tomas.scarfo@gmail.com")
+        self.assertEqual(cfg["CONTACT_EMAIL"], "lumoads.ml@gmail.com")
         self.assertEqual(cfg["CONTACT_WHATSAPP"], "5491145597516")
-        self.assertEqual(cfg["CONTACT_LINKEDIN"], "https://www.linkedin.com/in/tomas-scarfo/")
 
     def test_solo_se_usa_el_logo_nuevo(self):
         """El logo es el amanecer (semicírculo sobre una línea). La "L" vieja no tiene que aparecer en ningún lado."""
@@ -117,6 +134,35 @@ class Portada(Base):
     def test_estaticos(self):
         for path in ("/static/site.css", "/static/logo.svg", "/static/logo.png"):
             self.assertEqual(self.client.get(path).status_code, 200, path)
+
+
+class Presentacion(unittest.TestCase):
+    """Reglas que evitan cajas solapadas y números que cambian según el navegador."""
+    RAIZ = os.path.join(os.path.dirname(__file__), "..", "lumo")
+
+    def leer(self, ruta):
+        with open(os.path.join(self.RAIZ, ruta), encoding="utf-8") as f:
+            return f.read()
+
+    def test_numeros_con_formato_argentino_fijo(self):
+        panel = self.leer("panel.html")
+        self.assertIn("function fmtNum(", panel)
+        self.assertNotIn("Intl.NumberFormat", panel)  # el de Intl no agrupa los números de 4 cifras
+        self.assertNotIn("toLocaleString", panel)
+
+    def test_ninguna_grilla_usa_1fr_sin_minmax(self):
+        import re
+        for ruta in ("panel.html", "static/site.css"):
+            for linea in self.leer(ruta).splitlines():
+                if "grid-template-columns" in linea:
+                    sin_minmax = re.sub(r"minmax\([^)]*\)", "", linea)  # un 1fr suelto crece con su contenido y empuja la página
+                    self.assertNotRegex(sin_minmax, r"\b\d*\.?\d*fr\b", "%s: %s" % (ruta, linea.strip()))
+
+    def test_las_pantallas_no_se_salen_del_ancho(self):
+        for ruta in ("panel.html", "static/site.css"):
+            css = self.leer(ruta)
+            self.assertIn("body { overflow-x: clip; }", css, ruta)
+            self.assertIn("overflow-wrap: break-word", css, ruta)
 
 
 class Invitaciones(Base):

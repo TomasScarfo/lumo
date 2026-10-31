@@ -53,9 +53,8 @@ def load_config(overrides=None) -> dict:
         "ML_AUTH_BASE": os.environ.get("ML_AUTH_BASE", "https://auth.mercadolibre.com.ar"),
         "ML_API_BASE": os.environ.get("ML_API_BASE", "https://api.mercadolibre.com"),
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
-        "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "tomas.scarfo@gmail.com"),
+        "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com"),
         "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
-        "CONTACT_LINKEDIN": os.environ.get("CONTACT_LINKEDIN", "https://www.linkedin.com/in/tomas-scarfo/"),
         # Cobro con Mercado Pago. Sin MP_ACCESS_TOKEN o sin PLAN_PRICE, la prueba gratis funciona igual pero no se puede pagar.
         "MP_ACCESS_TOKEN": os.environ.get("MP_ACCESS_TOKEN", ""),
         "MP_WEBHOOK_SECRET": os.environ.get("MP_WEBHOOK_SECRET", ""),
@@ -109,7 +108,7 @@ def create_app(overrides=None) -> Flask:
     def _contact():
         """Datos de contacto para la portada. Si no hay ninguno configurado, no se muestra la sección."""
         out = {}
-        email, wa, linkedin = cfg.get("CONTACT_EMAIL"), cfg.get("CONTACT_WHATSAPP"), cfg.get("CONTACT_LINKEDIN")
+        email, wa = cfg.get("CONTACT_EMAIL"), cfg.get("CONTACT_WHATSAPP")
         if email:
             out["email"] = email
             out["mailto"] = "mailto:%s?subject=%s" % (email, quote("Acceso a Lumo"))
@@ -117,8 +116,6 @@ def create_app(overrides=None) -> Flask:
         if digits:
             out["whatsapp"] = "https://wa.me/%s?text=%s" % (digits, quote("Hola, quiero probar Lumo"))
             out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
-        if linkedin and linkedin.startswith("https://"):
-            out["linkedin"] = linkedin
         return out or None
 
     def _offer():
@@ -218,7 +215,8 @@ def create_app(overrides=None) -> Flask:
     def panel():
         if not _current_user():
             return redirect("/suscripcion" if _session_uid() else "/")
-        resp = Response(PANEL_HTML, mimetype="text/html")
+        data = json.dumps(_contact() or {}).replace("<", "\\u003c")
+        resp = Response(PANEL_HTML.replace("</head>", "<script>window.LUMO_CONTACT=%s;</script></head>" % data, 1), mimetype="text/html")
         resp.headers["Cache-Control"] = "no-store"
         return resp
 
@@ -289,6 +287,7 @@ def create_app(overrides=None) -> Flask:
             st = s.get(PanelState, uid)
             data["estado"] = json.loads(st.data) if st else {}
             data["admin"] = access.is_admin(cfg, uid)
+            data["uid"] = uid
             p = access.plan(s, cfg, uid)
             data["plan"] = {"kind": p["kind"], "days": p.get("days")}
         return _json(data)
