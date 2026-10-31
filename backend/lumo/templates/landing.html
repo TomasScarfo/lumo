@@ -48,7 +48,7 @@
     <nav class="links" aria-label="Secciones">
       <a href="#que-hace">Qué hace</a><a href="#como">Cómo funciona</a><a href="#panel">El panel</a><a href="#seguridad">Seguridad</a><a href="#preguntas">Preguntas</a>{% if contact %}<a href="#contacto">Contacto</a>{% endif %}
     </nav>
-    <a class="btn sm" href="/connect">Ingresar</a>
+    <a class="btn sm" href="{{ app }}/connect" data-app>Ingresar</a>
   </div>
 </header>
 
@@ -60,7 +60,7 @@
         <h1>Sabé qué mejorar en tu publicidad, <em>sin descifrar métricas</em>.</h1>
         <p class="lead">Lumo lee tus campañas de Product Ads y te explica, en palabras simples, qué está funcionando, qué no y qué conviene hacer primero. Sin planillas ni jerga.</p>
         <div class="cta-row">
-          <a class="btn" href="/connect">{% if invited %}Aceptar la invitación y conectar{% else %}Ingresar con Mercado Libre{% endif %}</a>
+          <a class="btn" href="{{ app }}/connect" data-app>{% if invited %}Aceptar la invitación y conectar{% else %}Ingresar con Mercado Libre{% endif %}</a>
           <a class="btn ghost" href="#como">Ver cómo funciona</a>
         </div>
         <ul class="chips" aria-label="Garantías">
@@ -236,7 +236,7 @@
     <div class="cta-band"><div class="cta-box">
       <h2>Empezá a entender tu publicidad hoy</h2>
       <p>Conectá tu cuenta de Mercado Libre y mirá tus campañas con otros ojos.</p>
-      <a class="btn" href="/connect">{% if invited %}Aceptar la invitación y conectar{% else %}Ingresar con Mercado Libre{% endif %}</a>
+      <a class="btn" href="{{ app }}/connect" data-app>{% if invited %}Aceptar la invitación y conectar{% else %}Ingresar con Mercado Libre{% endif %}</a>
       {% if not invited %}<small>Acceso por invitación. {% if contact %}<a href="#contacto">Pedí el tuyo</a>.{% else %}Pedíselo a quien te compartió Lumo.{% endif %}</small>{% endif %}
     </div></div>
   </section>
@@ -246,11 +246,64 @@
   <div class="wrap">
     <div class="foot-top">
       <a class="logo" href="/" style="font-size:1.1rem"><img src="/static/logo.svg" alt="" width="28" height="28">Lumo</a>
-      <nav aria-label="Pie"><a href="/connect">Ingresar</a>{% if contact %}{% if contact.whatsapp %} · <a href="{{ contact.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}{% if contact.email %} · <a href="{{ contact.mailto }}">Email</a>{% endif %}{% endif %}</nav>
+      <nav aria-label="Pie"><a href="{{ app }}/connect" data-app>Ingresar</a>{% if contact %}{% if contact.whatsapp %} · <a href="{{ contact.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}{% if contact.email %} · <a href="{{ contact.mailto }}">Email</a>{% endif %}{% endif %}</nav>
     </div>
     <p>Lumo es una herramienta independiente: no está afiliada ni respaldada por Mercado Libre. Mercado Libre y Mercado Ads son marcas de sus respectivos titulares.</p>
     <p>© 2026 Lumo</p>
   </div>
 </footer>
+{% if app %}
+<div class="waking" id="waking" hidden role="status" aria-live="polite">
+  <span class="sr-only">Abriendo Lumo</span>
+  <!-- 1) El logo se enciende como una lamparita: la línea se dibuja, el sol sube y titila al prenderse. -->
+  <div class="wk-logo" aria-hidden="true">
+    <i class="wk-halo"></i>
+    <svg viewBox="0 0 1000 1000" width="112" height="112">
+      <defs><clipPath id="wk-horizonte"><rect width="1000" height="688"/></clipPath></defs>
+      <rect width="1000" height="1000" rx="220" fill="#2446D6"/>
+      <g clip-path="url(#wk-horizonte)"><path class="wk-sun" d="M250 640a250 250 0 0 1 500 0z" fill="#fff"/></g>
+      <rect class="wk-line" x="158" y="688" width="684" height="64" rx="32" fill="#fff"/>
+    </svg>
+  </div>
+  <!-- 2) Después, el panel que se va a ver aparece en transparente y titila suave hasta que Lumo responde. -->
+  <div class="wk-skel" aria-hidden="true">
+    <div class="wk-top">
+      <div class="wk-brand"><img src="/static/logo.svg" alt="" width="34" height="34"><div><b class="sk" style="width:64px"></b><b class="sk sm" style="width:120px"></b></div></div>
+      <b class="sk pill" style="width:190px"></b>
+    </div>
+    <div class="wk-body">
+      <nav class="wk-nav"><b class="sk" style="width:80%"></b><b class="sk" style="width:62%"></b><b class="sk" style="width:70%"></b><b class="sk" style="width:86%"></b><b class="sk" style="width:58%"></b><b class="sk" style="width:66%"></b></nav>
+      <div class="wk-main">
+        <div class="sk box hero"></div>
+        <div class="wk-kpis"><div class="sk box"></div><div class="sk box"></div><div class="sk box"></div><div class="sk box"></div></div>
+        <div class="sk box chart"></div>
+        <div class="wk-rows"><b class="sk"></b><b class="sk"></b><b class="sk"></b><b class="sk"></b></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/* La portada está publicada aparte y carga al instante. El servidor de Lumo se apaga cuando nadie lo usa:
+   lo despertamos apenas se abre la portada y, si alguien toca "Ingresar" antes de que esté listo,
+   mostramos esta espera en vez de la pantalla de Render. */
+(function () {
+  var APP = '{{ app }}', ready = false;
+  function ping() {
+    return fetch(APP + '/healthz', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (j) { ready = !!j.ok; return ready; })
+      .catch(function () { return false; });
+  }
+  ping();
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[data-app]');
+    if (!a || ready) return;
+    e.preventDefault();
+    document.getElementById('waking').hidden = false;
+    (function wait() { ping().then(function (ok) { if (ok) location.href = a.href; else setTimeout(wait, 2000); }); })();
+  });
+})();
+</script>
+{% endif %}
 </body>
 </html>
