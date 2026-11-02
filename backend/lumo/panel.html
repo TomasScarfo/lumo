@@ -202,6 +202,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .sline { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .sdot { stroke: var(--surface); stroke-width: 2; }
 .guide { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.mailrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.mailrow input { flex: 1 1 220px; font: inherit; padding: 9px 12px; min-height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
 .mchips { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 10px 0 4px; }
 .mchip { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; min-width: 0; }
 .mchip[aria-pressed="true"] { border-color: var(--c); background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
@@ -521,7 +523,7 @@ function saveState() {
 
 /*LOGIC-START*/
 var S = { days: 7, off: 0, cust: false, pick: '', anchor: '', vm: null, cmp: 'prev', cmpOpen: false, cf: '', ct: '', ser: { units: true, sales: true }, tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
-  showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ m1: false, m2: false, m3: false }, EST.sw || {}), mailMsg: '' };
+  showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ m1: false, m2: false, m3: false }, EST.sw || {}), mailMsg: '', mailDraft: '' };
 var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
 var r1 = function (n) { return fmtNum(n, 1); };
@@ -872,7 +874,9 @@ function dayLong(d) { return d.toLocaleDateString('es-AR', { weekday: 'long', da
 function mailNote() {
   var from = (window.LUMO_CONTACT || {}).email;
   if (!D.mailOn) return '<p class="small" style="margin-top:10px">Guardamos tus preferencias. Los avisos por email todavía no están habilitados en Lumo.</p>';
-  if (!D.email) return '<p class="small" style="margin-top:10px">No pudimos leer el email de tu cuenta de Mercado Libre, así que todavía no podemos enviarte avisos. Si volvés a conectar tu cuenta, lo intentamos de nuevo.</p>';
+  if (!D.email) return '<form class="mailform" id="mailForm"><p class="small">Mercado Libre no nos informó el email de tu cuenta. Escribí a qué dirección querés recibir los avisos.</p>' +
+    '<div class="mailrow"><input type="email" id="mailIn" placeholder="tu@email.com" autocomplete="email" maxlength="200" value="' + esc(S.mailDraft) + '" aria-label="Tu email para los avisos"><button class="btn" type="submit">Guardar</button></div>' +
+    (S.mailMsg ? '<p class="small" role="status">' + esc(S.mailMsg) + '</p>' : '') + '</form>';
   return '<p class="small" style="margin-top:10px">Los avisos llegan a <b>' + esc(D.email) + '</b>' + (from ? ', desde ' + esc(from) : '') + '. Solo te escribimos por los avisos que activaste.</p>' +
     '<button class="link" data-act="mailTest">Enviarme un mail de prueba</button>' + (S.mailMsg ? ' <span class="small" role="status">' + esc(S.mailMsg) + '</span>' : '');
 }
@@ -1518,6 +1522,7 @@ document.addEventListener('mouseover', function (e) {
 });
 document.addEventListener('input', function (e) {
   if (e.target.id === 'newTask') S.draft = e.target.value;
+  if (e.target.id === 'mailIn') S.mailDraft = e.target.value;
   if (e.target.id === 'cq') { S.cq = e.target.value; render(); }
   if (e.target.id === 'glq') { S.q = e.target.value; var l = $('#glList'); if (l) l.innerHTML = glossaryListHTML(); }
 });
@@ -1528,6 +1533,14 @@ document.addEventListener('submit', function (e) {
     var rows = [['Cuenta de Mercado Libre', f.dataset.account], ['Nombre', v('name')], ['Email', v('email')], ['Consulta', v('message')]];
     var body = rows.filter(function (r) { return r[1]; }).map(function (r) { return r[0] + ': ' + r[1]; }).join('\n');
     window.location.href = 'mailto:' + f.dataset.to + '?subject=' + encodeURIComponent('Ayuda con Lumo') + '&body=' + encodeURIComponent(body);
+    return;
+  }
+  if (e.target.id === 'mailForm') {
+    e.preventDefault();
+    var mail = S.mailDraft.trim();
+    fetch('/api/email', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: mail }) })
+      .then(function (r) { if (r.ok) { D.email = mail; S.mailMsg = ''; } else S.mailMsg = 'Ese email no parece válido.'; render(); })
+      .catch(function () { S.mailMsg = 'No pudimos guardarlo. Probá de nuevo.'; render(); });
     return;
   }
   if (e.target.id !== 'addForm') return;

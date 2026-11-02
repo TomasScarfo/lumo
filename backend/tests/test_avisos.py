@@ -135,6 +135,27 @@ class Rutas(unittest.TestCase):
         self.assertEqual(self.mail.call_args[0][1], "ana@test.com")
         self.assertEqual(self.client.post("/api/avisos/prueba").status_code, 429)   # no más de uno por minuto
 
+    def test_el_email_se_puede_cargar_a_mano_y_se_valida(self):
+        with self.client.session_transaction() as sess:
+            sess["uid"] = 5
+        self.assertEqual(self.client.post("/api/email", json={"email": "no-es-un-mail"}).status_code, 400)
+        self.assertEqual(self.client.post("/api/email", json={"email": "ana@x"}).status_code, 400)
+        self.assertEqual(self.client.post("/api/email", json={"email": " nueva@test.com "}).status_code, 200)
+        self.assertEqual(self.client.get("/api/datos").get_json()["email"], "nueva@test.com")
+        self.client.post("/api/email", json={"email": "otra@test.com"})
+
+    def test_email_pide_sesion(self):
+        self.assertEqual(self.client.post("/api/email", json={"email": "a@b.com"}).status_code, 401)
+
+    def test_cuentas_sin_email_lo_leen_al_abrir_el_panel(self):
+        with Session(self.engine) as s:
+            s.get(Account, 5).email = None
+            s.commit()
+        with self.client.session_transaction() as sess:
+            sess["uid"] = 5
+        with mock.patch("lumo.ml.api_get", side_effect=lambda cfg, tok, path, params=None, version="2": {"email": "leido@ml.com"} if path == "/users/me" else fake_ml.api_get(cfg, tok, path, params, version)):
+            self.assertEqual(self.client.get("/api/datos").get_json()["email"], "leido@ml.com")
+
     def test_prueba_pide_sesion(self):
         self.assertEqual(self.client.post("/api/avisos/prueba").status_code, 401)
 

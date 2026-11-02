@@ -210,7 +210,10 @@ def create_app(overrides=None) -> Flask:
             log.warning("no se pudo leer el email: %s", exc.status)
             return None
         mail = body.get("email") if isinstance(body, dict) else None
-        return mail if isinstance(mail, str) and "@" in mail else None
+        if not (isinstance(mail, str) and "@" in mail):
+            log.warning("Mercado Libre no devolvió el email; campos recibidos: %s", sorted(body)[:30] if isinstance(body, dict) else type(body).__name__)
+            return None
+        return mail
 
     def _current_user():
         """El id de la cuenta de esta sesión, solo si está conectada y sigue teniendo acceso."""
@@ -301,6 +304,14 @@ def create_app(overrides=None) -> Flask:
             st = s.get(PanelState, uid)
             data["estado"] = json.loads(st.data) if st else {}
             acc = s.get(Account, uid)
+            if acc and not acc.email and notify.enabled(cfg) and notify._due(s, uid, "mailread", "x", timedelta(hours=1), utcnow()):
+                # Cuentas conectadas antes de los avisos: se intenta leer el email una vez por hora, sin pedir que reconecten.
+                try:
+                    acc.email = _read_email(valid_access_token(s, cfg, uid))
+                except NeedsReconnect:
+                    pass
+                notify._mark(s, uid, "mailread", "x", utcnow())
+                s.commit()
             data["email"] = acc.email if acc else None
             data["mailOn"] = notify.enabled(cfg)
             data["admin"] = access.is_admin(cfg, uid)
@@ -330,6 +341,22 @@ def create_app(overrides=None) -> Flask:
     def _app_link():
         base = cfg["REDIRECT_URI"].rsplit("/callback", 1)[0] if cfg["REDIRECT_URI"] else ""
         return base + "/panel#alertas"
+
+    @app.post("/api/email")
+    def api_email():
+        """La persona escribe su email cuando Mercado Libre no lo informa."""
+        uid = _current_user()
+        if not uid:
+            return _json({"error": "login"}, 401)
+        body = request.get_json(silent=True)
+        mail = str(body.get("email", "")).strip() if isinstance(body, dict) else ""
+        if len(mail) > 200 or not re.fullmatch(r"[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}", mail):
+            return _json({"error": "formato"}, 400)
+        with Session(engine) as s:
+            acc = s.get(Account, uid)
+            acc.email = mail
+            s.commit()
+        return _json({"ok": True, "email": mail})
 
     @app.post("/api/avisos/prueba")
     def avisos_prueba():
