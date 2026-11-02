@@ -103,7 +103,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (min-width: 900px) {
   .page { max-width: 1120px; }
   .wrap { display: grid; grid-template-columns: 232px minmax(0, 1fr); column-gap: 32px; row-gap: 18px; align-items: start; }
-  .wrap > .top, .wrap > .notice { grid-column: 1 / -1; }
+  .wrap > .top, .wrap > .notice, .wrap > .range { grid-column: 1 / -1; }
   .wrap > .nav { grid-column: 1; grid-row: 3; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); flex-direction: column; overflow: visible; gap: 4px; margin: 0; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; z-index: 5; }
   .wrap > #panel { grid-column: 2; grid-row: 3; }
   .nav button { width: 100%; justify-content: space-between; text-align: left; padding: 11px 12px; border-bottom: 0; border-radius: 10px; }
