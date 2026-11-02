@@ -86,10 +86,22 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .brand-store { font-size: .85rem; color: var(--ink-3); }
 .seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
 .seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; font-size: .9rem; font-weight: 600; color: var(--ink-2); min-height: 36px; }
-.range { grid-column: 1 / -1; display: flex; flex-flow: row wrap; gap: 8px 16px; align-items: center; margin: 0; }
-.range label { display: inline-flex; flex-direction: row; align-items: center; gap: 8px; font-size: .9rem; font-weight: 600; color: var(--ink-2); }
-.range input { font: inherit; padding: 7px 10px; min-height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
-.range .sub { flex: 1 1 100%; margin: 0; }
+.seg-wrap { position: relative; }
+.cal { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 296px; max-width: calc(100vw - 32px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,.18); padding: 12px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-head button { width: 36px; height: 36px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); font-size: 1.3rem; line-height: 1; }
+.cal-head button:hover:not(:disabled) { background: var(--surface-2); }
+.cal-head button:disabled { color: var(--ink-3); opacity: .4; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 2px; }
+.cal-w { text-align: center; font-size: .75rem; font-weight: 700; color: var(--ink-3); padding: 4px 0; }
+.cal-d { height: 36px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: .9rem; border-radius: 0; }
+.cal-d:disabled { color: var(--ink-3); opacity: .35; }
+.cal-d:hover:not(:disabled) { background: var(--surface-2); border-radius: 999px; }
+.cal-d.in { background: var(--accent-soft); }
+.cal-d.edge { background: var(--accent); color: var(--accent-ink); font-weight: 700; border-radius: 999px; }
+.cal-d.lo:not(.hi) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.cal-d.hi:not(.lo) { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.cal-hint { margin: 8px 2px 0; font-size: .8rem; color: var(--ink-2); }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
 .notice { display: flex; gap: 8px; align-items: flex-start; font-size: .85rem; color: var(--ink-2); background: var(--accent-soft); padding: 9px 12px; border-radius: 10px; }
 .notice .ic { margin-top: 2px; color: var(--accent); }
@@ -103,7 +115,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (min-width: 900px) {
   .page { max-width: 1120px; }
   .wrap { display: grid; grid-template-columns: 232px minmax(0, 1fr); column-gap: 32px; row-gap: 18px; align-items: start; }
-  .wrap > .top, .wrap > .notice, .wrap > .range { grid-column: 1 / -1; }
+  .wrap > .top, .wrap > .notice { grid-column: 1 / -1; }
   .wrap > .nav { grid-column: 1; grid-row: 3; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); flex-direction: column; overflow: visible; gap: 4px; margin: 0; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; z-index: 5; }
   .wrap > #panel { grid-column: 2; grid-row: 3; }
   .nav button { width: 100%; justify-content: space-between; text-align: left; padding: 11px 12px; border-bottom: 0; border-radius: 10px; }
@@ -472,7 +484,7 @@ function saveState() {
 /*DATA-END*/
 
 /*LOGIC-START*/
-var S = { days: 7, off: 0, cust: false, pick: false, rf: '', rt: '', rangeErr: '', metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
+var S = { days: 7, off: 0, cust: false, pick: false, anchor: '', vm: null, metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
   showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
 var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
@@ -668,17 +680,53 @@ var SEV = {
 };
 
 /* ---------- Encabezado y pestañas ---------- */
+/* ---------- Selector de rango: un clic elige el desde y el siguiente el hasta ---------- */
+function firstDay() { var d = new Date(END); d.setDate(END.getDate() - (DAYS - 1)); return d; }
+function monthStart(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+function calHTML() {
+  var first = firstDay(), vm = S.vm || monthStart(END), start = new Date(vm), h = '';
+  var prevOk = monthStart(first) < vm, nextOk = new Date(vm.getFullYear(), vm.getMonth() + 1, 1) <= END;
+  var title = vm.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  h += '<div class="cal" role="dialog" aria-label="Elegir rango de fechas"><div class="cal-head">' +
+    '<button type="button" data-act="mnav" data-v="-1" aria-label="Mes anterior"' + (prevOk ? '' : ' disabled') + '>‹</button>' +
+    '<b>' + esc(title.charAt(0).toUpperCase() + title.slice(1)) + '</b>' +
+    '<button type="button" data-act="mnav" data-v="1" aria-label="Mes siguiente"' + (nextOk ? '' : ' disabled') + '>›</button></div><div class="cal-grid">';
+  ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function (w) { h += '<span class="cal-w" aria-hidden="true">' + w + '</span>'; });
+  for (var k = 0; k < (start.getDay() + 6) % 7; k++) h += '<span></span>';
+  var last = new Date(vm.getFullYear(), vm.getMonth() + 1, 0).getDate();
+  for (var n = 1; n <= last; n++) {
+    var d = new Date(vm.getFullYear(), vm.getMonth(), n), off = d < first || d > END;
+    h += '<button type="button" class="cal-d" data-act="day" data-d="' + isoDay(d) + '"' + (off ? ' disabled' : '') + '>' + n + '</button>';
+  }
+  h += '</div><p class="cal-hint" role="status">' + (S.anchor ? 'Ahora elegí el último día del rango.' : 'Elegí el primer día del rango.') + '</p>' +
+    '<p class="cal-hint">Podés mirar desde el ' + dayShort(first) + (D.since ? '. Lumo guarda tu historial día a día.' : ' (el máximo que informa Mercado Libre). Desde hoy Lumo guarda tu historial día a día.') + '</p></div>';
+  return h;
+}
+/* Sombrea el rango mientras se elige, sin volver a dibujar todo el panel. */
+function paintCal(hover) {
+  var a = S.anchor, b = hover || a, lo = a && b ? (a < b ? a : b) : '', hi = a && b ? (a < b ? b : a) : '';
+  document.querySelectorAll('.cal-d').forEach(function (el) {
+    var d = el.dataset.d, on = a && d >= lo && d <= hi;
+    el.classList.toggle('in', !!(on && d !== lo && d !== hi));
+    el.classList.toggle('edge', !!(on && (d === lo || d === hi)));
+    el.classList.toggle('lo', !!(on && d === lo));
+    el.classList.toggle('hi', !!(on && d === hi));
+  });
+}
+function pickDay(iso) {
+  if (!S.anchor) { S.anchor = iso; return false; }
+  var a = S.anchor < iso ? S.anchor : iso, b = S.anchor < iso ? iso : S.anchor, f = parseDay(a), t = parseDay(b);
+  S.off = Math.round((END - t) / 864e5); S.days = Math.round((t - f) / 864e5) + 1;
+  S.cust = true; S.pick = false; S.anchor = '';
+  return true;
+}
 function topHTML() {
   var seg = [7, 14, 30].map(function (v) {
-    return '<button data-act="days" data-v="' + v + '" aria-pressed="' + (S.days === v) + '">' + v + ' días</button>';
+    return '<button data-act="days" data-v="' + v + '" aria-pressed="' + (!S.cust && S.days === v) + '">' + v + ' días</button>';
   }).join('');
   seg += '<button data-act="pick" aria-pressed="' + (S.cust || S.pick) + '" aria-expanded="' + S.pick + '">Otro rango</button>';
-  var first = new Date(END); first.setDate(END.getDate() - (DAYS - 1));
-  var picker = !S.pick ? '' : '<div class="range"><label>Desde<input type="date" id="rf" value="' + esc(S.rf) + '" min="' + isoDay(first) + '" max="' + isoDay(END) + '"></label>' +
-    '<label>Hasta<input type="date" id="rt" value="' + esc(S.rt) + '" min="' + isoDay(first) + '" max="' + isoDay(END) + '"></label>' +
-    '<p class="sub" role="status">' + (S.rangeErr ? esc(S.rangeErr) : (D.since ? 'Podés mirar desde el ' + dayShort(first) + ': Lumo guarda tu historial día a día, más allá de los 90 días que deja ver Mercado Libre.' : 'Podés mirar hasta 90 días hacia atrás (desde el ' + dayShort(first) + '). Desde hoy Lumo guarda tu historial día a día, así vas a poder ver más atrás con el tiempo.')) + '</p></div>';
   return '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(D.advertiser.name) + ' · ' + esc(D.advertiser.site) + '</div></div></div>' +
-    '<div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div></header>' + picker +
+    '<div class="seg-wrap"><div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div>' + (S.pick ? calHTML() : '') + '</div></header>' +
     '<div class="notice">' + icon('info') + '<span>Datos reales de Mercado Libre hasta el ' + dayLong(END) + '. Se actualizan una vez por día. El período elegido cambia las métricas de publicidad; las ventas orgánicas y las tendencias miran siempre los últimos 30 días. <a class="link" href="/panel?refresh=1">Actualizar ahora</a> · <a class="link" href="/salir">Salir</a>' + (D.admin ? ' · <a class="link" href="/admin">Administrar</a>' : '') + '</span></div>' + notesHTML();
 }
 var TABS = [['principal', 'Principal'], ['tareas', 'Tareas'], ['alertas', 'Alertas'], ['recomendaciones', 'Recomendaciones'], ['seguimiento', 'Seguimiento'], ['tendencias', 'Tendencias'], ['glosario', 'Glosario'], ['ayuda', 'Ayuda']];
@@ -1305,14 +1353,14 @@ function goPanelTop() {
 }
 
 document.addEventListener('click', function (e) {
+  if (S.pick && !e.target.closest('.seg-wrap')) { S.pick = false; S.anchor = ''; render(); }
   var b = e.target.closest('[data-act]'); if (!b) return;
   var a = b.dataset.act;
   if (a === 'draft' || a === 'glq' || a === 'cq') return;
-  if (a === 'days') { S.days = +b.dataset.v; S.off = 0; S.cust = false; S.pick = false; S.rangeErr = ''; }
-  else if (a === 'pick') {
-    S.pick = !S.pick;
-    if (S.pick && !S.rf) { S.rf = isoDay(periodStart()); S.rt = isoDay(periodEnd()); }
-  }
+  if (a === 'days') { S.days = +b.dataset.v; S.off = 0; S.cust = false; S.pick = false; S.anchor = ''; }
+  else if (a === 'pick') { S.pick = !S.pick; S.anchor = ''; S.vm = monthStart(S.cust ? periodEnd() : END); }
+  else if (a === 'mnav') { S.vm = new Date(S.vm.getFullYear(), S.vm.getMonth() + +b.dataset.v, 1); }
+  else if (a === 'day') { if (!pickDay(b.dataset.d)) { render(); paintCal(); return; } }
   else if (a === 'tab' || a === 'goTab') { S.tab = b.dataset.v; render(); goPanelTop(); return; }
   else if (a === 'sort') { var col = COLS.filter(function (x) { return x.k === b.dataset.v; })[0]; S.sort = S.sort.k === col.k ? { k: col.k, d: -S.sort.d } : { k: col.k, d: col.d }; }
   else if (a === 'fstat') S.fstat = b.dataset.v;
@@ -1337,19 +1385,9 @@ document.addEventListener('click', function (e) {
   } else return;
   render();
 });
-document.addEventListener('change', function (e) {
-  if (e.target.id !== 'rf' && e.target.id !== 'rt') return;
-  if (e.target.id === 'rf') S.rf = e.target.value; else S.rt = e.target.value;
-  if (!S.rf || !S.rt) { S.rangeErr = 'Elegí las dos fechas.'; render(); return; }
-  var f = parseDay(S.rf), t = parseDay(S.rt), first = new Date(END); first.setDate(END.getDate() - (DAYS - 1));
-  if (f > t) S.rangeErr = 'La fecha «Desde» tiene que ser anterior a «Hasta».';
-  else if (f < first || t > END) S.rangeErr = 'Elegí fechas entre el ' + dayShort(first) + ' y el ' + dayShort(END) + '.';
-  else {
-    S.rangeErr = ''; S.cust = true;
-    S.off = Math.round((END - t) / 864e5); S.days = Math.round((t - f) / 864e5) + 1;
-  }
-  render();
-  var again = document.getElementById(e.target.id); if (again) again.focus();
+document.addEventListener('mouseover', function (e) {
+  var b = e.target.closest && e.target.closest('.cal-d');
+  if (b && S.anchor) paintCal(b.dataset.d);
 });
 document.addEventListener('input', function (e) {
   if (e.target.id === 'newTask') S.draft = e.target.value;
