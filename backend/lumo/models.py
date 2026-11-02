@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, String, Text
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Float, String, Text
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -70,3 +70,18 @@ class Invite(Base):
     revoked = Column(Boolean, nullable=False, default=False)
     used_by = Column(BigInteger, nullable=True)
     used_at = Column(DateTime, nullable=True)
+
+
+class CampaignDay(Base):
+    """Un día de una campaña. Lumo lo guarda para que el historial supere los 90 días que deja consultar Mercado Libre."""
+
+    __tablename__ = "campaign_day"
+
+    user_id = Column(BigInteger, primary_key=True, autoincrement=False)
+    campaign_id = Column(BigInteger, primary_key=True, autoincrement=False)
+    day = Column(String(10), primary_key=True)
+    spend = Column(Float, nullable=False, default=0)
+    clicks = Column(Float, nullable=False, default=0)
+    prints = Column(Float, nullable=False, default=0)
+    units = Column(Float, nullable=False, default=0)
+    sales = Column(Float, nullable=False, default=0)

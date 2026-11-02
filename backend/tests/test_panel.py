@@ -28,10 +28,10 @@ class Dataset(unittest.TestCase):
         temprano = datetime(2026, 10, 28, 12, 0, tzinfo=timezone.utc)  # 09:00 en Argentina
         self.assertEqual(ads.window_end(temprano).strftime("%Y-%m-%d"), "2026-10-26")
 
-    def test_campanas_con_60_dias_y_objetivo_de_cada_una(self):
+    def test_campanas_con_90_dias_y_objetivo_de_cada_una(self):
         camps = {c["id"]: c for c in self.data["camps"]}
         self.assertEqual(len(camps), 4)
-        self.assertEqual(len(camps[101]["daily"]), 60)
+        self.assertEqual(len(camps[101]["daily"]), 90)
         self.assertAlmostEqual(camps[101]["target"], 5.0)   # roas_target tal cual
         self.assertAlmostEqual(camps[102]["target"], 4.0)   # sin roas_target: ACOS objetivo 25 -> ROAS objetivo 4
         self.assertFalse(camps[101]["estTarget"])
@@ -105,6 +105,32 @@ class Dataset(unittest.TestCase):
         self.assertTrue(propias)
         self.assertTrue(all(p.startswith("/advertising/MLA/") for p in propias), propias)
         self.assertFalse([p for p in propias if "/product_ads/items" in p or "/ads/search" in p])  # rutas dadas de baja
+
+
+class Historial(unittest.TestCase):
+    def setUp(self):
+        self.app = create_app(CFG)
+        self.engine = self.app.extensions["lumo_engine"]
+
+    def test_guarda_los_dias_y_los_suma_cuando_la_ventana_avanza(self):
+        from lumo import history
+        viejo = ads.build_dataset(fake_get, fake_ml.ADVERTISER, NOW)
+        with Session(self.engine) as s:
+            history.save(s, 5, viejo)
+            # 10 días después la ventana se corrió: los 10 primeros días ya no vienen de Mercado Libre
+            nuevo = ads.build_dataset(fake_get, fake_ml.ADVERTISER, NOW + timedelta(days=10))
+            ext = history.extend(s, 5, nuevo)
+        self.assertEqual(ext["days"], 100)
+        c_old = next(c for c in viejo["camps"] if c["id"] == 101)
+        c_new = next(c for c in ext["camps"] if c["id"] == 101)
+        self.assertEqual(len(c_new["daily"]), 100)
+        self.assertEqual(c_new["daily"][:10], c_old["daily"][:10])
+
+    def test_sin_historial_no_cambia_nada(self):
+        from lumo import history
+        data = ads.build_dataset(fake_get, fake_ml.ADVERTISER, NOW)
+        with Session(self.engine) as s:
+            self.assertEqual(history.extend(s, 5, data)["days"], 90)
 
 
 class Rutas(unittest.TestCase):

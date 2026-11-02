@@ -12,7 +12,7 @@ from sqlalchemy import create_engine, delete, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from . import access, ads, cuenta, ml
+from . import access, ads, cuenta, history, ml
 from .models import Access, Account, Base, Invite, PanelState, Snapshot, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
@@ -274,6 +274,8 @@ def create_app(overrides=None) -> Flask:
                 row.advertiser_id, row.data, row.fetched_at = data["advertiser"]["id"], json.dumps(data), utcnow()
                 s.add(row)
                 s.commit()
+                history.save(s, uid, data)
+            data = history.extend(s, uid, data)
             st = s.get(PanelState, uid)
             data["estado"] = json.loads(st.data) if st else {}
             data["admin"] = access.is_admin(cfg, uid)

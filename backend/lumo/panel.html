@@ -86,6 +86,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .brand-store { font-size: .85rem; color: var(--ink-3); }
 .seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
 .seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; font-size: .9rem; font-weight: 600; color: var(--ink-2); min-height: 36px; }
+.range { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 0 0 12px; }
+.range label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; font-weight: 600; color: var(--ink-2); }
+.range input { font: inherit; padding: 7px 10px; min-height: 40px; border: 1px solid var(--line, #d0d5dd); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.range .sub { flex-basis: 100%; margin: 0; }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
 .notice { display: flex; gap: 8px; align-items: flex-start; font-size: .85rem; color: var(--ink-2); background: var(--accent-soft); padding: 9px 12px; border-radius: 10px; }
 .notice .ic { margin-top: 2px; color: var(--accent); }
@@ -458,7 +462,7 @@ function saveState() {
 /*DATA-END*/
 
 /*LOGIC-START*/
-var S = { days: 7, metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
+var S = { days: 7, off: 0, cust: false, pick: false, rf: '', rt: '', rangeErr: '', metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
   showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
 var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
@@ -519,9 +523,9 @@ function groups(items, key) {
 }
 
 function compute() {
-  var n = S.days;
+  var n = S.days, o = S.off;
   var camps = CAMPS.map(function (c) {
-    var cur = agg(c.daily, DAYS - n, DAYS), prev = agg(c.daily, DAYS - 2 * n, DAYS - n);
+    var cur = agg(c.daily, DAYS - o - n, DAYS - o), prev = DAYS - o - 2 * n >= 0 ? agg(c.daily, DAYS - o - 2 * n, DAYS - o - n) : agg(c.daily, 0, 0);
     var roas = cur.spend ? cur.sales / cur.spend : 0;
     return { id: c.id, name: c.name, budget: c.budget, cur: cur, prev: prev,
       cur30: agg(c.daily, DAYS - 30, DAYS), prev30: agg(c.daily, DAYS - 60, DAYS - 30),
@@ -658,8 +662,13 @@ function topHTML() {
   var seg = [7, 14, 30].map(function (v) {
     return '<button data-act="days" data-v="' + v + '" aria-pressed="' + (S.days === v) + '">' + v + ' días</button>';
   }).join('');
+  seg += '<button data-act="pick" aria-pressed="' + (S.cust || S.pick) + '" aria-expanded="' + S.pick + '">Otro rango</button>';
+  var first = new Date(END); first.setDate(END.getDate() - (DAYS - 1));
+  var picker = !S.pick ? '' : '<div class="range"><label>Desde<input type="date" id="rf" value="' + esc(S.rf) + '" min="' + isoDay(first) + '" max="' + isoDay(END) + '"></label>' +
+    '<label>Hasta<input type="date" id="rt" value="' + esc(S.rt) + '" min="' + isoDay(first) + '" max="' + isoDay(END) + '"></label>' +
+    '<p class="sub" role="status">' + (S.rangeErr ? esc(S.rangeErr) : (D.since ? 'Podés mirar desde el ' + dayShort(first) + ': Lumo guarda tu historial día a día, más allá de los 90 días que deja ver Mercado Libre.' : 'Podés mirar hasta 90 días hacia atrás (desde el ' + dayShort(first) + '). Desde hoy Lumo guarda tu historial día a día, así vas a poder ver más atrás con el tiempo.')) + '</p></div>';
   return '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(D.advertiser.name) + ' · ' + esc(D.advertiser.site) + '</div></div></div>' +
-    '<div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div></header>' +
+    '<div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div></header>' + picker +
     '<div class="notice">' + icon('info') + '<span>Datos reales de Mercado Libre hasta el ' + dayLong(END) + '. Se actualizan una vez por día. El período elegido cambia las métricas de publicidad; las ventas orgánicas y las tendencias miran siempre los últimos 30 días. <a class="link" href="/panel?refresh=1">Actualizar ahora</a> · <a class="link" href="/salir">Salir</a>' + (D.admin ? ' · <a class="link" href="/admin">Administrar</a>' : '') + '</span></div>' + notesHTML();
 }
 var TABS = [['principal', 'Principal'], ['tareas', 'Tareas'], ['alertas', 'Alertas'], ['recomendaciones', 'Recomendaciones'], ['seguimiento', 'Seguimiento'], ['tendencias', 'Tendencias'], ['glosario', 'Glosario'], ['ayuda', 'Ayuda']];
@@ -683,7 +692,7 @@ function heroHTML() {
   var tone = { excelente: ['var(--good)', 'var(--on-good)'], bien: ['var(--good-soft)', 'var(--good)'], atencion: ['var(--warn-soft)', 'var(--warn)'], revisar: ['var(--bad-soft)', 'var(--bad)'], sindatos: ['var(--surface-2)', 'var(--ink-2)'] }[o];
   return '<section class="card hero" aria-labelledby="h-hero"><div class="hero-head"><div class="hero-ic" style="background:' + tone[0] + ';color:' + tone[1] + '">' + icon(ST[o].icon) + '</div><div>' +
     '<h1 id="h-hero">' + heads[o] + '</h1><div class="hero-lines">' +
-    '<p><b>ROAS</b> (retorno de la inversión publicitaria): por cada $1 que invertiste en publicidad en los últimos ' + S.days + ' días, vendiste <b>$' + r1(M.roas) + '</b>.</p><p>' + line2 + '</p>' +
+    '<p><b>ROAS</b> (retorno de la inversión publicitaria): por cada $1 que invertiste en publicidad en ' + periodIn() + ', vendiste <b>$' + r1(M.roas) + '</b>.</p><p>' + line2 + '</p>' +
     '<p class="small">Cada campaña se mide contra su propio ROAS objetivo, el que tenés configurado en Mercado Libre.</p></div></div></div></section>';
 }
 function tile(label, value, dl, def) { return '<div class="kpi"><span class="kpi-l">' + label + '</span><span class="kpi-v">' + value + '</span>' + dl + '<span class="kpi-d">' + def + '</span></div>'; }
@@ -692,7 +701,7 @@ function kpiHTML() {
   var ctr = t.prints ? t.clicks / t.prints : 0, pctr = p.prints ? p.clicks / p.prints : 0;
   var cvr = t.clicks ? t.units / t.clicks : 0, pcvr = p.clicks ? p.units / p.clicks : 0;
   var acos = t.sales ? t.spend / t.sales : 0, pacos = p.sales ? p.spend / p.sales : 0;
-  return '<section aria-labelledby="h-met"><div class="sec-head"><h2 id="h-met">Métricas de publicidad</h2><span class="sub">Últimos ' + S.days + ' días</span></div>' +
+  return '<section aria-labelledby="h-met"><div class="sec-head"><h2 id="h-met">Métricas de publicidad</h2><span class="sub">' + periodSub() + '</span></div>' +
     '<div class="group-t">Resultados</div><div class="kpis">' +
     tile('Inversión publicitaria', money(t.spend), delta(t.spend, p.spend, null), 'Lo que gastaste en tus anuncios.') +
     tile('Ventas por publicidad', money(t.sales), delta(t.sales, p.sales, true), 'Ventas que se atribuyen a tus anuncios.') +
@@ -710,6 +719,11 @@ var METRICS = {
   spend: { tab: 'Inversión', sub: 'Lo que invertiste en anuncios cada día.', fmt: function (v) { return money(v); }, axis: short },
   clicks: { tab: 'Clics', sub: 'Cuántas veces tocaron tus anuncios cada día.', fmt: function (v) { return nf0.format(v) + ' clics'; }, axis: function (v) { return nf0.format(v); } }
 };
+function dayShort(d) { return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }); }
+function periodEnd() { var d = new Date(END); d.setDate(END.getDate() - S.off); return d; }
+function periodStart() { var d = periodEnd(); d.setDate(d.getDate() - (S.days - 1)); return d; }
+function periodIn() { return S.cust ? 'el período del ' + dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'los últimos ' + S.days + ' días'; }
+function periodSub() { return S.cust ? dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'Últimos ' + S.days + ' días'; }
 function dayLong(d) { return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); }
 function chartCardHTML() {
   var tabs = Object.keys(METRICS).map(function (k) {
@@ -852,7 +866,7 @@ function roasChartHTML() {
       '<div class="rbar lg" aria-hidden="true"><span class="fill ' + c.status + '" style="width:' + Math.max(1, c.roas / max * 100) + '%"></span><i class="mark" style="left:' + (c.target / max * 100) + '%"></i></div>' +
       '<div class="rlab"><span>ROAS $' + r1(c.roas) + ': por cada $1 vendés $' + r1(c.roas) + '</span><span>Objetivo $' + r1(c.target) + '</span></div></div>';
   }).join('');
-  return '<section class="card" aria-labelledby="h-roas"><div class="sec-head"><h2 id="h-roas">ROAS de cada campaña contra su objetivo</h2><span class="sub">Últimos ' + S.days + ' días</span></div>' +
+  return '<section class="card" aria-labelledby="h-roas"><div class="sec-head"><h2 id="h-roas">ROAS de cada campaña contra su objetivo</h2><span class="sub">' + periodSub() + '</span></div>' +
     '<p class="sub">La marca negra es el ROAS objetivo de la campaña. Si la barra la pasa, la campaña cumple.</p>' + rows + '</section>';
 }
 function chartsHTML() {
@@ -923,7 +937,7 @@ function alertasHTML() {
   return '<div class="sum"><div class="sum-i"><b>' + M.strong.length + '</b><span>publicaciones sin publicidad que ya venden bien</span></div><div class="sum-i"><b>' + low.length + '</b><span>publicaciones con ROAS por debajo del objetivo</span></div></div>' +
     '<section aria-labelledby="h-org"><div class="blk-h"><h2 id="h-org">Vendiendo bien sin publicidad</h2><p class="sub">Publicaciones activas en Mercado Libre pero sin anuncios, con buen desempeño orgánico en los últimos 30 días. Activarlas en publicidad puede ayudarlas a vender más.</p>' +
     '<p class="small">Criterio: 10 o más unidades vendidas en 30 días sin publicidad, conversión del 3% o más (cuando la conocemos) y sin caída respecto de los 30 días anteriores.</p></div><div class="stack">' + orgBlock + '</div></section>' +
-    '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y ROAS por debajo del objetivo</h2><p class="sub">Publicaciones con anuncios activos que no llegan al ROAS objetivo de su campaña y bajan el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en los últimos ' + S.days + ' días.</p></div><div class="stack">' + lowBlock + '</div></section>' +
+    '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y ROAS por debajo del objetivo</h2><p class="sub">Publicaciones con anuncios activos que no llegan al ROAS objetivo de su campaña y bajan el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en ' + periodIn() + '.</p></div><div class="stack">' + lowBlock + '</div></section>' +
     '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Cómo querés que te avisemos</h2></div><div class="switches">' +
     sw.map(function (s) { return '<label class="sw" for="' + s[0] + '"><span>' + s[1] + '<small>' + s[2] + '</small></span><input type="checkbox" id="' + s[0] + '" role="switch" data-act="sw" data-id="' + s[0] + '"' + (S.sw[s[0]] ? ' checked' : '') + '></label>'; }).join('') +
     '</div><p class="small" style="margin-top:10px">Guardamos tus preferencias, pero Lumo todavía no envía avisos: el canal (email, WhatsApp u otro) está por definir.</p></section>';
@@ -1284,7 +1298,11 @@ document.addEventListener('click', function (e) {
   var b = e.target.closest('[data-act]'); if (!b) return;
   var a = b.dataset.act;
   if (a === 'draft' || a === 'glq' || a === 'cq') return;
-  if (a === 'days') S.days = +b.dataset.v;
+  if (a === 'days') { S.days = +b.dataset.v; S.off = 0; S.cust = false; S.pick = false; S.rangeErr = ''; }
+  else if (a === 'pick') {
+    S.pick = !S.pick;
+    if (S.pick && !S.rf) { S.rf = isoDay(periodStart()); S.rt = isoDay(periodEnd()); }
+  }
   else if (a === 'tab' || a === 'goTab') { S.tab = b.dataset.v; render(); goPanelTop(); return; }
   else if (a === 'sort') { var col = COLS.filter(function (x) { return x.k === b.dataset.v; })[0]; S.sort = S.sort.k === col.k ? { k: col.k, d: -S.sort.d } : { k: col.k, d: col.d }; }
   else if (a === 'fstat') S.fstat = b.dataset.v;
@@ -1308,6 +1326,20 @@ document.addEventListener('click', function (e) {
     return;
   } else return;
   render();
+});
+document.addEventListener('change', function (e) {
+  if (e.target.id !== 'rf' && e.target.id !== 'rt') return;
+  if (e.target.id === 'rf') S.rf = e.target.value; else S.rt = e.target.value;
+  if (!S.rf || !S.rt) { S.rangeErr = 'Elegí las dos fechas.'; render(); return; }
+  var f = parseDay(S.rf), t = parseDay(S.rt), first = new Date(END); first.setDate(END.getDate() - (DAYS - 1));
+  if (f > t) S.rangeErr = 'La fecha «Desde» tiene que ser anterior a «Hasta».';
+  else if (f < first || t > END) S.rangeErr = 'Elegí fechas entre el ' + dayShort(first) + ' y el ' + dayShort(END) + '.';
+  else {
+    S.rangeErr = ''; S.cust = true;
+    S.off = Math.round((END - t) / 864e5); S.days = Math.round((t - f) / 864e5) + 1;
+  }
+  render();
+  var again = document.getElementById(e.target.id); if (again) again.focus();
 });
 document.addEventListener('input', function (e) {
   if (e.target.id === 'newTask') S.draft = e.target.value;

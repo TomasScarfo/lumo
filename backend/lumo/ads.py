@@ -12,7 +12,7 @@ from .ml import MLError
 
 log = logging.getLogger("lumo")
 
-DAYS = 60
+DAYS = 90  # lo máximo que deja consultar Mercado Libre en las métricas de Product Ads
 AR = timezone(timedelta(hours=-3))  # Argentina no usa horario de verano
 MAX_GROUPS = 800
 PAGE = 200
