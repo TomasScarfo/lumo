@@ -87,11 +87,22 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
 .seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; font-size: .9rem; font-weight: 600; color: var(--ink-2); min-height: 36px; }
 .seg-wrap { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
-.cmp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: .85rem; color: var(--ink-2); }
-.cmp label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
-.cmp select { font: inherit; padding: 6px 8px; min-height: 36px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.cmp { position: relative; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: .85rem; color: var(--ink-2); }
+.cmp-l { font-weight: 600; }
+.cmp-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; text-align: left; }
+.cmp-btn:hover, .cmp-btn[aria-expanded="true"] { background: var(--surface-2); }
+.cmp-t { display: flex; flex-direction: column; line-height: 1.25; }
+.cmp-t b { font-weight: 600; font-size: .9rem; }
+.cmp-t span { font-size: .78rem; color: var(--ink-3); }
+.cmp-btn .ic { width: 1em; height: 1em; color: var(--ink-3); }
+.cmp-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 250px; max-width: calc(100vw - 32px); padding: 6px; display: flex; flex-direction: column; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.18); }
+.cmp-opt { display: flex; flex-direction: column; gap: 1px; text-align: left; border: 0; background: transparent; color: var(--ink); font: inherit; padding: 9px 12px; border-radius: 10px; }
+.cmp-opt b { font-weight: 600; font-size: .9rem; }
+.cmp-opt span { font-size: .78rem; color: var(--ink-3); }
+.cmp-opt:hover { background: var(--surface-2); }
+.cmp-opt[aria-selected="true"] { background: var(--accent-soft); }
+.cmp-opt[aria-selected="true"] b { color: var(--accent); }
 .cmp-edit { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 600; min-height: 36px; }
-.cmp-warn { color: var(--warn); }
 .cal { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 296px; max-width: calc(100vw - 32px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,.18); padding: 12px; }
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .cal-head button { width: 36px; height: 36px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); font-size: 1.3rem; line-height: 1; }
@@ -489,7 +500,7 @@ function saveState() {
 /*DATA-END*/
 
 /*LOGIC-START*/
-var S = { days: 7, off: 0, cust: false, pick: '', anchor: '', vm: null, cmp: 'prev', cf: '', ct: '', metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
+var S = { days: 7, off: 0, cust: false, pick: '', anchor: '', vm: null, cmp: 'prev', cmpOpen: false, cf: '', ct: '', metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
   showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
 var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
@@ -553,10 +564,11 @@ function groups(items, key) {
 function idxOf(d) { return DAYS - 1 - Math.round((END - d) / 864e5); }
 function scaleAgg(a, k) { return { spend: a.spend * k, sales: a.sales * k, clicks: a.clicks * k, prints: a.prints * k, units: a.units * k }; }
 /* Devuelve el tramo de la serie diaria a comparar, o null si no hay datos de ese período. Si tiene otra cantidad de días, se escala al largo del período actual. */
-function cmpWindow() {
+function cmpWindow(mode) {
+  mode = mode || S.cmp;
   var n = S.days, s0 = DAYS - S.off - n, a, b;
-  if (S.cmp === 'prev') { a = s0 - n; b = s0; }
-  else if (S.cmp === 'month') {
+  if (mode === 'prev') { a = s0 - n; b = s0; }
+  else if (mode === 'month') {
     var f = periodStart(), m = new Date(f.getFullYear(), f.getMonth() - 1, f.getDate());
     if (m.getMonth() !== (f.getMonth() + 11) % 12) m = new Date(f.getFullYear(), f.getMonth(), 0);
     a = idxOf(m); b = a + n;
@@ -567,6 +579,18 @@ function cmpWindow() {
   if (a < 0 || b > DAYS || b <= a) return null;
   return { a: a, b: b, scale: n / (b - a) };
 }
+function rangeTxt(f, t) {
+  if (f.getMonth() === t.getMonth() && f.getFullYear() === t.getFullYear()) return f.getDate() === t.getDate() ? dayShort(f) : f.getDate() + ' al ' + dayShort(t);
+  return dayShort(f) + ' al ' + dayShort(t);
+}
+function cmpDates(mode) {
+  var w = cmpWindow(mode);
+  if (!w) return mode === 'custom' && !S.cf ? 'Elegí las fechas' : 'Sin datos de ese período';
+  var f = new Date(END), t = new Date(END);
+  f.setDate(END.getDate() - (DAYS - 1 - w.a)); t.setDate(END.getDate() - (DAYS - w.b));
+  return rangeTxt(f, t);
+}
+var CMP_OPTS = [['prev', 'Período anterior'], ['month', 'Mes anterior'], ['custom', 'Período personalizado']];
 function cmpText() {
   if (S.cmp === 'month') return 'el mismo período del mes anterior';
   if (S.cmp === 'custom') return 'el período del ' + dayShort(parseDay(S.cf)) + ' al ' + dayShort(parseDay(S.ct));
@@ -750,13 +774,14 @@ function pickDay(iso) {
   return true;
 }
 function cmpHTML() {
-  var opts = [['prev', 'Período anterior'], ['month', 'Mes anterior (mismas fechas)'], ['custom', 'Período personalizado']].map(function (o) {
-    return '<option value="' + o[0] + '"' + (S.cmp === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+  var cur = CMP_OPTS.filter(function (o) { return o[0] === S.cmp; })[0];
+  var items = CMP_OPTS.map(function (o) {
+    return '<button type="button" role="option" class="cmp-opt" data-act="cmpopt" data-v="' + o[0] + '" aria-selected="' + (S.cmp === o[0]) + '"><b>' + o[1] + '</b><span>' + esc(cmpDates(o[0])) + '</span></button>';
   }).join('');
-  var extra = '';
-  if (S.cmp === 'custom' && S.cf && S.ct) extra = '<button type="button" class="cmp-edit" data-act="cmppick">' + dayShort(parseDay(S.cf)) + ' al ' + dayShort(parseDay(S.ct)) + '</button>';
-  if (!cmpWindow()) extra += '<span class="small cmp-warn" role="status">' + (S.cmp === 'custom' && !S.cf ? 'Elegí el período a comparar.' : 'No tenemos datos de ese período.') + '</span>';
-  return '<div class="cmp"><label>Comparar con <select id="cmp">' + opts + '</select></label>' + extra + '</div>';
+  return '<div class="cmp"><span class="cmp-l" id="cmp-l">Comparar con</span>' +
+    '<button type="button" class="cmp-btn" data-act="cmpmenu" aria-haspopup="listbox" aria-expanded="' + S.cmpOpen + '" aria-labelledby="cmp-l"><span class="cmp-t"><b>' + cur[1] + '</b><span>' + esc(cmpDates(S.cmp)) + '</span></span>' + icon('chevron') + '</button>' +
+    (S.cmpOpen ? '<div class="cmp-menu" role="listbox" aria-labelledby="cmp-l">' + items + '</div>' : '') +
+    (S.cmp === 'custom' && S.cf ? '<button type="button" class="cmp-edit" data-act="cmppick">Cambiar fechas</button>' : '') + '</div>';
 }
 function topHTML() {
   var seg = [7, 14, 30].map(function (v) {
@@ -1391,13 +1416,19 @@ function goPanelTop() {
 }
 
 document.addEventListener('click', function (e) {
+  if (S.cmpOpen && !e.target.closest('.cmp')) { S.cmpOpen = false; if (!e.target.closest('[data-act]')) render(); }
   if (S.pick && !e.target.closest('.seg-wrap')) { S.pick = ''; S.anchor = ''; render(); }
   var b = e.target.closest('[data-act]'); if (!b) return;
   var a = b.dataset.act;
   if (a === 'draft' || a === 'glq' || a === 'cq') return;
   if (a === 'days') { S.days = +b.dataset.v; S.off = 0; S.cust = false; S.pick = ''; S.anchor = ''; }
-  else if (a === 'pick') { S.pick = S.pick === 'range' ? '' : 'range'; S.anchor = ''; S.vm = monthStart(S.cust ? periodEnd() : END); }
-  else if (a === 'cmppick') { S.pick = 'cmp'; S.anchor = ''; S.vm = monthStart(S.cf ? parseDay(S.cf) : periodStart()); }
+  else if (a === 'pick') { S.cmpOpen = false; S.pick = S.pick === 'range' ? '' : 'range'; S.anchor = ''; S.vm = monthStart(S.cust ? periodEnd() : END); }
+  else if (a === 'cmpmenu') { S.cmpOpen = !S.cmpOpen; S.pick = ''; S.anchor = ''; }
+  else if (a === 'cmpopt') {
+    S.cmp = b.dataset.v; S.cmpOpen = false; S.anchor = '';
+    if (S.cmp === 'custom') { S.pick = 'cmp'; S.vm = monthStart(S.cf ? parseDay(S.cf) : periodStart()); } else S.pick = '';
+  }
+  else if (a === 'cmppick') { S.pick = 'cmp'; S.cmpOpen = false; S.anchor = ''; S.vm = monthStart(S.cf ? parseDay(S.cf) : periodStart()); }
   else if (a === 'mnav') { S.vm = new Date(S.vm.getFullYear(), S.vm.getMonth() + +b.dataset.v, 1); }
   else if (a === 'day') { if (!pickDay(b.dataset.d)) { render(); paintCal(); return; } }
   else if (a === 'tab' || a === 'goTab') { S.tab = b.dataset.v; render(); goPanelTop(); return; }
@@ -1424,11 +1455,8 @@ document.addEventListener('click', function (e) {
   } else return;
   render();
 });
-document.addEventListener('change', function (e) {
-  if (e.target.id !== 'cmp') return;
-  S.cmp = e.target.value; S.anchor = '';
-  if (S.cmp === 'custom') { S.pick = 'cmp'; S.vm = monthStart(S.cf ? parseDay(S.cf) : periodStart()); } else S.pick = '';
-  render();
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && (S.cmpOpen || S.pick)) { S.cmpOpen = false; S.pick = ''; S.anchor = ''; render(); }
 });
 document.addEventListener('mouseover', function (e) {
   var b = e.target.closest && e.target.closest('.cal-d');
