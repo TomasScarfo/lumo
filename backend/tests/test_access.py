@@ -190,6 +190,19 @@ class Invitaciones(Base):
         self.assertEqual(self.client.get("/invitacion/" + cancelada).status_code, 404)
 
 
+class VolverALaPortada(Base):
+    cfg = dict(CFG, SITE_URL="https://lumo-sitio.onrender.com")
+
+    def test_volver_al_inicio_va_a_la_portada_y_no_a_la_app(self):
+        html = self.connect(self.client, 999).get_data(as_text=True)
+        self.assertIn('href="https://lumo-sitio.onrender.com">Volver al inicio', html)
+        self.assertNotIn('href="/">Volver al inicio', html)
+
+    def test_salir_lleva_a_la_portada(self):
+        r = self.client.get("/salir")
+        self.assertEqual(r.headers["Location"], "https://lumo-sitio.onrender.com")
+
+
 class Ingreso(Base):
     def denied_html(self):
         return Base.connect(self, self.client, 999).get_data(as_text=True)

@@ -116,6 +116,10 @@ def create_app(overrides=None) -> Flask:
             out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
         return out or None
 
+    def _home():
+        site = cfg.get("SITE_URL", "")
+        return site if site.startswith("https://") else "/"
+
     app.extensions["lumo_contact"] = _contact  # build_site.py la usa para generar la portada estática
 
     @app.get("/")
@@ -177,7 +181,7 @@ def create_app(overrides=None) -> Flask:
                 s.rollback()
                 session.clear()
                 log.info("acceso denegado a la cuenta %s", user_id)
-                return render_template("denied.html", user_id=user_id, contact=_contact()), 403
+                return render_template("denied.html", user_id=user_id, contact=_contact(), home=_home()), 403
             save_tokens(s, cfg, user_id, tok)  # los tokens solo se guardan si la cuenta tiene acceso
             s.commit()
         session.clear()
@@ -213,7 +217,7 @@ def create_app(overrides=None) -> Flask:
     @app.get("/salir")
     def salir():
         session.clear()
-        return redirect("/")
+        return redirect(_home())
 
     def _json(data, status=200):
         resp = jsonify(data)
