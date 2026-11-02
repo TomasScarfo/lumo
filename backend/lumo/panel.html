@@ -362,6 +362,7 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .sw small { display: block; color: var(--ink-3); font-size: .82rem; }
 .sw input { appearance: none; -webkit-appearance: none; width: 46px; height: 28px; border-radius: 999px; background: var(--ink-3); position: relative; flex: none; margin: 0; cursor: pointer; transition: background .15s; }
 .sw input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
+.sw input:disabled { opacity: .5; cursor: not-allowed; }
 .sw input:checked { background: var(--accent); }
 .sw input:checked::after { transform: translateX(18px); background: var(--accent-ink); }
 
@@ -871,6 +872,8 @@ function periodStart() { var d = periodEnd(); d.setDate(d.getDate() - (S.days - 
 function periodIn() { return S.cust ? 'el período del ' + dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'los últimos ' + S.days + ' días'; }
 function periodSub() { return S.cust ? dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'Últimos ' + S.days + ' días'; }
 function dayLong(d) { return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); }
+/* Mientras sea true, los avisos por email se muestran como "Próximamente" y no se pueden activar. */
+var AVISOS_PRONTO = true;
 function mailNote() {
   var from = (window.LUMO_CONTACT || {}).email;
   if (!D.mailOn) return '<p class="small" style="margin-top:10px">Guardamos tus preferencias. Los avisos por email todavía no están habilitados en Lumo.</p>';
@@ -1110,9 +1113,9 @@ function alertasHTML() {
     '<section aria-labelledby="h-org"><div class="blk-h"><h2 id="h-org">Vendiendo bien sin publicidad</h2><p class="sub">Publicaciones activas en Mercado Libre pero sin anuncios, con buen desempeño orgánico en los últimos 30 días. Activarlas en publicidad puede ayudarlas a vender más.</p>' +
     '<p class="small">Criterio: 10 o más unidades vendidas en 30 días sin publicidad, conversión del 3% o más (cuando la conocemos) y sin caída respecto de los 30 días anteriores.</p></div><div class="stack">' + orgBlock + '</div></section>' +
     '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y ROAS por debajo del objetivo</h2><p class="sub">Publicaciones con anuncios activos que no llegan al ROAS objetivo de su campaña y bajan el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en ' + periodIn() + '.</p></div><div class="stack">' + lowBlock + '</div></section>' +
-    '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Cómo querés que te avisemos</h2></div><div class="switches">' +
-    sw.map(function (s) { return '<label class="sw" for="' + s[0] + '"><span>' + s[1] + '<small>' + s[2] + '</small></span><input type="checkbox" id="' + s[0] + '" role="switch" data-act="sw" data-id="' + s[0] + '"' + (S.sw[s[0]] ? ' checked' : '') + '></label>'; }).join('') +
-    '</div>' + mailNote() + '</section>';
+    '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Cómo querés que te avisemos</h2>' + (AVISOS_PRONTO ? '<span class="tag">Próximamente</span>' : '') + '</div><div class="switches">' +
+    sw.map(function (s) { return '<label class="sw" for="' + s[0] + '"><span>' + s[1] + '<small>' + s[2] + '</small></span><input type="checkbox" id="' + s[0] + '" role="switch" data-act="sw" data-id="' + s[0] + '"' + (S.sw[s[0]] ? ' checked' : '') + (AVISOS_PRONTO ? ' disabled' : '') + '></label>'; }).join('') +
+    '</div>' + (AVISOS_PRONTO ? '<p class="small" style="margin-top:10px">Estamos preparando los avisos por email. Muy pronto vas a poder activarlos desde acá.</p>' : mailNote()) + '</section>';
 }
 
 /* ---------- Recomendaciones ---------- */
