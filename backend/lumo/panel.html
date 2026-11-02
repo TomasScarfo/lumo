@@ -27,6 +27,7 @@
   --warn-soft: #FBEACB;
   --bad: #B42318;
   --bad-soft: #FADFDB;
+  --s-sales: #2446D6; --s-income: #146C43; --s-spend: #B35C00; --s-clicks: #8A3FB0; --s-prints: #0E7C86;
   --font-display: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
@@ -36,6 +37,7 @@
     --line: #263543; --accent: #8BA0FF; --accent-ink: #0B131A; --accent-soft: #1E2B55;
     --good: #52CC8C; --on-good: #07140D; --good-soft: #143525; --warn: #F2B24E; --warn-soft: #3A2A0D;
     --bad: #FF8F83; --bad-soft: #42201C; color-scheme: dark;
+    --s-sales: #8BA0FF; --s-income: #52CC8C; --s-spend: #F2B24E; --s-clicks: #C79BFF; --s-prints: #5FD0D9;
   }
 }
 :root[data-theme="dark"] {
@@ -43,6 +45,7 @@
   --line: #263543; --accent: #8BA0FF; --accent-ink: #0B131A; --accent-soft: #1E2B55;
   --good: #52CC8C; --on-good: #07140D; --good-soft: #143525; --warn: #F2B24E; --warn-soft: #3A2A0D;
   --bad: #FF8F83; --bad-soft: #42201C; color-scheme: dark;
+  --s-sales: #8BA0FF; --s-income: #52CC8C; --s-spend: #F2B24E; --s-clicks: #C79BFF; --s-prints: #5FD0D9;
 }
 
 * { box-sizing: border-box; }
@@ -195,7 +198,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .chart-box { position: relative; margin-top: 10px; min-height: 210px; touch-action: pan-y; }
 .chart-box svg { display: block; }
 .chart-box text { fill: var(--ink-3); font-family: var(--font-body); font-size: 11.5px; }
-.bar { fill: var(--accent); transition: opacity .1s; }
+.bar { fill: var(--s-sales); transition: opacity .1s; }
+.sline { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.sdot { stroke: var(--surface); stroke-width: 2; }
+.guide { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.mchips { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 10px 0 4px; }
+.mchip { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; min-width: 0; }
+.mchip[aria-pressed="true"] { border-color: var(--c); background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.mchip[aria-pressed="false"] { color: var(--ink-3); }
+.mchip[aria-pressed="false"] .mv { color: var(--ink-3); }
+.mchip:hover { background: var(--surface-2); }
+.mt { display: flex; align-items: center; gap: 8px; font-size: .85rem; font-weight: 600; }
+.sw { flex: none; width: 12px; height: 12px; border-radius: 3px; border: 2px solid var(--c); box-sizing: border-box; }
+.mchip[aria-pressed="true"] .sw { background: var(--c); }
+.sw.ln { height: 4px; border-radius: 2px; }
+.mv { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.15; font-variant-numeric: tabular-nums; }
+.mchip .delta { font-size: .75rem; }
+.tt i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.tt div { display: flex; justify-content: space-between; gap: 14px; font-variant-numeric: tabular-nums; }
 .bar.dim { opacity: .45; }
 .grid { stroke: var(--line); stroke-width: 1; }
 .tt { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); padding: 7px 10px; border-radius: 8px; font-size: .82rem; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -100%); z-index: 2; }
@@ -500,7 +520,7 @@ function saveState() {
 /*DATA-END*/
 
 /*LOGIC-START*/
-var S = { days: 7, off: 0, cust: false, pick: '', anchor: '', vm: null, cmp: 'prev', cmpOpen: false, cf: '', ct: '', metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
+var S = { days: 7, off: 0, cust: false, pick: '', anchor: '', vm: null, cmp: 'prev', cmpOpen: false, cf: '', ct: '', ser: { units: true, sales: true }, tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
   showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
 var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
@@ -691,9 +711,9 @@ function compute() {
   tasks.sort(function (a, b) { return whenOrder[a.when] - whenOrder[b.when]; });
 
   var daily = [];
-  for (var i = DAYS - n; i < DAYS; i++) {
-    var d = { date: CAMPS[0].daily[i].date, spend: 0, sales: 0, clicks: 0 };
-    CAMPS.forEach(function (c) { d.spend += c.daily[i].spend; d.sales += c.daily[i].sales; d.clicks += c.daily[i].clicks; });
+  for (var i = DAYS - o - n; i < DAYS - o; i++) {
+    var d = { date: CAMPS[0].daily[i].date, spend: 0, sales: 0, clicks: 0, prints: 0, units: 0 };
+    CAMPS.forEach(function (c) { var x = c.daily[i]; d.spend += x.spend; d.sales += x.sales; d.clicks += x.clicks; d.prints += x.prints; d.units += x.units; });
     daily.push(d);
   }
   var tot30 = { sales: 0, ad: 0 };
@@ -835,11 +855,14 @@ function kpiHTML() {
     tile('CVR (conversión)', pct1(cvr), delta(cvr, pcvr, true), 'Conversion Rate: de cada 100 clics, cuántos terminan en una compra.') +
     '</div><button class="link" data-act="tab" data-v="glosario" style="margin-top:6px">Ver todas las métricas en el Glosario</button></section>';
 }
-var METRICS = {
-  sales: { tab: 'Ventas', sub: 'Lo que vendiste cada día gracias a la publicidad.', fmt: function (v) { return money(v); }, axis: short },
-  spend: { tab: 'Inversión', sub: 'Lo que invertiste en anuncios cada día.', fmt: function (v) { return money(v); }, axis: short },
-  clicks: { tab: 'Clics', sub: 'Cuántas veces tocaron tus anuncios cada día.', fmt: function (v) { return nf0.format(v) + ' clics'; }, axis: function (v) { return nf0.format(v); } }
-};
+var SERIES = [
+  { k: 'units', label: 'Ventas', kind: 'bar', c: 'var(--s-sales)', val: function (v) { return nf0.format(Math.round(v)); }, tip: function (v) { return pl(Math.round(v), 'venta', 'ventas'); }, axis: function (v) { return nf0.format(v); }, up: true },
+  { k: 'sales', label: 'Ingresos', kind: 'line', c: 'var(--s-income)', val: money, tip: money, axis: short, up: true },
+  { k: 'spend', label: 'Inversión', kind: 'line', c: 'var(--s-spend)', val: money, tip: money, axis: short, up: null },
+  { k: 'clicks', label: 'Clics', kind: 'line', c: 'var(--s-clicks)', val: function (v) { return nf0.format(v); }, tip: function (v) { return nf0.format(v) + ' clics'; }, axis: function (v) { return nf0.format(v); }, up: true },
+  { k: 'prints', label: 'Impresiones', kind: 'line', c: 'var(--s-prints)', val: function (v) { return nf0.format(v); }, tip: function (v) { return nf0.format(v) + ' impresiones'; }, axis: function (v) { return nf0.format(short(v).replace('$', '')); }, up: true }
+];
+function onSeries() { return SERIES.filter(function (x) { return S.ser[x.k]; }); }
 function dayShort(d) { return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }); }
 function periodEnd() { var d = new Date(END); d.setDate(END.getDate() - S.off); return d; }
 function periodStart() { var d = periodEnd(); d.setDate(d.getDate() - (S.days - 1)); return d; }
@@ -847,20 +870,24 @@ function periodIn() { return S.cust ? 'el período del ' + dayShort(periodStart(
 function periodSub() { return S.cust ? dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'Últimos ' + S.days + ' días'; }
 function dayLong(d) { return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); }
 function chartCardHTML() {
-  var tabs = Object.keys(METRICS).map(function (k) {
-    return '<button data-act="metric" data-v="' + k + '" aria-pressed="' + (S.metric === k) + '">' + METRICS[k].tab + '</button>';
+  var t = M.tot, p = M.prev;
+  var chips = SERIES.map(function (x) {
+    return '<button type="button" class="mchip" style="--c:' + x.c + '" data-act="ser" data-v="' + x.k + '" aria-pressed="' + !!S.ser[x.k] + '">' +
+      '<span class="mt"><i class="sw' + (x.kind === 'line' ? ' ln' : '') + '"></i>' + x.label + '</span><span class="mv">' + x.val(t[x.k]) + '</span>' + delta(t[x.k], p[x.k], x.up) + '</button>';
   }).join('');
   var body;
   if (S.table) {
-    body = '<div class="tbl"><table><thead><tr><th>Día</th><th>Inversión</th><th>Ventas</th><th>Clics</th></tr></thead><tbody>' +
+    body = '<div class="tbl"><table><thead><tr><th>Día</th><th>Ventas</th><th>Ingresos</th><th>Inversión</th><th>Clics</th><th>Impresiones</th></tr></thead><tbody>' +
       M.daily.slice().reverse().map(function (d) {
-        return '<tr><td>' + d.date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }) + '</td><td>' + money(d.spend) + '</td><td>' + money(d.sales) + '</td><td>' + nf0.format(d.clicks) + '</td></tr>';
+        return '<tr><td>' + d.date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }) + '</td><td>' + nf0.format(d.units) + '</td><td>' + money(d.sales) + '</td><td>' + money(d.spend) + '</td><td>' + nf0.format(d.clicks) + '</td><td>' + nf0.format(d.prints) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
   } else {
-    body = '<div class="chart-box" id="chartBox" role="img" aria-label="Gráfico de barras por día. Usá la tabla para ver los valores exactos."></div>';
+    body = '<div class="chart-box" id="chartBox" role="img" aria-label="Gráfico por día. Las ventas van en barras y el resto de las métricas en líneas. Usá la tabla para ver los valores exactos."></div>' +
+      (onSeries().length > 1 ? '<p class="small">Cada métrica usa su propia escala, así podés compararlas aunque tengan valores muy distintos. Tocá el gráfico para ver los valores de cada día.</p>' : '');
   }
-  return '<section class="card" aria-labelledby="h-dias"><div class="sec-head"><h2 id="h-dias">Cómo vienen tus días</h2><div class="tabs" role="group" aria-label="Qué mostrar">' + tabs + '</div></div>' +
-    '<p class="sub">' + METRICS[S.metric].sub + '</p>' + body +
+  return '<section class="card" aria-labelledby="h-dias"><div class="sec-head"><h2 id="h-dias">Cómo vienen tus días</h2><span class="sub">' + periodSub() + '</span></div>' +
+    '<p class="sub">Elegí una o más métricas para verlas juntas. Las ventas se ven en barras y el resto en líneas.</p>' +
+    '<div class="mchips" role="group" aria-label="Métricas del gráfico">' + chips + '</div>' + body +
     '<button class="link" data-act="table" aria-pressed="' + S.table + '">' + (S.table ? 'Ver como gráfico' : 'Ver como tabla') + '</button></section>';
 }
 function niceMax(v) {
@@ -870,41 +897,54 @@ function niceMax(v) {
 }
 function drawChart() {
   var box = $('#chartBox'); if (!box || !M) return;
-  var W = Math.max(280, box.clientWidth), H = 210, mg = { l: 54, r: 6, t: 10, b: 26 };
-  var key = S.metric, def = METRICS[key], data = M.daily, N = data.length;
-  var max = niceMax(Math.max.apply(null, data.map(function (d) { return d[key]; })));
+  var on = onSeries(), single = on.length === 1, data = M.daily, N = data.length;
+  var W = Math.max(280, box.clientWidth), H = 220, mg = { l: single ? 54 : 8, r: 8, t: 12, b: 26 };
   var pw = W - mg.l - mg.r, ph = H - mg.t - mg.b, slot = pw / N, gap = N <= 7 ? 6 : N <= 14 ? 4 : 2, bw = Math.max(3, slot - gap);
-  var y = function (v) { return mg.t + ph - v / max * ph; };
+  var max = {};
+  on.forEach(function (x) { max[x.k] = niceMax(Math.max.apply(null, data.map(function (d) { return d[x.k]; }))); });
+  var yv = function (k, v) { return mg.t + ph - v / max[k] * ph; };
+  var cx = function (i) { return mg.l + i * slot + slot / 2; };
   var s = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
   [0, 0.5, 1].forEach(function (f) {
-    var yy = y(max * f);
-    s += '<line class="grid" x1="' + mg.l + '" x2="' + (W - mg.r) + '" y1="' + yy + '" y2="' + yy + '"/><text x="' + (mg.l - 8) + '" y="' + (yy + 4) + '" text-anchor="end">' + def.axis(max * f) + '</text>';
+    var yy = mg.t + ph - ph * f;
+    s += '<line class="grid" x1="' + mg.l + '" x2="' + (W - mg.r) + '" y1="' + yy + '" y2="' + yy + '"/>';
+    if (single) s += '<text x="' + (mg.l - 8) + '" y="' + (yy + 4) + '" text-anchor="end">' + on[0].axis(max[on[0].k] * f) + '</text>';
   });
-  data.forEach(function (d, i) {
-    var x = mg.l + i * slot + (slot - bw) / 2, h = Math.max(1, d[key] / max * ph), top = mg.t + ph - h, r = Math.min(4, bw / 2, h);
-    s += '<path class="bar" d="M' + x + ' ' + (top + h) + 'V' + (top + r) + 'Q' + x + ' ' + top + ' ' + (x + r) + ' ' + top + 'H' + (x + bw - r) + 'Q' + (x + bw) + ' ' + top + ' ' + (x + bw) + ' ' + (top + r) + 'V' + (top + h) + 'Z"/>';
+  on.filter(function (x) { return x.kind === 'bar'; }).forEach(function (x) {
+    data.forEach(function (d, i) {
+      var xx = mg.l + i * slot + (slot - bw) / 2, h = Math.max(1, d[x.k] / max[x.k] * ph), top = mg.t + ph - h, r = Math.min(4, bw / 2, h);
+      s += '<path class="bar" d="M' + xx + ' ' + (top + h) + 'V' + (top + r) + 'Q' + xx + ' ' + top + ' ' + (xx + r) + ' ' + top + 'H' + (xx + bw - r) + 'Q' + (xx + bw) + ' ' + top + ' ' + (xx + bw) + ' ' + (top + r) + 'V' + (top + h) + 'Z"' + (single ? '' : ' style="opacity:.55"') + '/>';
+    });
   });
-  var step = N <= 7 ? 1 : N <= 14 ? 3 : 7;
+  on.filter(function (x) { return x.kind === 'line'; }).forEach(function (x) {
+    s += '<polyline class="sline" stroke="' + x.c + '" points="' + data.map(function (d, i) { return cx(i).toFixed(1) + ',' + yv(x.k, d[x.k]).toFixed(1); }).join(' ') + '"/>';
+    if (N <= 31) data.forEach(function (d, i) { s += '<circle class="sdot" fill="' + x.c + '" cx="' + cx(i).toFixed(1) + '" cy="' + yv(x.k, d[x.k]).toFixed(1) + '" r="3"/>'; });
+  });
+  var step = N <= 7 ? 1 : N <= 14 ? 3 : N <= 31 ? 7 : N <= 120 ? 14 : 30;
   data.forEach(function (d, i) {
     if ((N - 1 - i) % step !== 0) return;
-    var last = i === N - 1, cx = last ? mg.l + pw : mg.l + i * slot + slot / 2;
+    var last = i === N - 1, lx = last ? mg.l + pw : cx(i);
     var lab = N <= 7 ? d.date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric' }) : d.date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-    s += '<text x="' + cx + '" y="' + (H - 7) + '" text-anchor="' + (last ? 'end' : 'middle') + '">' + lab.replace('.', '') + '</text>';
+    s += '<text x="' + lx + '" y="' + (H - 7) + '" text-anchor="' + (last ? 'end' : 'middle') + '">' + lab.replace('.', '') + '</text>';
   });
-  s += '</svg><div class="tt" id="tt" hidden></div>';
+  s += '<line class="guide" id="guide" y1="' + mg.t + '" y2="' + (mg.t + ph) + '" hidden/></svg><div class="tt" id="tt" hidden></div>';
   box.innerHTML = s;
-  var tt = $('#tt'), bars = box.querySelectorAll('.bar');
-  function clear() { tt.hidden = true; bars.forEach(function (b) { b.classList.remove('dim'); }); }
+  var tt = $('#tt'), guide = $('#guide'), bars = box.querySelectorAll('.bar');
+  function clear() { tt.hidden = true; guide.setAttribute('hidden', ''); bars.forEach(function (b) { b.classList.remove('dim'); }); }
   function move(e) {
     var rect = box.getBoundingClientRect(), x = e.clientX - rect.left, i = Math.floor((x - mg.l) / slot);
     if (i < 0 || i >= N) { clear(); return; }
     bars.forEach(function (b, j) { b.classList.toggle('dim', j !== i); });
-    var d = data[i], hh = Math.max(1, d[key] / max * ph);
-    tt.innerHTML = dayLong(d.date) + '<b>' + def.fmt(d[key]) + '</b>';
+    var d = data[i], top = mg.t + ph;
+    tt.innerHTML = dayLong(d.date) + (single ? '<b>' + on[0].tip(d[on[0].k]) + '</b>' : on.map(function (z) {
+      return '<div><span><i style="background:' + z.c + '"></i>' + z.label + '</span><b>' + z.val(d[z.k]) + '</b></div>';
+    }).join(''));
+    on.forEach(function (z) { top = Math.min(top, yv(z.k, d[z.k])); });
+    guide.removeAttribute('hidden'); guide.setAttribute('x1', cx(i)); guide.setAttribute('x2', cx(i));
     tt.hidden = false;
-    var half = tt.offsetWidth / 2, cx = mg.l + i * slot + slot / 2;
-    tt.style.left = Math.min(Math.max(cx, half + 2), W - half - 2) + 'px';
-    tt.style.top = Math.max(mg.t + ph - hh - 6, tt.offsetHeight + 2) + 'px';
+    var half = tt.offsetWidth / 2, c = cx(i);
+    tt.style.left = Math.min(Math.max(c, half + 2), W - half - 2) + 'px';
+    tt.style.top = Math.max(top - 8, tt.offsetHeight + 2) + 'px';
   }
   box.onpointermove = move; box.onpointerdown = move; box.onpointerleave = clear;
 }
@@ -1436,7 +1476,7 @@ document.addEventListener('click', function (e) {
   else if (a === 'fstat') S.fstat = b.dataset.v;
   else if (a === 'clearF') { S.fstat = 'all'; S.cq = ''; }
   else if (a === 'toggleAll') { var every = M.camps.every(function (c) { return S.open[c.id]; }); M.camps.forEach(function (c) { S.open[c.id] = !every; }); }
-  else if (a === 'metric') S.metric = b.dataset.v;
+  else if (a === 'ser') { var on0 = onSeries(); if (!(S.ser[b.dataset.v] && on0.length === 1)) S.ser[b.dataset.v] = !S.ser[b.dataset.v]; }
   else if (a === 'table') S.table = !S.table;
   else if (a === 'toggleCamp') S.open[b.dataset.id] = !S.open[b.dataset.id];
   else if (a === 'done') { S.done[b.dataset.id] = true; recordAction(b.dataset.id); }
