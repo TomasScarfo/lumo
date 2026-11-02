@@ -86,7 +86,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .brand-store { font-size: .85rem; color: var(--ink-3); }
 .seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
 .seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; font-size: .9rem; font-weight: 600; color: var(--ink-2); min-height: 36px; }
-.seg-wrap { position: relative; }
+.seg-wrap { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
+.cmp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: .85rem; color: var(--ink-2); }
+.cmp label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.cmp select { font: inherit; padding: 6px 8px; min-height: 36px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.cmp-edit { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 600; min-height: 36px; }
+.cmp-warn { color: var(--warn); }
 .cal { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 296px; max-width: calc(100vw - 32px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,.18); padding: 12px; }
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .cal-head button { width: 36px; height: 36px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); font-size: 1.3rem; line-height: 1; }
@@ -484,7 +489,7 @@ function saveState() {
 /*DATA-END*/
 
 /*LOGIC-START*/
-var S = { days: 7, off: 0, cust: false, pick: false, anchor: '', vm: null, metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
+var S = { days: 7, off: 0, cust: false, pick: '', anchor: '', vm: null, cmp: 'prev', cf: '', ct: '', metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
   showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
 var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
@@ -544,10 +549,33 @@ function groups(items, key) {
   }).sort(function (a, b) { return b.growth - a.growth; });
 }
 
+/* ---------- Período contra el que se compara ---------- */
+function idxOf(d) { return DAYS - 1 - Math.round((END - d) / 864e5); }
+function scaleAgg(a, k) { return { spend: a.spend * k, sales: a.sales * k, clicks: a.clicks * k, prints: a.prints * k, units: a.units * k }; }
+/* Devuelve el tramo de la serie diaria a comparar, o null si no hay datos de ese período. Si tiene otra cantidad de días, se escala al largo del período actual. */
+function cmpWindow() {
+  var n = S.days, s0 = DAYS - S.off - n, a, b;
+  if (S.cmp === 'prev') { a = s0 - n; b = s0; }
+  else if (S.cmp === 'month') {
+    var f = periodStart(), m = new Date(f.getFullYear(), f.getMonth() - 1, f.getDate());
+    if (m.getMonth() !== (f.getMonth() + 11) % 12) m = new Date(f.getFullYear(), f.getMonth(), 0);
+    a = idxOf(m); b = a + n;
+  } else {
+    if (!S.cf || !S.ct) return null;
+    a = idxOf(parseDay(S.cf)); b = idxOf(parseDay(S.ct)) + 1;
+  }
+  if (a < 0 || b > DAYS || b <= a) return null;
+  return { a: a, b: b, scale: n / (b - a) };
+}
+function cmpText() {
+  if (S.cmp === 'month') return 'el mismo período del mes anterior';
+  if (S.cmp === 'custom') return 'el período del ' + dayShort(parseDay(S.cf)) + ' al ' + dayShort(parseDay(S.ct));
+  return 'los ' + S.days + ' días anteriores';
+}
 function compute() {
-  var n = S.days, o = S.off;
+  var n = S.days, o = S.off, cw = cmpWindow();
   var camps = CAMPS.map(function (c) {
-    var cur = agg(c.daily, DAYS - o - n, DAYS - o), prev = DAYS - o - 2 * n >= 0 ? agg(c.daily, DAYS - o - 2 * n, DAYS - o - n) : agg(c.daily, 0, 0);
+    var cur = agg(c.daily, DAYS - o - n, DAYS - o), prev = cw ? scaleAgg(agg(c.daily, cw.a, cw.b), cw.scale) : agg(c.daily, 0, 0);
     var roas = cur.spend ? cur.sales / cur.spend : 0;
     return { id: c.id, name: c.name, budget: c.budget, cur: cur, prev: prev,
       cur30: agg(c.daily, DAYS - 30, DAYS), prev30: agg(c.daily, DAYS - 60, DAYS - 30),
@@ -594,7 +622,7 @@ function compute() {
   camps.forEach(function (c) {
     var base = 'En los últimos ' + n + ' días invertiste ' + money(c.cur.spend) + ' y vendiste ' + money(c.cur.sales) + '. Su ROAS es $' + r1(c.roas) + ' (por cada $1 invertido vendiste $' + r1(c.roas) + ') y el ROAS objetivo de la campaña es $' + r1(c.target) + '.';
     if (c.status === 'revisar') {
-      var drop = c.dSales <= -0.25 ? ' Además, las ventas bajaron ' + Math.round(-c.dSales * 100) + '% respecto de los ' + n + ' días anteriores.' : '';
+      var drop = c.dSales <= -0.25 ? ' Además, las ventas bajaron ' + Math.round(-c.dSales * 100) + '% respecto de ' + cmpText() + '.' : '';
       recs.push({ id: 'rec-' + c.id + '-low', camp: c.id, sev: 'urgente', score: c.cur.spend, go: 'camp',
         title: c.name + ': bajá el presupuesto mientras la revisás',
         text: base + drop,
@@ -666,10 +694,10 @@ function growthTag(g) {
 }
 function delta(cur, prev, goodUp) {
   if (!prev) return '';
-  var d = cur / prev - 1, a = Math.abs(d), n = S.days;
-  if (a < 0.02) return '<span class="delta">Igual que los ' + n + ' días anteriores</span>';
+  var d = cur / prev - 1, a = Math.abs(d), t = cmpText();
+  if (a < 0.02) return '<span class="delta">Igual que ' + t + '</span>';
   var up = d > 0, cls = goodUp === null ? '' : (up === goodUp ? 'good' : 'bad');
-  return '<span class="delta ' + cls + '">' + icon(up ? 'up' : 'down') + '<span>' + Math.round(a * 100) + '% ' + (up ? 'más' : 'menos') + ' que los ' + n + ' días anteriores</span></span>';
+  return '<span class="delta ' + cls + '">' + icon(up ? 'up' : 'down') + '<span>' + Math.round(a * 100) + '% ' + (up ? 'más' : 'menos') + ' que ' + t + '</span></span>';
 }
 
 var SEV = {
@@ -698,7 +726,7 @@ function calHTML() {
     var d = new Date(vm.getFullYear(), vm.getMonth(), n), off = d < first || d > END;
     h += '<button type="button" class="cal-d" data-act="day" data-d="' + isoDay(d) + '"' + (off ? ' disabled' : '') + '>' + n + '</button>';
   }
-  h += '</div><p class="cal-hint" role="status">' + (S.anchor ? 'Ahora elegí el último día del rango.' : 'Elegí el primer día del rango.') + '</p>' +
+  h += '</div><p class="cal-hint" role="status">' + (S.pick === 'cmp' ? (S.anchor ? 'Ahora elegí el último día del período a comparar.' : 'Elegí el primer día del período a comparar.') : S.anchor ? 'Ahora elegí el último día del rango.' : 'Elegí el primer día del rango.') + '</p>' +
     '<p class="cal-hint">Podés mirar desde el ' + dayShort(first) + (D.since ? '. Lumo guarda tu historial día a día.' : ' (el máximo que informa Mercado Libre). Desde hoy Lumo guarda tu historial día a día.') + '</p></div>';
   return h;
 }
@@ -716,17 +744,27 @@ function paintCal(hover) {
 function pickDay(iso) {
   if (!S.anchor) { S.anchor = iso; return false; }
   var a = S.anchor < iso ? S.anchor : iso, b = S.anchor < iso ? iso : S.anchor, f = parseDay(a), t = parseDay(b);
+  if (S.pick === 'cmp') { S.cf = a; S.ct = b; S.cmp = 'custom'; S.pick = ''; S.anchor = ''; return true; }
   S.off = Math.round((END - t) / 864e5); S.days = Math.round((t - f) / 864e5) + 1;
-  S.cust = true; S.pick = false; S.anchor = '';
+  S.cust = true; S.pick = ''; S.anchor = '';
   return true;
+}
+function cmpHTML() {
+  var opts = [['prev', 'Período anterior'], ['month', 'Mes anterior (mismas fechas)'], ['custom', 'Período personalizado']].map(function (o) {
+    return '<option value="' + o[0] + '"' + (S.cmp === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+  }).join('');
+  var extra = '';
+  if (S.cmp === 'custom' && S.cf && S.ct) extra = '<button type="button" class="cmp-edit" data-act="cmppick">' + dayShort(parseDay(S.cf)) + ' al ' + dayShort(parseDay(S.ct)) + '</button>';
+  if (!cmpWindow()) extra += '<span class="small cmp-warn" role="status">' + (S.cmp === 'custom' && !S.cf ? 'Elegí el período a comparar.' : 'No tenemos datos de ese período.') + '</span>';
+  return '<div class="cmp"><label>Comparar con <select id="cmp">' + opts + '</select></label>' + extra + '</div>';
 }
 function topHTML() {
   var seg = [7, 14, 30].map(function (v) {
     return '<button data-act="days" data-v="' + v + '" aria-pressed="' + (!S.cust && S.days === v) + '">' + v + ' días</button>';
   }).join('');
-  seg += '<button data-act="pick" aria-pressed="' + (S.cust || S.pick) + '" aria-expanded="' + S.pick + '">Otro rango</button>';
+  seg += '<button data-act="pick" aria-pressed="' + (S.cust || S.pick === 'range') + '" aria-expanded="' + (S.pick === 'range') + '">Otro rango</button>';
   return '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(D.advertiser.name) + ' · ' + esc(D.advertiser.site) + '</div></div></div>' +
-    '<div class="seg-wrap"><div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div>' + (S.pick ? calHTML() : '') + '</div></header>' +
+    '<div class="seg-wrap"><div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div>' + cmpHTML() + (S.pick ? calHTML() : '') + '</div></header>' +
     '<div class="notice">' + icon('info') + '<span>Datos reales de Mercado Libre hasta el ' + dayLong(END) + '. Se actualizan una vez por día. El período elegido cambia las métricas de publicidad; las ventas orgánicas y las tendencias miran siempre los últimos 30 días. <a class="link" href="/panel?refresh=1">Actualizar ahora</a> · <a class="link" href="/salir">Salir</a>' + (D.admin ? ' · <a class="link" href="/admin">Administrar</a>' : '') + '</span></div>' + notesHTML();
 }
 var TABS = [['principal', 'Principal'], ['tareas', 'Tareas'], ['alertas', 'Alertas'], ['recomendaciones', 'Recomendaciones'], ['seguimiento', 'Seguimiento'], ['tendencias', 'Tendencias'], ['glosario', 'Glosario'], ['ayuda', 'Ayuda']];
@@ -1353,12 +1391,13 @@ function goPanelTop() {
 }
 
 document.addEventListener('click', function (e) {
-  if (S.pick && !e.target.closest('.seg-wrap')) { S.pick = false; S.anchor = ''; render(); }
+  if (S.pick && !e.target.closest('.seg-wrap')) { S.pick = ''; S.anchor = ''; render(); }
   var b = e.target.closest('[data-act]'); if (!b) return;
   var a = b.dataset.act;
   if (a === 'draft' || a === 'glq' || a === 'cq') return;
-  if (a === 'days') { S.days = +b.dataset.v; S.off = 0; S.cust = false; S.pick = false; S.anchor = ''; }
-  else if (a === 'pick') { S.pick = !S.pick; S.anchor = ''; S.vm = monthStart(S.cust ? periodEnd() : END); }
+  if (a === 'days') { S.days = +b.dataset.v; S.off = 0; S.cust = false; S.pick = ''; S.anchor = ''; }
+  else if (a === 'pick') { S.pick = S.pick === 'range' ? '' : 'range'; S.anchor = ''; S.vm = monthStart(S.cust ? periodEnd() : END); }
+  else if (a === 'cmppick') { S.pick = 'cmp'; S.anchor = ''; S.vm = monthStart(S.cf ? parseDay(S.cf) : periodStart()); }
   else if (a === 'mnav') { S.vm = new Date(S.vm.getFullYear(), S.vm.getMonth() + +b.dataset.v, 1); }
   else if (a === 'day') { if (!pickDay(b.dataset.d)) { render(); paintCal(); return; } }
   else if (a === 'tab' || a === 'goTab') { S.tab = b.dataset.v; render(); goPanelTop(); return; }
@@ -1383,6 +1422,12 @@ document.addEventListener('click', function (e) {
     if (el) el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     return;
   } else return;
+  render();
+});
+document.addEventListener('change', function (e) {
+  if (e.target.id !== 'cmp') return;
+  S.cmp = e.target.value; S.anchor = '';
+  if (S.cmp === 'custom') { S.pick = 'cmp'; S.vm = monthStart(S.cf ? parseDay(S.cf) : periodStart()); } else S.pick = '';
   render();
 });
 document.addEventListener('mouseover', function (e) {
