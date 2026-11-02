@@ -86,10 +86,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .brand-store { font-size: .85rem; color: var(--ink-3); }
 .seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
 .seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; font-size: .9rem; font-weight: 600; color: var(--ink-2); min-height: 36px; }
-.range { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 0 0 12px; }
-.range label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; font-weight: 600; color: var(--ink-2); }
-.range input { font: inherit; padding: 7px 10px; min-height: 40px; border: 1px solid var(--line, #d0d5dd); border-radius: 10px; background: var(--surface); color: var(--ink); }
-.range .sub { flex-basis: 100%; margin: 0; }
+.range { grid-column: 1 / -1; display: flex; flex-flow: row wrap; gap: 8px 16px; align-items: center; margin: 0; }
+.range label { display: inline-flex; flex-direction: row; align-items: center; gap: 8px; font-size: .9rem; font-weight: 600; color: var(--ink-2); }
+.range input { font: inherit; padding: 7px 10px; min-height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.range .sub { flex: 1 1 100%; margin: 0; }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
 .notice { display: flex; gap: 8px; align-items: flex-start; font-size: .85rem; color: var(--ink-2); background: var(--accent-soft); padding: 9px 12px; border-radius: 10px; }
 .notice .ic { margin-top: 2px; color: var(--accent); }
