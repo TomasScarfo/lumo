@@ -21,6 +21,7 @@ class Account(Base):
     refresh_token = Column(Text, nullable=True)
     expires_at = Column(DateTime, nullable=False)
     scope = Column(Text, nullable=True)
+    email = Column(Text, nullable=True)  # para los avisos por mail; se lee de Mercado Libre
     # connected | needs_reconnect
     status = Column(String(32), nullable=False, default="connected")
     created_at = Column(DateTime, nullable=False, default=utcnow)
@@ -85,3 +86,14 @@ class CampaignDay(Base):
     prints = Column(Float, nullable=False, default=0)
     units = Column(Float, nullable=False, default=0)
     sales = Column(Float, nullable=False, default=0)
+
+
+class Notice(Base):
+    """Último aviso enviado de cada tipo y referencia, para no repetirlo."""
+
+    __tablename__ = "notice"
+
+    user_id = Column(BigInteger, primary_key=True, autoincrement=False)
+    kind = Column(String(8), primary_key=True)
+    ref = Column(String(64), primary_key=True)
+    sent_at = Column(DateTime, nullable=False, default=utcnow)

@@ -209,9 +209,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .mchip[aria-pressed="false"] .mv { color: var(--ink-3); }
 .mchip:hover { background: var(--surface-2); }
 .mt { display: flex; align-items: center; gap: 8px; font-size: .85rem; font-weight: 600; }
-.sw { flex: none; width: 12px; height: 12px; border-radius: 3px; border: 2px solid var(--c); box-sizing: border-box; }
-.mchip[aria-pressed="true"] .sw { background: var(--c); }
-.sw.ln { height: 4px; border-radius: 2px; }
+.msw { flex: none; width: 12px; height: 12px; border-radius: 3px; border: 2px solid var(--c); box-sizing: border-box; }
+.mchip[aria-pressed="true"] .msw { background: var(--c); }
+.msw.ln { height: 4px; border-radius: 2px; }
 .mv { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.15; font-variant-numeric: tabular-nums; }
 .mchip .delta { font-size: .75rem; }
 .tt i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
@@ -521,7 +521,7 @@ function saveState() {
 
 /*LOGIC-START*/
 var S = { days: 7, off: 0, cust: false, pick: '', anchor: '', vm: null, cmp: 'prev', cmpOpen: false, cf: '', ct: '', ser: { units: true, sales: true }, tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
-  showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
+  showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ m1: false, m2: false, m3: false }, EST.sw || {}), mailMsg: '' };
 var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
 var r1 = function (n) { return fmtNum(n, 1); };
@@ -869,11 +869,18 @@ function periodStart() { var d = periodEnd(); d.setDate(d.getDate() - (S.days - 
 function periodIn() { return S.cust ? 'el período del ' + dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'los últimos ' + S.days + ' días'; }
 function periodSub() { return S.cust ? dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'Últimos ' + S.days + ' días'; }
 function dayLong(d) { return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); }
+function mailNote() {
+  var from = (window.LUMO_CONTACT || {}).email;
+  if (!D.mailOn) return '<p class="small" style="margin-top:10px">Guardamos tus preferencias. Los avisos por email todavía no están habilitados en Lumo.</p>';
+  if (!D.email) return '<p class="small" style="margin-top:10px">No pudimos leer el email de tu cuenta de Mercado Libre, así que todavía no podemos enviarte avisos. Si volvés a conectar tu cuenta, lo intentamos de nuevo.</p>';
+  return '<p class="small" style="margin-top:10px">Los avisos llegan a <b>' + esc(D.email) + '</b>' + (from ? ', desde ' + esc(from) : '') + '. Solo te escribimos por los avisos que activaste.</p>' +
+    '<button class="link" data-act="mailTest">Enviarme un mail de prueba</button>' + (S.mailMsg ? ' <span class="small" role="status">' + esc(S.mailMsg) + '</span>' : '');
+}
 function chartCardHTML() {
   var t = M.tot, p = M.prev;
   var chips = SERIES.map(function (x) {
     return '<button type="button" class="mchip" style="--c:' + x.c + '" data-act="ser" data-v="' + x.k + '" aria-pressed="' + !!S.ser[x.k] + '">' +
-      '<span class="mt"><i class="sw' + (x.kind === 'line' ? ' ln' : '') + '"></i>' + x.label + '</span><span class="mv">' + x.val(t[x.k]) + '</span>' + delta(t[x.k], p[x.k], x.up) + '</button>';
+      '<span class="mt"><i class="msw' + (x.kind === 'line' ? ' ln' : '') + '"></i>' + x.label + '</span><span class="mv">' + x.val(t[x.k]) + '</span>' + delta(t[x.k], p[x.k], x.up) + '</button>';
   }).join('');
   var body;
   if (S.table) {
@@ -1094,14 +1101,14 @@ function alertasHTML() {
     ? shown.map(lowCard).join('') + (low.length > 5 ? '<button class="link" data-act="allLow" aria-expanded="' + S.showAllLow + '">' + (S.showAllLow ? 'Ver solo las 5 más importantes' : 'Ver las ' + low.length + ' publicaciones') + icon('chevron') + '</button>' : '')
     : '<div class="card empty">' + icon('check-circle') + '<p>Todas tus publicaciones con publicidad cumplen el ROAS objetivo de su campaña.</p></div>';
   var orgBlock = M.strong.length ? M.strong.map(orgCard).join('') : '<div class="card empty">' + icon('check-circle') + '<p>No hay publicaciones sin publicidad con buenas ventas orgánicas por ahora.</p></div>';
-  var sw = [['sw1', 'Resumen semanal por email', 'Los lunes a la mañana, con lo más importante de la semana.'], ['sw2', 'Aviso urgente cuando una publicación gasta mucho y no vende', 'Para no seguir gastando donde no rinde.'], ['sw3', 'Aviso cuando una publicación vende bien sin publicidad', 'Para que la actives a tiempo.']];
+  var sw = [['m1', 'Resumen semanal por email', 'Los lunes a la mañana, con lo más importante de la semana.'], ['m2', 'Aviso cuando una publicación gasta mucho y no vende', 'Para no seguir gastando donde no rinde. Se revisa una vez por día y no se repite en 7 días.'], ['m3', 'Aviso cuando una publicación vende bien sin publicidad', 'Para que la actives a tiempo. No se repite en 14 días.']];
   return '<div class="sum"><div class="sum-i"><b>' + M.strong.length + '</b><span>publicaciones sin publicidad que ya venden bien</span></div><div class="sum-i"><b>' + low.length + '</b><span>publicaciones con ROAS por debajo del objetivo</span></div></div>' +
     '<section aria-labelledby="h-org"><div class="blk-h"><h2 id="h-org">Vendiendo bien sin publicidad</h2><p class="sub">Publicaciones activas en Mercado Libre pero sin anuncios, con buen desempeño orgánico en los últimos 30 días. Activarlas en publicidad puede ayudarlas a vender más.</p>' +
     '<p class="small">Criterio: 10 o más unidades vendidas en 30 días sin publicidad, conversión del 3% o más (cuando la conocemos) y sin caída respecto de los 30 días anteriores.</p></div><div class="stack">' + orgBlock + '</div></section>' +
     '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y ROAS por debajo del objetivo</h2><p class="sub">Publicaciones con anuncios activos que no llegan al ROAS objetivo de su campaña y bajan el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en ' + periodIn() + '.</p></div><div class="stack">' + lowBlock + '</div></section>' +
     '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Cómo querés que te avisemos</h2></div><div class="switches">' +
     sw.map(function (s) { return '<label class="sw" for="' + s[0] + '"><span>' + s[1] + '<small>' + s[2] + '</small></span><input type="checkbox" id="' + s[0] + '" role="switch" data-act="sw" data-id="' + s[0] + '"' + (S.sw[s[0]] ? ' checked' : '') + '></label>'; }).join('') +
-    '</div><p class="small" style="margin-top:10px">Guardamos tus preferencias, pero Lumo todavía no envía avisos: el canal (email, WhatsApp u otro) está por definir.</p></section>';
+    '</div>' + mailNote() + '</section>';
 }
 
 /* ---------- Recomendaciones ---------- */
@@ -1476,6 +1483,13 @@ document.addEventListener('click', function (e) {
   else if (a === 'fstat') S.fstat = b.dataset.v;
   else if (a === 'clearF') { S.fstat = 'all'; S.cq = ''; }
   else if (a === 'toggleAll') { var every = M.camps.every(function (c) { return S.open[c.id]; }); M.camps.forEach(function (c) { S.open[c.id] = !every; }); }
+  else if (a === 'mailTest') {
+    S.mailMsg = 'Enviando…';
+    fetch('/api/avisos/prueba', { method: 'POST', credentials: 'same-origin' }).then(function (r) {
+      S.mailMsg = r.ok ? 'Listo, revisá tu bandeja (y el spam).' : r.status === 429 ? 'Esperá un minuto antes de pedir otro.' : 'No pudimos enviarlo. Probá más tarde.';
+      render();
+    }).catch(function () { S.mailMsg = 'No pudimos enviarlo. Probá más tarde.'; render(); });
+  }
   else if (a === 'ser') { var on0 = onSeries(); if (!(S.ser[b.dataset.v] && on0.length === 1)) S.ser[b.dataset.v] = !S.ser[b.dataset.v]; }
   else if (a === 'table') S.table = !S.table;
   else if (a === 'toggleCamp') S.open[b.dataset.id] = !S.open[b.dataset.id];

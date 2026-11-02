@@ -12,7 +12,7 @@ from sqlalchemy import create_engine, delete, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from . import access, ads, cuenta, history, ml
+from . import access, ads, cuenta, history, ml, notify
 from .models import Access, Account, Base, Invite, PanelState, Snapshot, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
@@ -54,6 +54,12 @@ def load_config(overrides=None) -> dict:
         "ML_API_BASE": os.environ.get("ML_API_BASE", "https://api.mercadolibre.com"),
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com"),
+        # Avisos por email. Sin SMTP_PASSWORD (contraseña de aplicación de Gmail) no se envía nada.
+        "SMTP_HOST": os.environ.get("SMTP_HOST", "smtp.gmail.com"),
+        "SMTP_PORT": os.environ.get("SMTP_PORT", "587"),
+        "SMTP_USER": os.environ.get("SMTP_USER", os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com")),
+        "SMTP_PASSWORD": os.environ.get("SMTP_PASSWORD", ""),
+        "CRON_TOKEN": os.environ.get("CRON_TOKEN", ""),
         "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
         # Dirección de la portada publicada aparte (servicio estático de Render). Vacía: la app sirve la portada.
         "SITE_URL": os.environ.get("SITE_URL", "").rstrip("/"),
@@ -84,6 +90,7 @@ def create_app(overrides=None) -> Flask:
     had_access_table = inspect(engine).has_table("access")
     Base.metadata.create_all(engine)
     _widen_scope(engine)
+    _add_email_column(engine)
     if not had_access_table:
         _grandfather(engine)
     app.extensions["lumo_cfg"] = cfg
@@ -182,7 +189,8 @@ def create_app(overrides=None) -> Flask:
                 session.clear()
                 log.info("acceso denegado a la cuenta %s", user_id)
                 return render_template("denied.html", user_id=user_id, contact=_contact(), home=_home()), 403
-            save_tokens(s, cfg, user_id, tok)  # los tokens solo se guardan si la cuenta tiene acceso
+            acc = save_tokens(s, cfg, user_id, tok)  # los tokens solo se guardan si la cuenta tiene acceso
+            acc.email = _read_email(tok["access_token"]) or acc.email
             s.commit()
         session.clear()
         session["uid"] = user_id  # Lumo recuerda a la persona en este navegador
@@ -193,6 +201,16 @@ def create_app(overrides=None) -> Flask:
         if access.is_admin(cfg, user_id):
             return redirect("/admin")
         return page(body)
+
+    def _read_email(token):
+        """El email de la cuenta de Mercado Libre, para los avisos. Si no se puede leer, los avisos quedan sin destino."""
+        try:
+            body = ml.api_get(cfg, token, "/users/me", None, None)
+        except ml.MLError as exc:
+            log.warning("no se pudo leer el email: %s", exc.status)
+            return None
+        mail = body.get("email") if isinstance(body, dict) else None
+        return mail if isinstance(mail, str) and "@" in mail else None
 
     def _current_user():
         """El id de la cuenta de esta sesión, solo si está conectada y sigue teniendo acceso."""
@@ -282,6 +300,9 @@ def create_app(overrides=None) -> Flask:
             data = history.extend(s, uid, data)
             st = s.get(PanelState, uid)
             data["estado"] = json.loads(st.data) if st else {}
+            acc = s.get(Account, uid)
+            data["email"] = acc.email if acc else None
+            data["mailOn"] = notify.enabled(cfg)
             data["admin"] = access.is_admin(cfg, uid)
             data["uid"] = uid
         return _json(data)
@@ -306,6 +327,81 @@ def create_app(overrides=None) -> Flask:
         return _json({"ok": True})
 
     # ---------- Administración: invitaciones y accesos ----------
+    def _app_link():
+        base = cfg["REDIRECT_URI"].rsplit("/callback", 1)[0] if cfg["REDIRECT_URI"] else ""
+        return base + "/panel#alertas"
+
+    @app.post("/api/avisos/prueba")
+    def avisos_prueba():
+        """Manda un mail de prueba a la propia cuenta, para comprobar que los avisos llegan."""
+        uid = _current_user()
+        if not uid:
+            return _json({"error": "login"}, 401)
+        if not notify.enabled(cfg):
+            return _json({"error": "apagado"}, 503)
+        with Session(engine) as s:
+            acc = s.get(Account, uid)
+            if not acc or not acc.email:
+                return _json({"error": "sin_email"}, 400)
+            now = utcnow()
+            if not notify._due(s, uid, "test", "x", timedelta(minutes=1), now):
+                return _json({"error": "espera"}, 429)
+            try:
+                notify.send_mail(cfg, acc.email, "Prueba de avisos de Lumo", "Si leés esto, los avisos de Lumo te van a llegar a este mail.\n",
+                                 "<p>Si leés esto, los avisos de Lumo te van a llegar a este mail.</p>")
+            except Exception as exc:  # smtplib y red: no se detalla al usuario
+                log.warning("mail de prueba falló: %s", type(exc).__name__)
+                return _json({"error": "envio"}, 502)
+            notify._mark(s, uid, "test", "x", now)
+            s.commit()
+            return _json({"ok": True, "email": acc.email})
+
+    @app.post("/cron/avisos")
+    def cron_avisos():
+        """Lo llama una tarea programada una vez por día. Se protege con la clave CRON_TOKEN."""
+        token = cfg["CRON_TOKEN"]
+        if not token:
+            abort(404)
+        if not secrets.compare_digest(request.headers.get("X-Cron-Token", ""), token):
+            abort(403)
+        if not notify.enabled(cfg):
+            return _json({"ok": False, "motivo": "SMTP_PASSWORD sin configurar"}, 503)
+        result = {"cuentas": 0, "enviados": 0, "errores": 0}
+        with Session(engine) as s:
+            rows = s.execute(select(PanelState)).scalars().all()
+        for st in rows:
+            try:
+                prefs = (json.loads(st.data) or {}).get("sw") or {}
+            except ValueError:
+                continue
+            if not any(prefs.get(k) for k in notify.KINDS):
+                continue
+            result["cuentas"] += 1
+            try:
+                with Session(engine) as s:
+                    acc = s.get(Account, st.user_id)
+                    if not acc or acc.status != "connected":
+                        continue
+                    token_ml = valid_access_token(s, cfg, st.user_id)
+                    if not acc.email:
+                        acc.email = _read_email(token_ml)
+                        s.commit()
+                    if not acc.email:
+                        continue
+                    advs = ml.advertisers(cfg, token_ml)
+                    if not advs:
+                        continue
+                    snap = s.get(Snapshot, st.user_id)
+                    adv = next((a for a in advs if snap and a["advertiser_id"] == snap.advertiser_id), advs[0])
+                    get = lambda path, params=None, version="2": ml.api_get(cfg, token_ml, path, params, version)
+                    data = ads.build_dataset(get, adv)
+                    sent = notify.run_for(s, cfg, st.user_id, acc.email, prefs, data, _app_link())
+                    result["enviados"] += len(sent)
+            except Exception as exc:  # una cuenta con problemas no frena a las demás
+                result["errores"] += 1
+                log.warning("avisos de %s fallaron: %s", st.user_id, type(exc).__name__, exc_info=True)
+        return _json(dict(result, ok=True))
+
     def _admin_uid():
         uid = _current_user()
         if not uid or not access.is_admin(cfg, uid):
@@ -405,6 +501,14 @@ def _widen_scope(engine) -> None:
         return
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE account ALTER COLUMN scope TYPE TEXT"))
+
+
+def _add_email_column(engine) -> None:
+    """La tabla account ya existía sin la columna email."""
+    if "email" in {c["name"] for c in inspect(engine).get_columns("account")}:
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE account ADD COLUMN email TEXT"))
 
 
 def _esc(text) -> str:

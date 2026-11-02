@@ -41,3 +41,8 @@ services:
       # Dirección de la portada estática (servicio "lumo-sitio"). Con esto, quien entra a la app sin sesión va a la portada.
       - key: SITE_URL
         sync: false
+      # Avisos por email desde lumoads.ml@gmail.com: contraseña de aplicación de Gmail y clave para el chequeo diario.
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: CRON_TOKEN
+        sync: false
