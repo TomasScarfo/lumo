@@ -151,9 +151,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: normal; max-width: 100%; }
 .pill .ic { width: 1.05em; height: 1.05em; }
-.s-excelente { background: var(--good); color: var(--on-good); }
-.s-bien { background: var(--good-soft); color: var(--good); }
-.s-atencion { background: var(--warn-soft); color: var(--warn); }
+.s-supera { background: var(--good); color: var(--on-good); }
+.s-objetivo { background: var(--good-soft); color: var(--good); }
+.s-mejorando { background: var(--accent-soft); color: var(--accent); }
+.s-oportunidad { background: var(--warn-soft); color: var(--warn); }
 .s-revisar { background: var(--bad-soft); color: var(--bad); }
 .s-sindatos { background: var(--surface-2); color: var(--ink-2); }
 .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--surface-2); color: var(--ink-2); white-space: normal; max-width: 100%; }
@@ -316,9 +317,10 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .rbar { position: relative; height: 10px; background: var(--surface-2); border-radius: 999px; margin: 6px 0 4px; }
 .rbar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; }
 .rbar .fill.revisar { background: var(--bad); }
-.rbar .fill.atencion { background: var(--warn); }
-.rbar .fill.bien { background: var(--good); opacity: .75; }
-.rbar .fill.excelente { background: var(--good); }
+.rbar .fill.oportunidad { background: var(--warn); }
+.rbar .fill.mejorando { background: var(--accent); }
+.rbar .fill.objetivo { background: var(--good); opacity: .75; }
+.rbar .fill.supera { background: var(--good); }
 .rbar .fill.sindatos { background: var(--ink-3); }
 .rbar.lg { height: 14px; margin: 8px 0 6px; }
 .rrow { padding: 12px 0; border-top: 1px solid var(--line); }
@@ -533,18 +535,31 @@ var pct1 = function (n) { return r1(n * 100) + '%'; };
 var pctN = function (v) { return v == null ? '—' : Math.round(v * 100) + '%'; };
 var short = function (n) { return n >= 1e6 ? '$' + r1(n / 1e6) + ' M' : n >= 1e3 ? '$' + nf0.format(Math.round(n / 1000)) + ' mil' : '$' + nf0.format(n); };
 var pl = function (n, a, b) { return n + ' ' + (n === 1 ? a : b); };
+/* El ROAS objetivo marca cuánta rentabilidad priorizás. Más alto: la campaña se muestra menos y gana más por cada peso. Más bajo: se muestra más
+   y gana visibilidad, visitas y clics a cambio de algo de rentabilidad. Por eso estar por debajo del objetivo no es "estar mal": es una oportunidad,
+   y más todavía si el ROAS viene mejorando. Estar por encima es rentable, pero también deja margen para mostrarse más. */
 var ST = {
-  excelente: { label: 'Excelente', icon: 'check-circle', rank: 3 },
-  bien: { label: 'Bien', icon: 'check', rank: 2 },
-  atencion: { label: 'Atención', icon: 'alert', rank: 1 },
+  supera: { label: 'Superando el objetivo', icon: 'check-circle', rank: 4 },
+  objetivo: { label: 'En objetivo', icon: 'check', rank: 3 },
+  mejorando: { label: 'Mejorando', icon: 'up', rank: 2 },
+  oportunidad: { label: 'Con oportunidad', icon: 'trend', rank: 1 },
   revisar: { label: 'Revisar', icon: 'x-circle', rank: 0 },
-  sindatos: { label: 'Sin actividad', icon: 'info', rank: 4 }
+  sindatos: { label: 'Sin actividad', icon: 'info', rank: 5 }
 };
-function statusOf(roas, spend, sales, t) {
+/* trend: cuánto cambió el ROAS contra el período de comparación (0,1 = 10% más). null si no se conoce. */
+function statusOf(roas, spend, sales, t, trend) {
   if (!spend) return 'sindatos';
-  if (spend > 0 && sales === 0) return 'revisar';
+  if (sales === 0) return 'revisar';
   var k = roas / t;
-  return k >= 1.25 ? 'excelente' : k >= 1 ? 'bien' : k >= 0.7 ? 'atencion' : 'revisar';
+  if (k >= 1.2) return 'supera';
+  if (k >= 0.9) return 'objetivo';
+  if (trend != null && trend >= 0.05) return 'mejorando';
+  return k < 0.7 ? 'revisar' : 'oportunidad';
+}
+function trendTxt(c) {
+  if (c.trend == null) return '';
+  if (Math.abs(c.trend) < 0.02) return ' Su ROAS se mantiene igual que en ' + cmpText() + '.';
+  return ' Su ROAS ' + (c.trend > 0 ? 'subió ' : 'bajó ') + Math.round(Math.abs(c.trend) * 100) + '% respecto de ' + cmpText() + '.';
 }
 function agg(arr, from, to) {
   var s = { spend: 0, sales: 0, clicks: 0, prints: 0, units: 0 };
@@ -555,17 +570,18 @@ function roundTo(n, step) { return Math.max(step, Math.round(n / step) * step); 
 function isStrongOrganic(o) { return o.units >= 10 && (o.conv == null || o.conv >= 0.03); }
 
 function lowReco(o) {
-  if (o.sales === 0) return { short: 'Pausar «' + o.name + '»', text: 'Invirtió ' + money(o.spend) + ' y no vendió nada con publicidad. Pausala y revisá precio, fotos y stock antes de volver a activarla.' };
-  if (isStrongOrganic(o)) return { short: 'Probar pausar «' + o.name + '»', text: 'Se vende bien sola: ' + pl(o.units, 'unidad', 'unidades') + ' en 30 días sin contar la publicidad. Es probable que mantenga sus ventas sin anuncios. Probá pausarla unos días y compará.' };
-  if (o.roas < 0.7 * o.target) return { short: 'Pausar «' + o.name + '»', text: 'Su ROAS está muy lejos del objetivo. Pausala o sacala de la campaña mientras mejorás precio, fotos y título.' };
-  return { short: 'Mejorar «' + o.name + '»', text: 'Está cerca del objetivo. Mejorá título, fotos y precio antes de seguir invirtiendo. Si no sube, pausala.' };
+  var wait = o.campTrend != null && o.campTrend >= 0.05 ? ' Su campaña viene mejorando, así que conviene darle unos días antes de decidir.' : '';
+  if (o.sales === 0) return { short: 'Pausar «' + o.name + '»', text: 'Invirtió ' + money(o.spend) + ' y no vendió nada con publicidad. Pausala y revisá precio, fotos y stock antes de volver a activarla.' + wait };
+  if (isStrongOrganic(o)) return { short: 'Probar pausar «' + o.name + '»', text: 'Se vende bien sola: ' + pl(o.units, 'unidad', 'unidades') + ' en 30 días sin contar la publicidad. Es probable que mantenga sus ventas sin anuncios. Probá pausarla unos días y compará.' + wait };
+  if (o.roas < 0.7 * o.target) return { short: 'Pausar «' + o.name + '»', text: 'Su ROAS está lejos del objetivo y es una buena oportunidad de mejora. Pausala o sacala de la campaña mientras mejorás precio, fotos y título.' + wait };
+  return { short: 'Mejorar «' + o.name + '»', text: 'Está cerca del objetivo: hay oportunidad de mejorarla con título, fotos y precio. Si no sube, probá pausarla.' + wait };
 }
 function actReco(o, camps) {
   var cands = camps.filter(function (c) { return c.items.some(function (i) { return i.cat === o.cat; }); })
     .sort(function (a, b) { return b.roas - a.roas; });
   var best = cands[0], txt;
   if (!best) txt = 'No hay una campaña de esta categoría. Creá una nueva con un presupuesto chico y mirá los resultados durante una semana.';
-  else if (best.status === 'revisar') txt = 'La campaña de su categoría («' + best.name + '») hoy está en Revisar, con ROAS $' + r1(best.roas) + '. Conviene crear una campaña aparte con presupuesto chico para no mezclarla.';
+  else if (best.status === 'revisar' || best.status === 'oportunidad') txt = 'La campaña de su categoría («' + best.name + '») hoy tiene ROAS $' + r1(best.roas) + ', por debajo de su objetivo. Conviene crear una campaña aparte con presupuesto chico para no mezclarla.';
   else txt = 'Sumala a «' + best.name + '», que hoy tiene ROAS $' + r1(best.roas) + ' (' + ST[best.status].label + '). Es solo una referencia: no garantiza el mismo resultado, pero esa categoría ya responde bien a la publicidad.' + (best.used >= 0.95 ? ' Esa campaña llega al tope de su presupuesto, así que subilo para que alcance.' : '');
   if (o.stock != null && o.stock < 10) txt += ' Ojo: con ' + pl(o.stock, 'unidad', 'unidades') + ' de stock se puede agotar rápido. Reponé antes de invertir.';
   return txt;
@@ -623,10 +639,10 @@ function compute() {
   var n = S.days, o = S.off, cw = cmpWindow();
   var camps = CAMPS.map(function (c) {
     var cur = agg(c.daily, DAYS - o - n, DAYS - o), prev = cw ? scaleAgg(agg(c.daily, cw.a, cw.b), cw.scale) : agg(c.daily, 0, 0);
-    var roas = cur.spend ? cur.sales / cur.spend : 0;
+    var roas = cur.spend ? cur.sales / cur.spend : 0, proas = prev.spend ? prev.sales / prev.spend : 0, trend = proas && cur.spend ? roas / proas - 1 : null;
     return { id: c.id, name: c.name, budget: c.budget, cur: cur, prev: prev,
       cur30: agg(c.daily, DAYS - 30, DAYS), prev30: agg(c.daily, DAYS - 60, DAYS - 30),
-      roas: roas, target: c.target, acosTarget: c.acosTarget, status: statusOf(roas, cur.spend, cur.sales, c.target), avgSpend: cur.spend / n, used: c.budget ? cur.spend / n / c.budget : 0,
+      roas: roas, target: c.target, acosTarget: c.acosTarget, trend: trend, status: statusOf(roas, cur.spend, cur.sales, c.target, trend), avgSpend: cur.spend / n, used: c.budget ? cur.spend / n / c.budget : 0,
       ctr: cur.prints ? cur.clicks / cur.prints : 0, cpc: cur.clicks ? cur.spend / cur.clicks : 0, cvr: cur.clicks ? cur.units / cur.clicks : 0,
       lostB: c.lostB, lostR: c.lostR, share: c.share, estTarget: c.estTarget, paused: c.status === 'paused',
       dSales: prev.sales ? cur.sales / prev.sales - 1 : 0, items: [] };
@@ -643,7 +659,7 @@ function compute() {
     if (it.camp) {
       var c = byId[it.camp];
       o.spend = c.cur.spend * it.sp; o.sales = c.cur.sales * it.sa; o.roas = o.spend ? o.sales / o.spend : 0;
-      o.target = c.target; o.sp = it.sp; o.status = statusOf(o.roas, o.spend, o.sales, c.target); o.campName = c.name;
+      o.target = c.target; o.sp = it.sp; o.status = statusOf(o.roas, o.spend, o.sales, c.target, null); o.campName = c.name; o.campTrend = c.trend;
       o.ad30 = c.cur30.sales * it.sa; o.prevAd30 = c.prev30.sales * it.sa;
       c.items.push(o);
     }
@@ -654,7 +670,7 @@ function compute() {
     c.items.forEach(function (o, i) { o.kc = o.sp * (1 + ((i % 3) - 1) * 0.12); o.kp = o.sp * (1 + (((i + 1) % 3) - 1) * 0.15); sc += o.kc; sp += o.kp; });
     c.items.forEach(function (o) { o.clicks = c.cur.clicks * o.kc / sc; o.prints = c.cur.prints * o.kp / sp; o.cpc = o.clicks ? o.spend / o.clicks : 0; o.ctr = o.prints ? o.clicks / o.prints : 0; });
   });
-  var lowItems = items.filter(function (o) { return o.active && (o.status === 'atencion' || o.status === 'revisar'); }).map(function (o) {
+  var lowItems = items.filter(function (o) { return o.active && (o.status === 'oportunidad' || o.status === 'revisar'); }).map(function (o) {
     o.shortfall = o.spend * o.target - o.sales;
     o.roasWithout = (tot.spend - o.spend) ? (tot.sales - o.sales) / (tot.spend - o.spend) : 0;
     o.reco = lowReco(o);
@@ -667,31 +683,38 @@ function compute() {
   var catG = groups(items, 'cat'), brandG = groups(items, 'brand');
   var recs = [];
   camps.forEach(function (c) {
-    var base = 'En los últimos ' + n + ' días invertiste ' + money(c.cur.spend) + ' y vendiste ' + money(c.cur.sales) + '. Su ROAS es $' + r1(c.roas) + ' (por cada $1 invertido vendiste $' + r1(c.roas) + ') y el ROAS objetivo de la campaña es $' + r1(c.target) + '.';
+    var pctT = Math.round(c.roas / c.target * 100), tr = trendTxt(c);
+    var base = 'En ' + periodIn() + ' invertiste ' + money(c.cur.spend) + ' y vendiste ' + money(c.cur.sales) + '. Su ROAS es $' + r1(c.roas) + ' (por cada $1 invertido vendiste $' + r1(c.roas) + ') y el ROAS objetivo de la campaña es $' + r1(c.target) + '.';
     if (c.status === 'revisar') {
       var drop = c.dSales <= -0.25 ? ' Además, las ventas bajaron ' + Math.round(-c.dSales * 100) + '% respecto de ' + cmpText() + '.' : '';
       recs.push({ id: 'rec-' + c.id + '-low', camp: c.id, sev: 'urgente', score: c.cur.spend, go: 'camp',
-        title: c.name + ': bajá el presupuesto mientras la revisás',
-        text: base + drop,
+        title: c.name + ': conviene revisarla, bajá el presupuesto mientras tanto',
+        text: base + (c.cur.sales === 0 ? ' No tuvo ventas con publicidad.' : ' Está al ' + pctT + '% de su objetivo' + (c.trend != null ? ' y no viene mejorando.' : '.')) + tr + drop,
         action: 'Bajá el presupuesto diario de ' + money(c.budget) + ' a ' + money(roundTo(c.budget * 0.5, 500)) + ' y revisá sus publicaciones en la sección Alertas.' });
-    } else if (c.status === 'atencion') {
+    } else if (c.status === 'oportunidad') {
       recs.push({ id: 'rec-' + c.id + '-mid', camp: c.id, sev: 'mejora', score: c.cur.spend, go: 'camp',
-        title: c.name + ' rinde un poco menos que tu objetivo',
-        text: base,
-        action: 'Mejorá las publicaciones que menos venden antes de subir el presupuesto.' });
+        title: c.name + ' tiene oportunidad de mejora',
+        text: base + ' Está al ' + pctT + '% de su objetivo: no es que esté mal, hay margen para mejorar su rentabilidad.' + tr,
+        action: 'Mejorá las publicaciones que menos venden antes de subir el presupuesto. Si preferís priorizar rentabilidad, también podés subir el ROAS objetivo: la campaña se va a mostrar menos, pero con mejor retorno por cada $1.' });
+    } else if (c.status === 'mejorando') {
+      recs.push({ id: 'rec-' + c.id + '-up', camp: c.id, sev: 'buena', score: c.cur.spend, go: 'camp',
+        title: c.name + ' viene mejorando',
+        text: base + tr + ' Ya está al ' + pctT + '% de su objetivo.',
+        action: 'No hace falta tocar nada por ahora: dejala seguir y mirá si llega a su objetivo.' });
+    } else if (c.status === 'supera') {
+      var lost = c.lostR != null && c.lostR >= 0.2 ? ' Hoy pierde ' + Math.round(c.lostR * 100) + '% de las impresiones por ranking.' : '';
+      recs.push({ id: 'rec-' + c.id + '-vis', camp: c.id, sev: 'oportunidad', score: c.cur.sales, go: 'camp',
+        title: c.name + ' tiene margen para ganar visibilidad',
+        text: base + ' Su ROAS está ' + (pctT - 100) + '% por encima del objetivo: es rentable, pero es probable que se esté mostrando menos de lo que podría.' + lost + tr,
+        action: 'Probá bajar el ROAS objetivo un 10% (de $' + r1(c.target) + ' a $' + r1(c.target * 0.9) + '). Sus anuncios se van a mostrar más y vas a ganar visibilidad, visitas, clics y ventas, a cambio de algo de rentabilidad. Mirá cómo responde durante unos días.' });
     }
-    if (c.used >= 0.95 && (c.status === 'excelente' || c.status === 'bien')) {
+    if (c.used >= 0.95 && (c.status === 'supera' || c.status === 'objetivo')) {
       recs.push({ id: 'rec-' + c.id + '-cap', camp: c.id, sev: 'oportunidad', score: c.cur.sales, go: 'camp',
         title: c.name + ' se queda sin presupuesto',
-        text: 'Gastó casi todo su presupuesto diario (' + Math.round(c.used * 100) + '% en promedio) y su ROAS es $' + r1(c.roas) + ', por encima de tu objetivo. Cuando llega al tope, sus anuncios dejan de mostrarse y es probable que queden ventas sin captar.',
+        text: 'Gastó casi todo su presupuesto diario (' + Math.round(c.used * 100) + '% en promedio) y su ROAS es $' + r1(c.roas) + ', ' + (c.status === 'supera' ? 'por encima de' : 'en línea con') + ' tu objetivo. Cuando llega al tope, sus anuncios dejan de mostrarse y es probable que queden ventas sin captar.',
         action: 'Subí el presupuesto diario de ' + money(c.budget) + ' a ' + money(roundTo(c.budget * 1.3, 500)) + ' (un 30% más) y mirá cómo responde durante unos días.' });
     }
   });
-  var best = camps.filter(function (c) { return c.status === 'excelente'; }).sort(function (a, b) { return b.roas - a.roas; })[0];
-  if (best) recs.push({ id: 'rec-' + best.id + '-best', camp: best.id, sev: 'buena', score: 0, go: 'camp',
-    title: best.name + ' es tu mejor campaña',
-    text: 'Su ROAS es $' + r1(best.roas) + ': por cada $1 invertido vendiste $' + r1(best.roas) + ', bastante por encima de su objetivo de $' + r1(best.target) + '.',
-    action: 'No hace falta tocar nada. Si tenés stock, es la campaña más segura para crecer.' });
   var hot = catG.filter(function (g) { return g.growth >= 0.1 && g.cover < 0.7; })[0];
   if (hot) {
     var free = items.filter(function (o) { return o.cat === hot.name && !o.active; }).length;
@@ -723,7 +746,7 @@ function compute() {
   items.forEach(function (o) { tot30.sales += o.orgSales + o.ad30; tot30.ad += o.ad30; });
   var openTasks = tasks.filter(function (x) { return !S.done[x.id]; });
   return { camps: camps, items: items, tot: tot, prev: prev, roas: roas, prevRoas: prev.spend ? prev.sales / prev.spend : 0,
-    overall: statusOf(roas, tot.spend, tot.sales, tgtAvg), tgtAvg: tgtAvg, daily: daily, lowItems: lowItems, strong: strong, recs: recs, tasks: tasks,
+    overall: statusOf(roas, tot.spend, tot.sales, tgtAvg, prev.spend && prev.sales ? roas / (prev.sales / prev.spend) - 1 : null), tgtAvg: tgtAvg, daily: daily, lowItems: lowItems, strong: strong, recs: recs, tasks: tasks,
     openTasks: openTasks, catG: catG, brandG: brandG, tot30: tot30,
     openAlerts: strong.filter(function (o) { return !S.done['org-' + o.id]; }).length + lowItems.filter(function (o) { return !S.done['low-' + o.id]; }).length,
     openRecs: recs.filter(function (r) { return !S.done[r.id] && r.sev !== 'buena'; }).length };
@@ -827,17 +850,19 @@ function navHTML() {
 /* ---------- Principal ---------- */
 function heroHTML() {
   var o = M.overall;
-  var heads = { excelente: 'Tu publicidad va muy bien', bien: 'Tu publicidad va bien', atencion: 'Tu publicidad rinde, pero podés mejorarla', revisar: 'Tu publicidad necesita atención', sindatos: 'No hay inversión publicitaria en este período' };
-  var low = M.camps.filter(function (c) { return c.status === 'atencion' || c.status === 'revisar'; });
-  var lowSpend = low.reduce(function (a, c) { return a + c.cur.spend; }, 0);
-  var line2 = low.length
-    ? (low.length === 1 ? 'Una campaña está' : low.length + ' campañas están') + ' por debajo de su ROAS objetivo y se llevaron ' + money(lowSpend) + ' (' + Math.round(lowSpend / M.tot.spend * 100) + '% de lo que invertiste).'
-    : 'Todas tus campañas cumplen su ROAS objetivo.';
-  var tone = { excelente: ['var(--good)', 'var(--on-good)'], bien: ['var(--good-soft)', 'var(--good)'], atencion: ['var(--warn-soft)', 'var(--warn)'], revisar: ['var(--bad-soft)', 'var(--bad)'], sindatos: ['var(--surface-2)', 'var(--ink-2)'] }[o];
+  var heads = { supera: 'Tu publicidad rinde por encima de tu objetivo', objetivo: 'Tu publicidad está en su objetivo', mejorando: 'Tu publicidad viene mejorando', oportunidad: 'Tu publicidad tiene margen para mejorar', revisar: 'Hay campañas para revisar', sindatos: 'No hay inversión publicitaria en este período' };
+  var by = function (list) { return M.camps.filter(function (c) { return list.indexOf(c.status) !== -1; }); };
+  var opp = by(['oportunidad', 'revisar']), imp = by(['mejorando']), sup = by(['supera']);
+  var oppSpend = opp.reduce(function (a, c) { return a + c.cur.spend; }, 0), parts = [];
+  if (opp.length) parts.push(pl(opp.length, 'campaña tiene', 'campañas tienen') + ' oportunidad de mejora: están por debajo de su ROAS objetivo y se llevaron ' + money(oppSpend) + ' (' + Math.round(oppSpend / M.tot.spend * 100) + '% de lo que invertiste).');
+  if (imp.length) parts.push(pl(imp.length, 'campaña viene', 'campañas vienen') + ' mejorando y se acerca a su objetivo.');
+  if (sup.length) parts.push(pl(sup.length, 'campaña tiene', 'campañas tienen') + ' margen para ganar visibilidad: rinden por encima del objetivo.');
+  var line2 = parts.length ? parts.join(' ') : 'Todas tus campañas están en su ROAS objetivo.';
+  var tone = { supera: ['var(--good)', 'var(--on-good)'], objetivo: ['var(--good-soft)', 'var(--good)'], mejorando: ['var(--accent-soft)', 'var(--accent)'], oportunidad: ['var(--warn-soft)', 'var(--warn)'], revisar: ['var(--bad-soft)', 'var(--bad)'], sindatos: ['var(--surface-2)', 'var(--ink-2)'] }[o];
   return '<section class="card hero" aria-labelledby="h-hero"><div class="hero-head"><div class="hero-ic" style="background:' + tone[0] + ';color:' + tone[1] + '">' + icon(ST[o].icon) + '</div><div>' +
     '<h1 id="h-hero">' + heads[o] + '</h1><div class="hero-lines">' +
     '<p><b>ROAS</b> (retorno de la inversión publicitaria): por cada $1 que invertiste en publicidad en ' + periodIn() + ', vendiste <b>$' + r1(M.roas) + '</b>.</p><p>' + line2 + '</p>' +
-    '<p class="small">Cada campaña se mide contra su propio ROAS objetivo, el que tenés configurado en Mercado Libre.</p></div></div></div></section>';
+    '<p class="small">El ROAS objetivo es cuánta rentabilidad priorizás en cada campaña. Más alto: te mostrás menos y ganás más por cada peso. Más bajo: te mostrás más y ganás visibilidad con menos rentabilidad. Estar por debajo no es estar mal: es una oportunidad, sobre todo si viene mejorando.</p></div></div></div></section>';
 }
 function tile(label, value, dl, def) { return '<div class="kpi"><span class="kpi-l">' + label + '</span><span class="kpi-v">' + value + '</span>' + dl + '<span class="kpi-d">' + def + '</span></div>'; }
 function kpiHTML() {
@@ -1009,7 +1034,7 @@ function itemRow(o) {
 }
 function campsHTML() {
   var q = S.cq.trim().toLowerCase();
-  var sts = [['all', 'Todas']].concat(['excelente', 'bien', 'atencion', 'revisar', 'sindatos'].map(function (k) { return [k, ST[k].label]; }));
+  var sts = [['all', 'Todas']].concat(['supera', 'objetivo', 'mejorando', 'oportunidad', 'revisar', 'sindatos'].map(function (k) { return [k, ST[k].label]; }));
   var chips = sts.map(function (x) {
     var n = x[0] === 'all' ? M.camps.length : M.camps.filter(function (c) { return c.status === x[0]; }).length;
     return '<button class="chip" data-act="fstat" data-v="' + x[0] + '" aria-pressed="' + (S.fstat === x[0]) + '">' + x[1] + ' <b>' + n + '</b></button>';
@@ -1042,7 +1067,7 @@ function roasChartHTML() {
       '<div class="rlab"><span>ROAS $' + r1(c.roas) + ': por cada $1 vendés $' + r1(c.roas) + '</span><span>Objetivo $' + r1(c.target) + '</span></div></div>';
   }).join('');
   return '<section class="card" aria-labelledby="h-roas"><div class="sec-head"><h2 id="h-roas">ROAS de cada campaña contra su objetivo</h2><span class="sub">' + periodSub() + '</span></div>' +
-    '<p class="sub">La marca negra es el ROAS objetivo de la campaña. Si la barra la pasa, la campaña cumple.</p>' + rows + '</section>';
+    '<p class="sub">La marca negra es el ROAS objetivo de la campaña. Si la barra la pasa, rinde por encima de lo que buscás y podés mostrarte más. Si no llega, hay una oportunidad de mejora.</p>' + rows + '</section>';
 }
 function chartsHTML() {
   return '<div class="group-t" style="margin-top:4px">Gráficos</div><div class="stack">' + chartCardHTML() + roasChartHTML() + '</div>';
@@ -1096,7 +1121,7 @@ function lowCard(o) {
   var fillW = Math.min(100, o.roas / max * 100), markL = t / max * 100;
   return '<article class="item"><div class="item-top"><div class="chips"><span class="tag">' + o.cat + '</span><span class="tag">' + o.campName + '</span>' + pill(o.status) + '</div><h3>' + o.name + '</h3></div>' +
     statsDL([['Inversión', money(o.spend)], ['Ventas por publicidad', money(o.sales)], ['ROAS actual', '$' + r1(o.roas)], ['ROAS objetivo', '$' + r1(t)]]) +
-    '<div><div class="rbar" aria-hidden="true"><span class="fill ' + (o.status === 'revisar' ? 'revisar' : 'atencion') + '" style="width:' + fillW + '%"></span><i class="mark" style="left:' + markL + '%"></i></div>' +
+    '<div><div class="rbar" aria-hidden="true"><span class="fill ' + (o.status === 'revisar' ? 'revisar' : 'oportunidad') + '" style="width:' + fillW + '%"></span><i class="mark" style="left:' + markL + '%"></i></div>' +
     '<div class="rlab"><span>ROAS actual: por cada $1 vendés $' + r1(o.roas) + '</span><span>Marca negra: tu objetivo ($' + r1(t) + ')</span></div></div>' +
     '<p class="impact">Le faltaron <b>' + money(o.shortfall) + '</b> de ventas para llegar a tu ROAS objetivo con lo que invirtió. Tu ROAS general hoy es <b>$' + r2(M.roas) + '</b> y sin esta publicación sería <b>$' + r2(o.roasWithout) + '</b>.</p>' +
     '<div class="reco"><strong>Recomendación</strong>' + o.reco.text + '</div>' +
@@ -1109,10 +1134,10 @@ function alertasHTML() {
     : '<div class="card empty">' + icon('check-circle') + '<p>Todas tus publicaciones con publicidad cumplen el ROAS objetivo de su campaña.</p></div>';
   var orgBlock = M.strong.length ? M.strong.map(orgCard).join('') : '<div class="card empty">' + icon('check-circle') + '<p>No hay publicaciones sin publicidad con buenas ventas orgánicas por ahora.</p></div>';
   var sw = [['m1', 'Resumen semanal por email', 'Los lunes a la mañana, con lo más importante de la semana.'], ['m2', 'Aviso cuando una publicación gasta mucho y no vende', 'Para no seguir gastando donde no rinde. Se revisa una vez por día y no se repite en 7 días.'], ['m3', 'Aviso cuando una publicación vende bien sin publicidad', 'Para que la actives a tiempo. No se repite en 14 días.']];
-  return '<div class="sum"><div class="sum-i"><b>' + M.strong.length + '</b><span>publicaciones sin publicidad que ya venden bien</span></div><div class="sum-i"><b>' + low.length + '</b><span>publicaciones con ROAS por debajo del objetivo</span></div></div>' +
+  return '<div class="sum"><div class="sum-i"><b>' + M.strong.length + '</b><span>publicaciones sin publicidad que ya venden bien</span></div><div class="sum-i"><b>' + low.length + '</b><span>publicaciones con oportunidad de mejora (ROAS por debajo del objetivo)</span></div></div>' +
     '<section aria-labelledby="h-org"><div class="blk-h"><h2 id="h-org">Vendiendo bien sin publicidad</h2><p class="sub">Publicaciones activas en Mercado Libre pero sin anuncios, con buen desempeño orgánico en los últimos 30 días. Activarlas en publicidad puede ayudarlas a vender más.</p>' +
     '<p class="small">Criterio: 10 o más unidades vendidas en 30 días sin publicidad, conversión del 3% o más (cuando la conocemos) y sin caída respecto de los 30 días anteriores.</p></div><div class="stack">' + orgBlock + '</div></section>' +
-    '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y ROAS por debajo del objetivo</h2><p class="sub">Publicaciones con anuncios activos que no llegan al ROAS objetivo de su campaña y bajan el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en ' + periodIn() + '.</p></div><div class="stack">' + lowBlock + '</div></section>' +
+    '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y oportunidad de mejora</h2><p class="sub">Publicaciones con anuncios activos que están por debajo del ROAS objetivo de su campaña. No es que estén mal: mejorarlas es la forma más directa de subir el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en ' + periodIn() + '.</p></div><div class="stack">' + lowBlock + '</div></section>' +
     '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Cómo querés que te avisemos</h2>' + (AVISOS_PRONTO ? '<span class="tag">Próximamente</span>' : '') + '</div><div class="switches">' +
     sw.map(function (s) { return '<label class="sw" for="' + s[0] + '"><span>' + s[1] + '<small>' + s[2] + '</small></span><input type="checkbox" id="' + s[0] + '" role="switch" data-act="sw" data-id="' + s[0] + '"' + (S.sw[s[0]] ? ' checked' : '') + (AVISOS_PRONTO ? ' disabled' : '') + '></label>'; }).join('') +
     '</div>' + (AVISOS_PRONTO ? '<p class="small" style="margin-top:10px">Estamos preparando los avisos por email. Muy pronto vas a poder activarlos desde acá.</p>' : mailNote()) + '</section>';
@@ -1139,6 +1164,7 @@ var KIND = {
   budget_up: { tag: 'Subir presupuesto', goal: 'Vender más sin que el ROAS baje de tu ROAS objetivo.' },
   budget_down: { tag: 'Bajar presupuesto', goal: 'Mejorar el ROAS gastando menos.' },
   improve: { tag: 'Mejorar publicaciones', goal: 'Mejorar el ROAS o vender más con el mismo presupuesto.' },
+  target_down: { tag: 'Bajar ROAS objetivo', goal: 'Mostrarte más y ganar visibilidad, visitas y ventas, resignando un poco de rentabilidad.' },
   pause: { tag: 'Pausar', goal: 'Dejar de gastar donde no rinde y mejorar el ROAS de tu cuenta.' },
   activate: { tag: 'Activar publicidad', goal: 'Vender más con publicaciones que ya vendían bien sin anuncios.' }
 };
@@ -1160,9 +1186,9 @@ function actionFromId(id) {
   if (id.indexOf('rec-') === 0) {
     r = M.recs.filter(function (x) { return x.id === id; })[0];
     if (!r || !r.camp) return null;
-    kind = /-low$/.test(id) ? 'budget_down' : /-cap$/.test(id) ? 'budget_up' : /-mid$/.test(id) ? 'improve' : null;
+    kind = /-low$/.test(id) ? 'budget_down' : /-cap$/.test(id) ? 'budget_up' : /-mid$/.test(id) ? 'improve' : /-vis$/.test(id) ? 'target_down' : null;
     if (!kind) return null;
-    verb = { budget_down: 'Bajaste el presupuesto de ', budget_up: 'Subiste el presupuesto de ', improve: 'Mejoraste las publicaciones de ' }[kind];
+    verb = { budget_down: 'Bajaste el presupuesto de ', budget_up: 'Subiste el presupuesto de ', improve: 'Mejoraste las publicaciones de ', target_down: 'Bajaste el ROAS objetivo de ' }[kind];
     return { kind: kind, scope: r.camp, title: verb + campName(r.camp) };
   }
   if (id.indexOf('low-') === 0) {
@@ -1203,7 +1229,7 @@ function dailySales(scope, from, to) {
 }
 function simAfter(b, act) {
   var s = { days: b.days, spend: b.spend, clicks: b.clicks, sales: b.sales, prints: b.prints };
-  var f = { budget_up: [1.3, 1.25, 1.2], budget_down: [0.55, 0.57, 0.8], improve: [1, 1.1, 1.15] }[act.kind];
+  var f = { budget_up: [1.3, 1.25, 1.2], budget_down: [0.55, 0.57, 0.8], improve: [1, 1.1, 1.15], target_down: [1.25, 1.3, 1.15] }[act.kind];
   if (f) { s.spend *= f[0]; s.clicks *= f[1]; s.prints *= f[1]; s.sales *= f[2]; }
   else if (act.kind === 'pause') {
     var sp = 0, sa = 0;
@@ -1221,9 +1247,10 @@ function dp(a, b) { return b ? a / b - 1 : 0; }
 function verdictOf(kind, b, a, t) {
   var dS = dp(a.sales, b.sales), dR = dp(a.roas, b.roas);
   if (kind === 'pause') return dR >= 0.02 ? 'mejoro' : dR <= -0.03 ? 'empeoro' : 'igual';
-  if (kind === 'budget_up') return a.roas < t * 0.85 ? 'empeoro' : dS >= 0.08 ? 'mejoro' : 'igual';
+  if (kind === 'target_down') return dS >= 0.08 ? 'mejoro' : dR <= -0.25 ? 'empeoro' : 'igual';
+  if (kind === 'budget_up') return a.roas < t * 0.85 && dR <= -0.05 ? 'empeoro' : dS >= 0.08 ? 'mejoro' : 'igual';
   if (kind === 'budget_down') return dR >= 0.08 ? 'mejoro' : dR <= -0.08 ? 'empeoro' : 'igual';
-  if (kind === 'activate') return a.roas < t * 0.85 ? 'empeoro' : dS >= 0.05 ? 'mejoro' : 'igual';
+  if (kind === 'activate') return a.roas < t * 0.85 && dR <= -0.05 ? 'empeoro' : dS >= 0.05 ? 'mejoro' : 'igual';
   return (dR >= 0.05 || (dS >= 0.1 && dR >= -0.03)) ? 'mejoro' : dR <= -0.05 ? 'empeoro' : 'igual';
 }
 function evolution(act) {
@@ -1378,7 +1405,8 @@ var GLOSSARY = [
   ]},
   { g: 'Eficiencia', terms: [
     { n: 'ROAS (retorno de la inversión publicitaria)', api: 'roas', d: 'Return On Ad Spend. Cuánto vendés por cada $1 que invertís en publicidad.', ex: 'Invertiste $10.000 y vendiste $60.000 con anuncios: el ROAS es $6 por cada $1.', best: 'Más alto es mejor. Se compara con tu ROAS objetivo.' },
-    { n: 'ROAS objetivo', api: 'roas_target', d: 'El ROAS mínimo que esperás de una campaña. Se configura campaña por campaña en Mercado Libre y Lumo lo lee de ahí. Si una campaña solo informa su ACOS objetivo, usamos ROAS objetivo = 100 ÷ ACOS objetivo.', ex: 'Un ROAS objetivo de $5 equivale a un ACOS objetivo del 20%.', best: 'Es la vara del semáforo de cada campaña.' },
+    { n: 'ROAS objetivo', api: 'roas_target', d: 'El ROAS mínimo que esperás de una campaña. Se configura campaña por campaña en Mercado Libre y Lumo lo lee de ahí. Si una campaña solo informa su ACOS objetivo, usamos ROAS objetivo = 100 ÷ ACOS objetivo.', ex: 'Un ROAS objetivo de $5 equivale a un ACOS objetivo del 20%.', best: 'Más alto: te mostrás menos y ganás más por cada peso. Más bajo: te mostrás más y ganás visibilidad con menos rentabilidad.' },
+    { n: 'Estado de una campaña', api: '', d: 'Lumo compara el ROAS de cada campaña con su objetivo y mira si viene mejorando o empeorando. Superando el objetivo: rinde más de lo que buscás y tiene margen para mostrarse más. En objetivo: está dentro de lo esperado. Mejorando: está por debajo, pero su ROAS sube y se acerca. Con oportunidad: está por debajo y hay margen para mejorarla. Revisar: no vendió o está lejos del objetivo sin mejorar.', ex: 'Estar por debajo del objetivo no es estar mal: es una oportunidad.', best: 'Se compara con el período que elegís en Comparar con.' },
     { n: 'ACOS (costo publicitario de ventas)', api: 'acos', d: 'Advertising Cost of Sales. Qué porcentaje de lo vendido con publicidad se fue en anuncios. Es el ROAS al revés.', ex: 'Invertiste $10.000 y vendiste $60.000: el ACOS es 16,7%. Un ROAS de $5 equivale a un ACOS del 20%.', best: 'Más bajo es mejor.' },
     { n: 'CVR (tasa de conversión)', api: 'cvr', d: 'Conversion Rate. Es el porcentaje de clics que terminan en una compra.', ex: '120 clics y 4 compras es un CVR del 3,3%.', best: 'Más alto es mejor.' }
   ]},
@@ -1406,7 +1434,7 @@ function glossaryListHTML() {
     if (!terms.length) return '';
     any = true;
     return '<section class="gl-group" aria-label="' + grp.g + '"><h2>' + grp.g + '</h2>' + terms.map(function (t) {
-      return '<article class="term"><div class="term-top"><h3>' + t.n + '</h3><code>' + t.api + '</code></div><p>' + t.d + '</p><p class="ex"><b>Ejemplo:</b> ' + t.ex + '</p>' +
+      return '<article class="term"><div class="term-top"><h3>' + t.n + '</h3>' + (t.api ? '<code>' + t.api + '</code>' : '') + '</div><p>' + t.d + '</p><p class="ex"><b>Ejemplo:</b> ' + t.ex + '</p>' +
         '<div class="meta"><span class="tag">' + t.best + '</span>' + (t.check ? '<span class="tag warn">Definición a confirmar</span>' : '') + '</div></article>';
     }).join('') + '</section>';
   }).join('');
@@ -1564,7 +1592,7 @@ function say(html) { dyn.innerHTML = '<section class="cargando" role="status" ar
 var SOL = '<svg class="sol" viewBox="0 0 64 64" aria-hidden="true"><g class="rayo"><path d="M18 40a14 14 0 0 1 28 0z" fill="#fff"/></g><rect x="12" y="43" width="40" height="3" rx="1.5" fill="#fff"/></svg>';
 function noAds(c) {
   c = c || {};
-  var ST2 = { ok: ['bien', 'check', 'Listo'], falta: ['revisar', 'x-circle', 'Falta'], revisar: ['atencion', 'alert', 'Revisar'], sindato: ['sindatos', 'info', 'Sin dato'] };
+  var ST2 = { ok: ['objetivo', 'check', 'Listo'], falta: ['revisar', 'x-circle', 'Falta'], revisar: ['oportunidad', 'alert', 'Revisar'], sindato: ['sindatos', 'info', 'Sin dato'] };
   function badge(k) { var t = ST2[k] || ST2.sindato; return '<span class="pill s-' + t[0] + '"><svg class="ic"><use href="#i-' + t[1] + '"/></svg>' + t[2] + '</span>'; }
   function num(v) { return v == null ? '—' : fmtNum(v, 0); }
   var h = '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(c.nick || 'Tu cuenta') + (c.site ? ' · ' + esc(c.site) : '') + '</div></div></div></header>';

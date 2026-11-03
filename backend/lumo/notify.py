@@ -119,12 +119,12 @@ def weekly_mail(data: dict, link: str, why: str):
     h = "".join("<p style='margin:6px 0'><b>%s:</b> %s%s</p>" % (escape(a), escape(b), (" <span style='color:#5A6B7C'>(%s)</span>" % escape(c)) if c else "") for a, b, c in rows)
     t = "".join("%s: %s%s\n" % (a, b, " (%s)" % c if c else "") for a, b, c in rows)
     if w["below"]:
-        h += "<p style='margin:14px 0 4px'><b>Campañas por debajo de su objetivo</b></p><ul>" + "".join(
+        h += "<p style='margin:14px 0 4px'><b>Campañas con oportunidad de mejora (por debajo de su ROAS objetivo)</b></p><ul>" + "".join(
             "<li>%s: ROAS $%s (objetivo $%s)</li>" % (escape(n), format(r, ".1f").replace(".", ","), format(tg, ".1f").replace(".", ",")) for n, r, tg in w["below"]) + "</ul>"
-        t += "\nCampañas por debajo de su objetivo:\n" + "".join("- %s: ROAS $%s (objetivo $%s)\n" % (n, format(r, ".1f").replace(".", ","), format(tg, ".1f").replace(".", ",")) for n, r, tg in w["below"])
+        t += "\nCampañas con oportunidad de mejora (por debajo de su ROAS objetivo):\n" + "".join("- %s: ROAS $%s (objetivo $%s)\n" % (n, format(r, ".1f").replace(".", ","), format(tg, ".1f").replace(".", ",")) for n, r, tg in w["below"])
     else:
-        h += "<p>Todas tus campañas con inversión cumplen su ROAS objetivo.</p>"
-        t += "\nTodas tus campañas con inversión cumplen su ROAS objetivo.\n"
+        h += "<p>Todas tus campañas con inversión están en su ROAS objetivo o por encima.</p>"
+        t += "\nTodas tus campañas con inversión están en su ROAS objetivo o por encima.\n"
     return ("Tu resumen semanal de Lumo",) + _layout("Cómo te fue en los últimos 7 días", h, t, link, why)
 
 
