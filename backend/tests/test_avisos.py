@@ -12,7 +12,7 @@ from lumo.tokens import save_tokens
 
 CFG = {"ML_CLIENT_ID": "123", "ML_CLIENT_SECRET": "secreto-de-prueba", "REDIRECT_URI": "https://lumo.test/callback",
        "ENCRYPTION_KEY": "clave-de-prueba-larga-y-aleatoria", "SECRET_KEY": "otra-clave-de-sesion", "DATABASE_URL": "sqlite://",
-       "SMTP_PASSWORD": "pass-de-app", "SMTP_USER": "lumoads.ml@gmail.com", "CRON_TOKEN": "clave-del-cron"}
+       "SMTP_PASSWORD": "pass-de-app", "SMTP_USER": "lumoads.ml@gmail.com", "CRON_TOKEN": "clave-del-cron-larga-y-aleatoria-0123456789"}
 LUNES = datetime(2026, 10, 26, 15, 0)   # 12:00 en Argentina
 MIERCOLES = datetime(2026, 10, 28, 15, 0)
 SABADO = datetime(2026, 10, 31, 15, 0)
@@ -101,7 +101,7 @@ class Rutas(unittest.TestCase):
         _, _, self.mail = [p.start() for p in patches]
         self.addCleanup(mock.patch.stopall)
 
-    def cron(self, token="clave-del-cron"):
+    def cron(self, token="clave-del-cron-larga-y-aleatoria-0123456789"):
         return self.client.post("/cron/avisos", headers={"X-Cron-Token": token} if token is not None else {})
 
     def test_el_chequeo_diario_exige_la_clave(self):
@@ -115,7 +115,7 @@ class Rutas(unittest.TestCase):
 
     def test_sin_contrasena_de_correo_no_envia(self):
         app = create_app(dict(CFG, SMTP_PASSWORD=""))
-        r = app.test_client().post("/cron/avisos", headers={"X-Cron-Token": "clave-del-cron"})
+        r = app.test_client().post("/cron/avisos", headers={"X-Cron-Token": "clave-del-cron-larga-y-aleatoria-0123456789"})
         self.assertEqual(r.status_code, 503)
 
     def test_el_chequeo_diario_envia_a_quien_activo_el_aviso_y_no_repite(self):

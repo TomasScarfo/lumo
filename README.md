@@ -6,6 +6,7 @@ Lee tus métricas de Product Ads y te dice qué mejorar con palabras simples.
 - `design/`: prototipo de la interfaz con datos de ejemplo y logos.
 - `site/`: la portada estática, generada con `backend/build_site.py`. Se publica aparte para que cargue al instante aunque el servidor esté dormido.
 - `render.yaml`: configuración para publicar en Render (la app y la portada).
+- `docs/seguridad/`: políticas, matriz de controles (ISO 27001, SOC 2, ISO 27701), riesgos, incidentes y privacidad. Ver también `SECURITY.md`.
 
 ## Probar en tu computadora
 

@@ -3,17 +3,19 @@ import logging
 import os
 import re
 import secrets
+import time
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import quote
 
 from flask import Flask, Response, abort, jsonify, redirect, render_template, render_template_string, request, session
-from sqlalchemy import create_engine, delete, inspect, select, text
+from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import access, ads, cuenta, history, ml, notify
-from .models import Access, Account, Base, Invite, PanelState, Snapshot, utcnow
+from . import access, ads, audit, cuenta, history, ml, notify, privacy, security
+from .models import Access, Account, AuditLog, Base, Invite, PanelState, Snapshot, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
 log = logging.getLogger("lumo")
@@ -21,7 +23,9 @@ log = logging.getLogger("lumo")
 SNAPSHOT_TTL = timedelta(hours=3)  # Mercado Libre actualiza los datos una vez al día
 MIN_REFRESH = timedelta(minutes=10)  # tope para el botón "Actualizar"
 MAX_STATE_BYTES = 200_000
-SESSION_DAYS = 90
+MAX_REQUEST_BYTES = 1_000_000
+SESSION_DAYS = 30
+ADMIN_SESSION_HOURS = 12  # quien administra vuelve a pasar por Mercado Libre pasadas estas horas
 
 PAGE = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Lumo</title>
@@ -48,6 +52,8 @@ def load_config(overrides=None) -> dict:
         "ML_CLIENT_SECRET": os.environ.get("ML_CLIENT_SECRET", ""),
         "REDIRECT_URI": os.environ.get("REDIRECT_URI", ""),
         "ENCRYPTION_KEY": os.environ.get("ENCRYPTION_KEY", ""),
+        # Claves anteriores (separadas por coma) mientras se rota ENCRYPTION_KEY. Ver crypto.py.
+        "ENCRYPTION_KEY_PREVIOUS": os.environ.get("ENCRYPTION_KEY_PREVIOUS", ""),
         "SECRET_KEY": os.environ.get("SECRET_KEY", ""),
         "DATABASE_URL": os.environ.get("DATABASE_URL", "sqlite:///lumo.db"),
         "ML_AUTH_BASE": os.environ.get("ML_AUTH_BASE", "https://auth.mercadolibre.com.ar"),
@@ -75,17 +81,31 @@ def make_engine(url: str):
         url = "postgresql+psycopg2://" + url[len("postgresql://"):]
     if url in ("sqlite://", "sqlite:///:memory:"):
         return create_engine("sqlite://", poolclass=StaticPool, connect_args={"check_same_thread": False})
+    if url.startswith("postgresql") and "sslmode" not in url:
+        return create_engine(url, pool_pre_ping=True, connect_args={"sslmode": "require"})  # la base siempre por conexión cifrada
     return create_engine(url, pool_pre_ping=True)
 
 
 def create_app(overrides=None) -> Flask:
     cfg = load_config(overrides)
+    prod = cfg["REDIRECT_URI"].startswith("https://")
+    if prod and not cfg["SECRET_KEY"]:
+        # Sin clave fija cada proceso firmaría las sesiones con una distinta y la app quedaría a medias: mejor no arrancar.
+        raise RuntimeError("Falta SECRET_KEY: sin ella no se pueden firmar las sesiones")
+    for name, minimum in (("SECRET_KEY", 16), ("ENCRYPTION_KEY", 32), ("CRON_TOKEN", 32)):
+        if prod and cfg[name] and len(cfg[name]) < minimum:
+            log.error("%s es demasiado corta (menos de %d caracteres): reemplazala por un valor largo y aleatorio", name, minimum)
     app = Flask(__name__)
     app.config["SECRET_KEY"] = cfg["SECRET_KEY"] or secrets.token_hex(32)
-    app.config["SESSION_COOKIE_SECURE"] = cfg["REDIRECT_URI"].startswith("https://")
+    app.config["SESSION_COOKIE_SECURE"] = prod
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    if prod:
+        app.config["SESSION_COOKIE_NAME"] = "__Host-lumo"  # el navegador la acepta solo por HTTPS, sin Domain y con Path=/
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)  # Render termina el HTTPS: así vemos la IP y el esquema reales
+    app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
     app.permanent_session_lifetime = timedelta(days=SESSION_DAYS)
+    limiter = security.RateLimiter()
     engine = make_engine(cfg["DATABASE_URL"])
     had_access_table = inspect(engine).has_table("access")
     Base.metadata.create_all(engine)
@@ -98,6 +118,44 @@ def create_app(overrides=None) -> Flask:
 
     def missing_config():
         return [k for k in ("ML_CLIENT_ID", "ML_CLIENT_SECRET", "REDIRECT_URI", "ENCRYPTION_KEY") if not cfg[k]]
+
+    def _too_many(retry):
+        if request.path.startswith("/api/"):
+            resp = _json({"error": "espera"}, 429)
+        else:
+            resp = Response("Demasiados intentos. Esperá un momento y probá de nuevo.", 429, mimetype="text/plain")
+        resp.headers["Retry-After"] = str(retry)
+        return resp
+
+    @app.before_request
+    def _guard():
+        path = request.path
+        if path.startswith("/static/") or path == "/healthz":
+            return None
+        rule = security.limit_for(path, request.method)
+        if rule and not limiter.allow("%s|%s" % (rule[0], request.remote_addr), rule[1], rule[2]):
+            log.warning("tope de pedidos superado en %s", rule[0])
+            return _too_many(rule[2])
+        if request.method in ("POST", "PUT", "PATCH", "DELETE") and not path.startswith("/cron/"):
+            # Los navegadores mandan Origin en cada POST: si no es esta misma app, el pedido vino de otro sitio.
+            origin = request.headers.get("Origin")
+            if (origin and not security.same_origin(origin, request.host)) or request.headers.get("Sec-Fetch-Site") == "cross-site":
+                log.warning("pedido de otro origen rechazado en %s", path)
+                return Response("Pedido rechazado.", 403, mimetype="text/plain")
+        return None
+
+    @app.after_request
+    def _secure_headers(resp):
+        return security.apply_headers(resp, request.path, prod)
+
+    @app.get("/.well-known/security.txt")
+    def security_txt():
+        """Cómo avisar de un problema de seguridad (RFC 9116)."""
+        contact = cfg.get("CONTACT_EMAIL")
+        if not contact:
+            abort(404)
+        expires = (utcnow() + timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return Response("Contact: mailto:%s\nExpires: %s\nPreferred-Languages: es, en\n" % (contact, expires), mimetype="text/plain")
 
     @app.get("/healthz")
     def healthz():
@@ -168,7 +226,7 @@ def create_app(overrides=None) -> Flask:
         expected = session.pop("oauth_state", None)
         verifier = session.pop("pkce_verifier", None)
         state, code = request.args.get("state"), request.args.get("code")
-        if not expected or not state or not secrets.compare_digest(expected, state) or not code or not verifier:
+        if not expected or not state or not security.safe_eq(expected, state) or not code or not verifier:
             return page("<h1>No se pudo conectar</h1><p>La sesión venció o el enlace no es válido. Probá de nuevo.</p><a class='btn' href='/'>Volver</a>", 400)
         try:
             tok = ml.exchange_code(cfg, code, verifier)
@@ -188,12 +246,16 @@ def create_app(overrides=None) -> Flask:
                 s.rollback()
                 session.clear()
                 log.info("acceso denegado a la cuenta %s", user_id)
+                audit.record(s, "login_denied", target=user_id)
+                s.commit()
                 return render_template("denied.html", user_id=user_id, contact=_contact(), home=_home()), 403
             acc = save_tokens(s, cfg, user_id, tok)  # los tokens solo se guardan si la cuenta tiene acceso
             acc.email = _read_email(tok["access_token"]) or acc.email
+            audit.record(s, "login_ok", actor=user_id)
             s.commit()
         session.clear()
         session["uid"] = user_id  # Lumo recuerda a la persona en este navegador
+        session["at"] = int(time.time())  # cuándo entró: las sesiones de administración vencen antes
         session.permanent = True
         body, ok = _result_body(cfg, tok, user_id)
         if ok:
@@ -355,6 +417,7 @@ def create_app(overrides=None) -> Flask:
         with Session(engine) as s:
             acc = s.get(Account, uid)
             acc.email = mail
+            audit.record(s, "email_set", actor=uid)
             s.commit()
         return _json({"ok": True, "email": mail})
 
@@ -389,7 +452,8 @@ def create_app(overrides=None) -> Flask:
         token = cfg["CRON_TOKEN"]
         if not token:
             abort(404)
-        if not secrets.compare_digest(request.headers.get("X-Cron-Token", ""), token):
+        if not security.safe_eq(request.headers.get("X-Cron-Token", ""), token):
+            log.warning("cron/avisos: clave incorrecta")
             abort(403)
         if not notify.enabled(cfg):
             return _json({"ok": False, "motivo": "SMTP_PASSWORD sin configurar"}, 503)
@@ -427,12 +491,20 @@ def create_app(overrides=None) -> Flask:
             except Exception as exc:  # una cuenta con problemas no frena a las demás
                 result["errores"] += 1
                 log.warning("avisos de %s fallaron: %s", st.user_id, type(exc).__name__, exc_info=True)
-        return _json(dict(result, ok=True))
+        with Session(engine) as s:
+            purged = privacy.purge(s)  # plazos de conservación: se aplican una vez por día
+            audit.record(s, "cron_run", detail="cuentas=%(cuentas)s enviados=%(enviados)s errores=%(errores)s" % result)
+            s.commit()
+        return _json(dict(result, ok=True, purga=purged))
 
     def _admin_uid():
         uid = _current_user()
         if not uid or not access.is_admin(cfg, uid):
+            if uid:
+                log.warning("la cuenta %s intentó entrar a la administración", uid)
             abort(404)  # a quien no administra, la página ni siquiera le aparece
+        if time.time() - session.get("at", 0) > ADMIN_SESSION_HOURS * 3600:
+            abort(redirect("/connect"))  # sesión de administración vencida: se vuelve a confirmar con Mercado Libre
         return uid
 
     def _csrf() -> str:
@@ -441,7 +513,7 @@ def create_app(overrides=None) -> Flask:
         return session["csrf"]
 
     def _check_csrf():
-        if not secrets.compare_digest(request.form.get("csrf", ""), session.get("csrf", "-")):
+        if not session.get("csrf") or not security.safe_eq(request.form.get("csrf", ""), session["csrf"]):
             abort(400)
 
     @app.get("/admin")
@@ -466,47 +538,87 @@ def create_app(overrides=None) -> Flask:
                         pass
                 members.append({"user_id": row.user_id, "note": row.note, "since": row.created_at,
                                 "status": acc.status if acc else "sin conectar", "advertiser": name})
-        return render_template("admin.html", csrf=_csrf(), invites=invites, members=members, admins=sorted(access.admin_ids(cfg)))
+            events = s.execute(select(AuditLog).order_by(AuditLog.id.desc()).limit(40)).scalars().all()
+            events = [{"at": e.at, "event": e.event, "actor": e.actor, "target": e.target, "detail": e.detail} for e in events]
+        return render_template("admin.html", csrf=_csrf(), invites=invites, members=members, admins=sorted(access.admin_ids(cfg)), events=events)
 
     @app.post("/admin/invitar")
     def admin_invitar():
-        _admin_uid(); _check_csrf()
+        admin_uid = _admin_uid(); _check_csrf()
         with Session(engine) as s:
             access.create_invite(s, request.form.get("label", ""))
+            audit.record(s, "invite_create", actor=admin_uid)
             s.commit()
         return redirect("/admin#invitaciones")
 
     @app.post("/admin/invitacion/revocar")
     def admin_revocar():
-        _admin_uid(); _check_csrf()
+        admin_uid = _admin_uid(); _check_csrf()
         with Session(engine) as s:
             inv = s.get(Invite, request.form.get("token", ""))
             if inv and inv.used_by is None:
                 inv.revoked = True
+                audit.record(s, "invite_revoke", actor=admin_uid, target=inv.token[:6])
                 s.commit()
         return redirect("/admin#invitaciones")
 
     @app.post("/admin/acceso/agregar")
     def admin_agregar():
-        _admin_uid(); _check_csrf()
+        admin_uid = _admin_uid(); _check_csrf()
         raw = request.form.get("user_id", "").strip()
-        if raw.isdigit():
+        if raw.isdigit() and 0 < int(raw) < 2**63:
             with Session(engine) as s:
                 access.grant(s, int(raw), request.form.get("note", ""))
+                audit.record(s, "access_grant", actor=admin_uid, target=int(raw))
                 s.commit()
         return redirect("/admin#accesos")
 
     @app.post("/admin/acceso/quitar")
     def admin_quitar():
-        _admin_uid(); _check_csrf()
+        admin_uid = _admin_uid(); _check_csrf()
         raw = request.form.get("user_id", "").strip()
-        if raw.isdigit():
+        if raw.isdigit() and 0 < int(raw) < 2**63:
             uid = int(raw)
             with Session(engine) as s:
-                for model in (Access, Account, Snapshot, PanelState):
-                    s.execute(delete(model).where(model.user_id == uid))
+                privacy.erase_user(s, uid)
+                audit.record(s, "access_remove", actor=admin_uid, target=uid)
                 s.commit()
         return redirect("/admin#accesos")
+
+    # ---------- Privacidad: transparencia, descarga y borrado de los propios datos ----------
+    @app.get("/privacidad")
+    def privacidad():
+        uid = _current_user()
+        return render_template("privacidad.html", contact=_contact(), home=_home(), logged=bool(uid), csrf=_csrf() if uid else "",
+                               audit_days=privacy.AUDIT_DAYS, history_days=privacy.HISTORY_DAYS)
+
+    @app.get("/api/cuenta/exportar")
+    def cuenta_exportar():
+        uid = _current_user()
+        if not uid:
+            return _json({"error": "login"}, 401)
+        with Session(engine) as s:
+            data = privacy.export_user(s, uid)
+            audit.record(s, "data_export", actor=uid)
+            s.commit()
+        resp = _json(data)
+        resp.headers["Content-Disposition"] = 'attachment; filename="mis-datos-lumo.json"'
+        return resp
+
+    @app.post("/cuenta/eliminar")
+    def cuenta_eliminar():
+        uid = _current_user()
+        if not uid:
+            return redirect("/")
+        _check_csrf()
+        with Session(engine) as s:
+            privacy.erase_user(s, uid)
+            audit.record(s, "account_erase", actor=uid)
+            s.commit()
+        session.clear()
+        return page("<h1>Listo, borramos tus datos</h1><p>Eliminamos tu cuenta de Lumo y todo lo que guardábamos de ella.</p>"
+                    "<p>Para que Lumo deje de tener permiso sobre tu cuenta de Mercado Libre, también podés quitarlo desde <b>Mi perfil → Seguridad → Aplicaciones conectadas</b>.</p>"
+                    "<a class='btn' href='%s'>Volver al inicio</a>" % _esc(_home()))
 
     return app
 

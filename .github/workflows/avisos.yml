@@ -2,6 +2,7 @@
 # Necesita dos secretos del repositorio: APP_URL (por ejemplo https://lumo-xxxx.onrender.com, sin barra al final)
 # y CRON_TOKEN (el mismo valor que la variable CRON_TOKEN del servicio "lumo" en Render).
 name: Avisos por email
+permissions: {}   # esta tarea solo llama a Lumo con un secreto: no necesita ningún permiso sobre el repositorio
 on:
   schedule:
     - cron: "0 14 * * *"   # 11:00 en Argentina, después de que Mercado Libre actualiza sus datos

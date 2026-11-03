@@ -9,7 +9,7 @@ from datetime import timedelta
 from sqlalchemy import select
 
 from . import ml
-from .crypto import decrypt, encrypt
+from .crypto import decrypt, encrypt, previous_keys
 from .models import Account, utcnow
 
 # Se renueva un poco antes de que venza para no depender del reloj exacto.
@@ -21,12 +21,12 @@ class NeedsReconnect(Exception):
 
 
 def save_tokens(session, cfg: dict, user_id: int, tok: dict) -> Account:
-    key = cfg["ENCRYPTION_KEY"]
+    key, prev = cfg["ENCRYPTION_KEY"], previous_keys(cfg)
     expires_in = int(tok.get("expires_in") or 0)
     acc = session.get(Account, user_id) or Account(user_id=user_id)
-    acc.access_token = encrypt(key, tok["access_token"])
+    acc.access_token = encrypt(key, tok["access_token"], prev)
     # Si Mercado Libre no devuelve refresh token (falta el acceso offline), se deja vacío y se avisa en pantalla.
-    acc.refresh_token = encrypt(key, tok["refresh_token"]) if tok.get("refresh_token") else None
+    acc.refresh_token = encrypt(key, tok["refresh_token"], prev) if tok.get("refresh_token") else None
     acc.expires_at = utcnow() + timedelta(seconds=expires_in)
     acc.scope = tok.get("scope")
     acc.status = "connected"
@@ -38,15 +38,15 @@ def valid_access_token(session, cfg: dict, user_id: int) -> str:
     acc = session.execute(select(Account).where(Account.user_id == user_id).with_for_update()).scalar_one_or_none()
     if acc is None or acc.status != "connected":
         raise NeedsReconnect()
-    key = cfg["ENCRYPTION_KEY"]
+    key, prev = cfg["ENCRYPTION_KEY"], previous_keys(cfg)
     if acc.expires_at - utcnow() > MARGIN:
-        return decrypt(key, acc.access_token)
+        return decrypt(key, acc.access_token, prev)
     if not acc.refresh_token:
         acc.status = "needs_reconnect"
         session.commit()
         raise NeedsReconnect()
     try:
-        tok = ml.refresh(cfg, decrypt(key, acc.refresh_token))
+        tok = ml.refresh(cfg, decrypt(key, acc.refresh_token, prev))
     except ml.MLError as exc:
         if exc.code == "invalid_grant":
             acc.status = "needs_reconnect"

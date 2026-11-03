@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Float, String, Text
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -86,6 +86,19 @@ class CampaignDay(Base):
     prints = Column(Float, nullable=False, default=0)
     units = Column(Float, nullable=False, default=0)
     sales = Column(Float, nullable=False, default=0)
+
+
+class AuditLog(Base):
+    """Registro de auditoría de accesos y cambios de administración. No guarda datos personales más allá del id de cuenta."""
+
+    __tablename__ = "audit_log"
+
+    id = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    at = Column(DateTime, nullable=False, default=utcnow, index=True)
+    event = Column(String(40), nullable=False)
+    actor = Column(BigInteger, nullable=True)
+    target = Column(String(64), nullable=True)
+    detail = Column(String(200), nullable=True)
 
 
 class Notice(Base):

@@ -6,6 +6,26 @@ services:
     runtime: static
     buildCommand: test -n "$APP_URL" && sed -i "s#__APP_URL__#${APP_URL%/}#g" site/index.html
     staticPublishPath: ./site
+    # Encabezados de seguridad de la portada (la app los manda por su cuenta, en lumo/security.py).
+    headers:
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'none'"
     envVars:
       - key: APP_URL
         sync: false
@@ -26,6 +46,9 @@ services:
         generateValue: true
       - key: SECRET_KEY
         generateValue: true
+      # Solo durante una rotación de ENCRYPTION_KEY: la clave anterior. Ver docs/seguridad/politicas.md.
+      - key: ENCRYPTION_KEY_PREVIOUS
+        sync: false
       # Los valores secretos se cargan a mano en el panel de Render (sync: false), nunca en este archivo.
       - key: ML_CLIENT_ID
         sync: false

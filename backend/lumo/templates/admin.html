@@ -75,7 +75,22 @@
     </table>
     {% if not members and not admins %}<p class="empty">Todavía no hay cuentas.</p>{% endif %}
   </div>
-  <p class="sub" style="margin-top:14px">Quitar el acceso borra los permisos guardados, la copia de datos y las tareas de esa cuenta. Para volver a entrar necesitará una invitación nueva.</p>
+  <p class="sub" style="margin-top:14px">Quitar el acceso borra todo lo que Lumo guarda de esa cuenta: permisos, email, copia de datos, historial, tareas y avisos. Para volver a entrar necesitará una invitación nueva.</p>
+
+  <h2 id="actividad">Actividad reciente</h2>
+  <p class="sub">Los últimos movimientos de acceso y administración. Se conservan un año.</p>
+  <div class="tw">
+    {% if events %}
+    <table>
+      <thead><tr><th>Cuándo (UTC)</th><th>Qué</th><th>Cuenta</th><th>Sobre</th></tr></thead>
+      <tbody>
+      {% for e in events %}
+        <tr><td>{{ e.at.strftime('%d/%m %H:%M') }}</td><td><code>{{ e.event }}</code></td><td>{{ e.actor if e.actor is not none else '—' }}</td><td>{{ e.target or e.detail or '—' }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="empty">Todavía no hay actividad registrada.</p>{% endif %}
+  </div>
 </main>
 <script>
 document.addEventListener('click', function (e) {
