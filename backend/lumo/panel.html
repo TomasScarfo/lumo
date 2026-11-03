@@ -556,6 +556,10 @@ function statusOf(roas, spend, sales, t, trend) {
   if (trend != null && trend >= 0.05) return 'mejorando';
   return k < 0.7 ? 'revisar' : 'oportunidad';
 }
+function visTxt(c) {
+  if (c.vis == null) return '';
+  return ' Sus impresiones ' + (c.vis > 0 ? 'subieron ' : 'bajaron ') + Math.round(Math.abs(c.vis) * 100) + '% respecto de ' + cmpText() + '.';
+}
 function trendTxt(c) {
   if (c.trend == null) return '';
   if (Math.abs(c.trend) < 0.02) return ' Su ROAS se mantiene igual que en ' + cmpText() + '.';
@@ -639,10 +643,10 @@ function compute() {
   var n = S.days, o = S.off, cw = cmpWindow();
   var camps = CAMPS.map(function (c) {
     var cur = agg(c.daily, DAYS - o - n, DAYS - o), prev = cw ? scaleAgg(agg(c.daily, cw.a, cw.b), cw.scale) : agg(c.daily, 0, 0);
-    var roas = cur.spend ? cur.sales / cur.spend : 0, proas = prev.spend ? prev.sales / prev.spend : 0, trend = proas && cur.spend ? roas / proas - 1 : null;
+    var roas = cur.spend ? cur.sales / cur.spend : 0, proas = prev.spend ? prev.sales / prev.spend : 0, trend = proas && cur.spend ? roas / proas - 1 : null, vis = prev.prints ? cur.prints / prev.prints - 1 : null;
     return { id: c.id, name: c.name, budget: c.budget, cur: cur, prev: prev,
       cur30: agg(c.daily, DAYS - 30, DAYS), prev30: agg(c.daily, DAYS - 60, DAYS - 30),
-      roas: roas, target: c.target, acosTarget: c.acosTarget, trend: trend, status: statusOf(roas, cur.spend, cur.sales, c.target, trend), avgSpend: cur.spend / n, used: c.budget ? cur.spend / n / c.budget : 0,
+      roas: roas, target: c.target, acosTarget: c.acosTarget, trend: trend, vis: vis, status: statusOf(roas, cur.spend, cur.sales, c.target, trend), avgSpend: cur.spend / n, used: c.budget ? cur.spend / n / c.budget : 0,
       ctr: cur.prints ? cur.clicks / cur.prints : 0, cpc: cur.clicks ? cur.spend / cur.clicks : 0, cvr: cur.clicks ? cur.units / cur.clicks : 0,
       lostB: c.lostB, lostR: c.lostR, share: c.share, estTarget: c.estTarget, paused: c.status === 'paused',
       dSales: prev.sales ? cur.sales / prev.sales - 1 : 0, items: [] };
@@ -701,12 +705,23 @@ function compute() {
         title: c.name + ' viene mejorando',
         text: base + tr + ' Ya está al ' + pctT + '% de su objetivo.',
         action: 'No hace falta tocar nada por ahora: dejala seguir y mirá si llega a su objetivo.' });
-    } else if (c.status === 'supera') {
-      var lost = c.lostR != null && c.lostR >= 0.2 ? ' Hoy pierde ' + Math.round(c.lostR * 100) + '% de las impresiones por ranking.' : '';
+    }
+    /* Visibilidad (impresiones) contra el período de comparación: manda sobre el ROAS objetivo.
+       Si baja, bajar el ROAS objetivo la recupera. Si sube pero el ROAS cae, subirlo un poco devuelve rentabilidad. */
+    var lostTxt = c.lostR != null && c.lostR >= 0.2 ? ' Hoy pierde ' + Math.round(c.lostR * 100) + '% de las impresiones por ranking.' : '';
+    var visUp = c.vis != null && c.vis >= 0.1 && c.trend != null && c.trend <= -0.05;
+    var visDown = c.vis != null && c.vis <= -0.1 && c.cur.sales > 0;
+    if (visUp) {
+      recs.push({ id: 'rec-' + c.id + '-visup', camp: c.id, sev: 'oportunidad', score: c.cur.spend, go: 'camp',
+        title: c.name + ' gana visibilidad, pero cae su ROAS',
+        text: base + visTxt(c) + tr + ' Se está mostrando más, pero a costa de rentabilidad.',
+        action: 'Probá subir un poco el ROAS objetivo: la campaña se va a mostrar algo menos y recupera rentabilidad. Hacelo de a poco y mirá cómo responde durante unos días.' });
+    } else if (visDown || c.status === 'supera') {
+      var below = c.status === 'oportunidad' || c.status === 'revisar';
       recs.push({ id: 'rec-' + c.id + '-vis', camp: c.id, sev: 'oportunidad', score: c.cur.sales, go: 'camp',
-        title: c.name + ' tiene margen para ganar visibilidad',
-        text: base + ' Su ROAS está ' + (pctT - 100) + '% por encima del objetivo: es rentable, pero es probable que se esté mostrando menos de lo que podría.' + lost + tr,
-        action: 'Probá bajar el ROAS objetivo un 10% (de $' + r1(c.target) + ' a $' + r1(c.target * 0.9) + '). Sus anuncios se van a mostrar más y vas a ganar visibilidad, visitas, clics y ventas, a cambio de algo de rentabilidad. Mirá cómo responde durante unos días.' });
+        title: visDown ? c.name + ' está perdiendo visibilidad' : c.name + ' tiene margen para ganar visibilidad',
+        text: base + (visDown ? visTxt(c) : ' Su ROAS está ' + (pctT - 100) + '% por encima del objetivo: es rentable, pero es probable que se esté mostrando menos de lo que podría.') + lostTxt + tr + (below ? ' Ojo: ya está por debajo de su objetivo, así que ganar visibilidad le va a costar rentabilidad. Decidilo según lo que priorices.' : ''),
+        action: 'Probá bajar el ROAS objetivo para que tus anuncios se muestren más: vas a ganar visibilidad, visitas, clics y ventas, a cambio de algo de rentabilidad. Hacelo de a poco y mirá cómo responde durante unos días.' });
     }
     if (c.used >= 0.95 && (c.status === 'supera' || c.status === 'objetivo')) {
       recs.push({ id: 'rec-' + c.id + '-cap', camp: c.id, sev: 'oportunidad', score: c.cur.sales, go: 'camp',
@@ -1164,6 +1179,7 @@ var KIND = {
   budget_up: { tag: 'Subir presupuesto', goal: 'Vender más sin que el ROAS baje de tu ROAS objetivo.' },
   budget_down: { tag: 'Bajar presupuesto', goal: 'Mejorar el ROAS gastando menos.' },
   improve: { tag: 'Mejorar publicaciones', goal: 'Mejorar el ROAS o vender más con el mismo presupuesto.' },
+  target_up: { tag: 'Subir ROAS objetivo', goal: 'Recuperar rentabilidad, mostrándote algo menos.' },
   target_down: { tag: 'Bajar ROAS objetivo', goal: 'Mostrarte más y ganar visibilidad, visitas y ventas, resignando un poco de rentabilidad.' },
   pause: { tag: 'Pausar', goal: 'Dejar de gastar donde no rinde y mejorar el ROAS de tu cuenta.' },
   activate: { tag: 'Activar publicidad', goal: 'Vender más con publicaciones que ya vendían bien sin anuncios.' }
@@ -1186,9 +1202,9 @@ function actionFromId(id) {
   if (id.indexOf('rec-') === 0) {
     r = M.recs.filter(function (x) { return x.id === id; })[0];
     if (!r || !r.camp) return null;
-    kind = /-low$/.test(id) ? 'budget_down' : /-cap$/.test(id) ? 'budget_up' : /-mid$/.test(id) ? 'improve' : /-vis$/.test(id) ? 'target_down' : null;
+    kind = /-low$/.test(id) ? 'budget_down' : /-cap$/.test(id) ? 'budget_up' : /-mid$/.test(id) ? 'improve' : /-vis$/.test(id) ? 'target_down' : /-visup$/.test(id) ? 'target_up' : null;
     if (!kind) return null;
-    verb = { budget_down: 'Bajaste el presupuesto de ', budget_up: 'Subiste el presupuesto de ', improve: 'Mejoraste las publicaciones de ', target_down: 'Bajaste el ROAS objetivo de ' }[kind];
+    verb = { budget_down: 'Bajaste el presupuesto de ', budget_up: 'Subiste el presupuesto de ', improve: 'Mejoraste las publicaciones de ', target_down: 'Bajaste el ROAS objetivo de ', target_up: 'Subiste el ROAS objetivo de ' }[kind];
     return { kind: kind, scope: r.camp, title: verb + campName(r.camp) };
   }
   if (id.indexOf('low-') === 0) {
@@ -1229,7 +1245,7 @@ function dailySales(scope, from, to) {
 }
 function simAfter(b, act) {
   var s = { days: b.days, spend: b.spend, clicks: b.clicks, sales: b.sales, prints: b.prints };
-  var f = { budget_up: [1.3, 1.25, 1.2], budget_down: [0.55, 0.57, 0.8], improve: [1, 1.1, 1.15], target_down: [1.25, 1.3, 1.15] }[act.kind];
+  var f = { budget_up: [1.3, 1.25, 1.2], budget_down: [0.55, 0.57, 0.8], improve: [1, 1.1, 1.15], target_down: [1.25, 1.3, 1.15], target_up: [0.85, 0.82, 0.95] }[act.kind];
   if (f) { s.spend *= f[0]; s.clicks *= f[1]; s.prints *= f[1]; s.sales *= f[2]; }
   else if (act.kind === 'pause') {
     var sp = 0, sa = 0;
@@ -1247,6 +1263,7 @@ function dp(a, b) { return b ? a / b - 1 : 0; }
 function verdictOf(kind, b, a, t) {
   var dS = dp(a.sales, b.sales), dR = dp(a.roas, b.roas);
   if (kind === 'pause') return dR >= 0.02 ? 'mejoro' : dR <= -0.03 ? 'empeoro' : 'igual';
+  if (kind === 'target_up') return dR >= 0.08 ? 'mejoro' : dR <= -0.08 ? 'empeoro' : 'igual';
   if (kind === 'target_down') return dS >= 0.08 ? 'mejoro' : dR <= -0.25 ? 'empeoro' : 'igual';
   if (kind === 'budget_up') return a.roas < t * 0.85 && dR <= -0.05 ? 'empeoro' : dS >= 0.08 ? 'mejoro' : 'igual';
   if (kind === 'budget_down') return dR >= 0.08 ? 'mejoro' : dR <= -0.08 ? 'empeoro' : 'igual';
@@ -1405,7 +1422,7 @@ var GLOSSARY = [
   ]},
   { g: 'Eficiencia', terms: [
     { n: 'ROAS (retorno de la inversión publicitaria)', api: 'roas', d: 'Return On Ad Spend. Cuánto vendés por cada $1 que invertís en publicidad.', ex: 'Invertiste $10.000 y vendiste $60.000 con anuncios: el ROAS es $6 por cada $1.', best: 'Más alto es mejor. Se compara con tu ROAS objetivo.' },
-    { n: 'ROAS objetivo', api: 'roas_target', d: 'El ROAS mínimo que esperás de una campaña. Se configura campaña por campaña en Mercado Libre y Lumo lo lee de ahí. Si una campaña solo informa su ACOS objetivo, usamos ROAS objetivo = 100 ÷ ACOS objetivo.', ex: 'Un ROAS objetivo de $5 equivale a un ACOS objetivo del 20%.', best: 'Más alto: te mostrás menos y ganás más por cada peso. Más bajo: te mostrás más y ganás visibilidad con menos rentabilidad.' },
+    { n: 'ROAS objetivo', api: 'roas_target', d: 'El ROAS mínimo que esperás de una campaña. Se configura campaña por campaña en Mercado Libre y Lumo lo lee de ahí. Si una campaña solo informa su ACOS objetivo, usamos ROAS objetivo = 100 ÷ ACOS objetivo.', ex: 'Un ROAS objetivo de $5 equivale a un ACOS objetivo del 20%.', best: 'Más alto: te mostrás menos y ganás más por cada peso. Más bajo: te mostrás más y ganás visibilidad con menos rentabilidad. Si tu visibilidad baja, bajarlo la recupera. Si la visibilidad sube pero cae el ROAS, subirlo un poco devuelve rentabilidad.' },
     { n: 'Estado de una campaña', api: '', d: 'Lumo compara el ROAS de cada campaña con su objetivo y mira si viene mejorando o empeorando. Superando el objetivo: rinde más de lo que buscás y tiene margen para mostrarse más. En objetivo: está dentro de lo esperado. Mejorando: está por debajo, pero su ROAS sube y se acerca. Con oportunidad: está por debajo y hay margen para mejorarla. Revisar: no vendió o está lejos del objetivo sin mejorar.', ex: 'Estar por debajo del objetivo no es estar mal: es una oportunidad.', best: 'Se compara con el período que elegís en Comparar con.' },
     { n: 'ACOS (costo publicitario de ventas)', api: 'acos', d: 'Advertising Cost of Sales. Qué porcentaje de lo vendido con publicidad se fue en anuncios. Es el ROAS al revés.', ex: 'Invertiste $10.000 y vendiste $60.000: el ACOS es 16,7%. Un ROAS de $5 equivale a un ACOS del 20%.', best: 'Más bajo es mejor.' },
     { n: 'CVR (tasa de conversión)', api: 'cvr', d: 'Conversion Rate. Es el porcentaje de clics que terminan en una compra.', ex: '120 clics y 4 compras es un CVR del 3,3%.', best: 'Más alto es mejor.' }
