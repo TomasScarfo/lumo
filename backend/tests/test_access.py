@@ -4,6 +4,7 @@ import unittest
 from datetime import timedelta
 from unittest import mock
 
+import requests
 from sqlalchemy.orm import Session
 
 from lumo import access, create_app
@@ -206,6 +207,12 @@ class VolverALaPortada(Base):
 class Ingreso(Base):
     def denied_html(self):
         return Base.connect(self, self.client, 999).get_data(as_text=True)
+
+    def test_si_mercado_libre_no_responde_al_pedir_el_email_igual_entra(self):
+        with mock.patch("lumo.ml.api_get", side_effect=requests.ConnectionError("sin red")):
+            r = self.connect(self.client, 1)
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(r.headers["Location"].endswith("/panel"))
 
     def test_la_pantalla_principal_ordena_metricas_graficos_y_campanas(self):
         fuente = open(os.path.join(os.path.dirname(__file__), "..", "lumo", "panel.html"), encoding="utf-8").read()
