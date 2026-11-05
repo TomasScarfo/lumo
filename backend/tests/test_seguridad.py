@@ -24,7 +24,9 @@ class Encabezados(Base):
         self.assertIn("object-src 'none'", h["Content-Security-Policy"])
         self.assertEqual(h["X-Content-Type-Options"], "nosniff")
         self.assertEqual(h["X-Frame-Options"], "DENY")
-        self.assertEqual(h["Referrer-Policy"], "no-referrer")
+        # same-origin y no no-referrer: con no-referrer los navegadores mandan "Origin: null" en los formularios
+        # y el control de origen rechazaba todos (por ejemplo, crear una invitación en /admin).
+        self.assertEqual(h["Referrer-Policy"], "same-origin")
         self.assertIn("max-age=", h["Strict-Transport-Security"])  # REDIRECT_URI es https
 
     def test_sin_https_no_se_manda_hsts(self):

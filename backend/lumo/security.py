@@ -27,7 +27,10 @@ HEADERS = {
     "Content-Security-Policy": CSP,
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
-    "Referrer-Policy": "no-referrer",  # las invitaciones viajan en la dirección: que no se filtren por el Referer
+    # same-origin: las invitaciones viajan en la dirección y no se filtran a otros sitios por el Referer.
+    # No usar no-referrer: con esa política los navegadores mandan "Origin: null" en los formularios
+    # y el control de origen los rechaza a todos ("Pedido rechazado").
+    "Referrer-Policy": "same-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Resource-Policy": "same-origin",

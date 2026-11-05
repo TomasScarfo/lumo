@@ -8,6 +8,7 @@ from datetime import timedelta
 from pathlib import Path
 from urllib.parse import quote
 
+import requests
 from flask import Flask, Response, abort, jsonify, redirect, render_template, render_template_string, request, session
 from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import Session
@@ -270,6 +271,9 @@ def create_app(overrides=None) -> Flask:
             body = ml.api_get(cfg, token, "/users/me", None, None)
         except ml.MLError as exc:
             log.warning("no se pudo leer el email: %s", exc.status)
+            return None
+        except requests.RequestException as exc:  # sin red o Mercado Libre no responde: la persona entra igual
+            log.warning("no se pudo leer el email: %s", type(exc).__name__)
             return None
         mail = body.get("email") if isinstance(body, dict) else None
         if not (isinstance(mail, str) and "@" in mail):
