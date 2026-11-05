@@ -218,6 +218,21 @@ class Ingreso(Base):
         fuente = open(os.path.join(os.path.dirname(__file__), "..", "lumo", "panel.html"), encoding="utf-8").read()
         self.assertIn("function principalHTML() { return heroHTML() + kpiHTML() + chartsHTML() + campsHTML(); }", fuente)
 
+    def test_pantalla_sin_acceso_arma_el_mensaje_con_el_id_y_el_email(self):
+        from urllib.parse import quote
+        with mock.patch("lumo.ml.api_get", return_value={"email": "ana@ej.com"}):
+            html = self.denied_html()
+        texto = "Hola, quiero probar Lumo. Mi ID de Mercado Libre es 999 y mi email es ana@ej.com."
+        self.assertIn("https://wa.me/5491100000000?text=" + quote(texto), html)
+        self.assertIn("body=" + quote(texto), html)
+
+    def test_pantalla_sin_acceso_sin_email_igual_lleva_el_id(self):
+        from urllib.parse import quote
+        with mock.patch("lumo.ml.api_get", return_value={}):
+            html = self.denied_html()
+        self.assertIn(quote("Mi ID de Mercado Libre es 999."), html)
+        self.assertNotIn(quote("mi email es"), html)
+
     def test_sin_invitacion_no_entra_ni_se_guardan_sus_datos(self):
         r = self.connect(self.client, 999)
         html = r.get_data(as_text=True)

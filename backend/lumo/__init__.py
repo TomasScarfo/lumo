@@ -169,16 +169,20 @@ def create_app(overrides=None) -> Flask:
     def favicon():
         return redirect("/static/logo.png")
 
-    def _contact():
-        """Datos de contacto para la portada. Si no hay ninguno configurado, no se muestra la sección."""
+    def _contact(user_id=None, user_email=None):
+        """Datos de contacto para la portada. Si no hay ninguno configurado, no se muestra la sección.
+        Con el ID (y el email) de quien pide acceso, el mensaje ya sale escrito para que lo habiliten sin pedirle nada más."""
         out = {}
+        msg = "Hola, quiero probar Lumo."
+        if user_id:
+            msg += " Mi ID de Mercado Libre es %s" % user_id + (" y mi email es %s." % user_email if user_email else ".")
         email, wa = cfg.get("CONTACT_EMAIL"), cfg.get("CONTACT_WHATSAPP")
         if email:
             out["email"] = email
-            out["mailto"] = "mailto:%s?subject=%s" % (email, quote("Acceso a Lumo"))
+            out["mailto"] = "mailto:%s?subject=%s&body=%s" % (email, quote("Acceso a Lumo"), quote(msg))
         digits = re.sub(r"\D", "", wa or "")
         if digits:
-            out["whatsapp"] = "https://wa.me/%s?text=%s" % (digits, quote("Hola, quiero probar Lumo"))
+            out["whatsapp"] = "https://wa.me/%s?text=%s" % (digits, quote(msg))
             out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
         return out or None
 
@@ -249,7 +253,7 @@ def create_app(overrides=None) -> Flask:
                 log.info("acceso denegado a la cuenta %s", user_id)
                 audit.record(s, "login_denied", target=user_id)
                 s.commit()
-                return render_template("denied.html", user_id=user_id, contact=_contact(), home=_home()), 403
+                return render_template("denied.html", user_id=user_id, contact=_contact(user_id, _read_email(tok["access_token"])), home=_home()), 403
             acc = save_tokens(s, cfg, user_id, tok)  # los tokens solo se guardan si la cuenta tiene acceso
             acc.email = _read_email(tok["access_token"]) or acc.email
             audit.record(s, "login_ok", actor=user_id)
