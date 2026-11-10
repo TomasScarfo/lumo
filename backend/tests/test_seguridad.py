@@ -188,9 +188,9 @@ class Auditoria(Base):
         self.assertEqual([e[0] for e in ev], ["login_ok", "invite_create", "access_grant", "access_remove"])
         self.assertEqual(ev[2], ("access_grant", 1, "77"))
 
-    def test_el_inicio_de_la_prueba_gratis_queda_registrado(self):
+    def test_el_ingreso_de_una_cuenta_nueva_queda_registrado(self):
         self.connect(self.client, 50)
-        self.assertEqual(self.events(), [("trial_start", 50, None), ("login_ok", 50, None)])
+        self.assertEqual(self.events(), [("login_ok", 50, None)])
 
     def test_el_registro_no_guarda_emails_ni_tokens(self):
         c = self.admin_client()

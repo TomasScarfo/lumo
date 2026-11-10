@@ -113,14 +113,16 @@ class Notice(Base):
 
 
 class Subscription(Base):
-    """Prueba gratis y suscripción paga de una cuenta. Se crea al primer ingreso y no se borra: la prueba es una sola por cuenta."""
+    """Suscripción de una cuenta. La prueba gratis empieza cuando Mercado Pago confirma el medio de pago, y es una sola por cuenta:
+    por eso la fila no se borra."""
 
     __tablename__ = "subscription"
 
     user_id = Column(BigInteger, primary_key=True, autoincrement=False)
-    trial_ends_at = Column(DateTime, nullable=False)
-    # trial | pending | authorized | paused | cancelled (los últimos cuatro son los estados de Mercado Pago)
-    status = Column(String(32), nullable=False, default="trial")
+    trial_started_at = Column(DateTime, nullable=True)  # cuándo empezó la prueba gratis; vacío: todavía no la usó
+    trial_ends_at = Column(DateTime, nullable=False, default=utcnow)  # día del primer cobro; solo vale si trial_started_at tiene fecha
+    # new | pending | authorized | paused | cancelled (los últimos cuatro son los estados de Mercado Pago)
+    status = Column(String(32), nullable=False, default="new")
     mp_preapproval_id = Column(String(64), nullable=True)
     payer_email = Column(String(254), nullable=True)
     paid_until = Column(DateTime, nullable=True)  # próximo cobro informado por Mercado Pago: hasta ahí ya está pago

@@ -29,10 +29,11 @@ python -m unittest discover -s tests
 
 ## Acceso y cobro
 
-- **Prueba gratis:** cualquier cuenta nueva de Mercado Libre tiene 14 días (`TRIAL_DAYS`), sin tarjeta. Es una sola por cuenta.
+- **Prueba gratis:** 14 días (`TRIAL_DAYS`), una sola por cuenta. Empieza cuando la persona elige un plan y Mercado Pago confirma su medio de pago; no se cobra nada hasta el día 15. Si cancela antes, no paga.
 - **Planes:** mensual (`PLAN_PRICE_USD`) y anual (`PLAN_PRICE_ANNUAL_USD`). El ahorro del anual se calcula solo y se muestra como descuento.
 - **Dólares y pesos:** el precio se muestra en dólares y Mercado Pago cobra en pesos. Lumo convierte con el dólar oficial vendedor (`USD_RATE_URL`) al suscribirse y, cada día, actualiza el monto de las suscripciones activas si la cotización se movió más de 1 %. `USD_ARS_RATE` fija la cotización a mano.
-- **Renovación:** automática, cada mes o cada año. Si se suscribe durante la prueba, el primer cobro es el día que termina.
+- **Renovación:** automática, cada mes o cada año. Tres días antes del primer cobro se manda un email de aviso.
+- **Legales:** `/terminos` (términos y condiciones) y `/arrepentimiento` (botón de arrepentimiento: cancela en el momento, da un código y avisa por email a `CONTACT_EMAIL` para devolver el cobro si lo hubo). Las devoluciones se hacen a mano desde Mercado Pago. La factura todavía no se emite desde Lumo.
 - **Cobro rechazado:** la cuenta sigue entrando 7 días (`GRACE_DAYS`) y recibe un email. Si no regulariza, el acceso se pausa; no se borra nada.
 - **Cambio de plan:** desde `/suscripcion`. El plan nuevo empieza cuando termina lo ya pago y reemplaza al anterior recién cuando Mercado Pago lo confirma.
 - **Cancelación:** desde `/suscripcion`; sigue entrando hasta la fecha ya paga. Borrar la cuenta o quitar el acceso desde `/admin` también corta el cobro.

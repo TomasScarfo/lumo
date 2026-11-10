@@ -134,8 +134,8 @@ def list_mail(subject: str, title: str, intro: str, lines: list, link: str, why:
     return (subject,) + _layout(title, h, t, link, why)
 
 
-def billing_mail(kind: str, link: str, until: datetime = None, days: int = None, price: str = None):
-    """Avisos de la suscripción: "pago" (cobro rechazado), "baja" (acceso suspendido) y "prueba" (la prueba gratis está por terminar)."""
+def billing_mail(kind: str, link: str, until: datetime = None, days: int = None, price: str = None, plan: str = None):
+    """Avisos de la suscripción: "pago" (cobro rechazado), "baja" (acceso suspendido) y "prueba" (la prueba gratis termina y viene el primer cobro)."""
     why = "Te escribimos porque tenés una cuenta en Lumo. Este aviso es sobre tu suscripción."
     if kind == "pago":
         subject = title = "No pudimos cobrar tu suscripción de Lumo"
@@ -147,8 +147,9 @@ def billing_mail(kind: str, link: str, until: datetime = None, days: int = None,
                  "No borramos nada: tus datos y tus tareas te esperan. Cuando vuelvas a suscribirte, seguís donde lo dejaste."]
     else:
         subject = title = "Tu prueba gratis de Lumo termina %s" % ("mañana" if days == 1 else "en %d días" % days)
-        lines = ["Para seguir viendo tus campañas con claridad, elegí un plan%s." % (" desde %s por mes" % price if price else ""),
-                 "Si te suscribís ahora, el primer cobro se hace recién cuando termina la prueba."]
+        what = "tu plan %s" % plan if plan else "tu plan"
+        lines = ["El %s Mercado Pago hace el primer cobro de %s%s." % (until.strftime("%d/%m/%Y"), what, " (%s)" % price if price else ""),
+                 "Si querés seguir, no tenés que hacer nada. Si no, cancelá antes de esa fecha desde tu suscripción y no se te cobra."]
     h = "".join("<p>%s</p>" % escape(x) for x in lines)
     return (subject,) + _layout(title, h, "\n".join(lines) + "\n", link, why, "Ver mi suscripción")
 

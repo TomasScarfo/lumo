@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Términos y condiciones · Lumo</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<main class="page doc">
+  <a class="logo" href="{{ home }}"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
+  <div class="panel" style="margin-top:24px">
+    <h1>Términos y condiciones</h1>
+    <p>Estas son las reglas para usar Lumo, en simple. Al suscribirte las aceptás. Última actualización: {{ updated }}.</p>
+
+    <h2>1. Qué es Lumo</h2>
+    <p>Lumo es una herramienta que lee las métricas de tu publicidad en Mercado Libre (Product Ads) y te las muestra con claridad, con alertas y recomendaciones. Lumo solo consulta información: no crea, pausa ni modifica tus campañas. Es una herramienta independiente, no afiliada a Mercado Libre.</p>
+
+    <h2>2. Tu cuenta</h2>
+    <p>Entrás con tu cuenta de Mercado Libre y autorizás a Lumo a leer tus datos de publicidad. Sos responsable de tener permiso sobre la cuenta que conectás. Podés quitarle el acceso a Lumo cuando quieras desde Mercado Libre.</p>
+
+    <h2>3. Prueba gratis</h2>
+    <p>La primera vez que te suscribís tenés {{ trial_days }} días de prueba gratis. La prueba empieza cuando Mercado Pago confirma tu medio de pago. Durante esos días no se te cobra nada; si cancelás antes de que termine, no pagás. La prueba es una sola por cuenta.</p>
+
+    <h2>4. Planes y precios</h2>
+    <ul>
+      {% if price.monthly %}<li><b>Plan mensual:</b> {{ price.monthly }} por mes.</li>{% endif %}
+      {% if price.annual %}<li><b>Plan anual:</b> {{ price.annual }} por año.</li>{% endif %}
+    </ul>
+    <p>Los precios están expresados en dólares estadounidenses e incluyen impuestos. El cobro se hace en pesos argentinos a través de Mercado Pago, al tipo de cambio oficial vendedor del día de cada cobro, por lo que el importe en pesos puede variar de un cobro a otro.</p>
+
+    <h2>5. Renovación automática</h2>
+    <p>La suscripción se renueva sola al final de cada período (cada mes o cada año, según tu plan) y Mercado Pago cobra el nuevo período con el medio de pago que cargaste, hasta que la canceles.</p>
+
+    <h2>6. Cambios de precio</h2>
+    <p>Si cambiamos el precio en dólares de tu plan, te avisamos por email con al menos 30 días de anticipación. Si no estás de acuerdo, podés cancelar antes de que se aplique.</p>
+
+    <h2>7. Cómo cancelar</h2>
+    <p>Podés cancelar cuando quieras desde <a href="/suscripcion">la página de tu suscripción</a>, con un clic. Seguís teniendo acceso hasta el final del período que ya pagaste (o hasta el final de la prueba gratis) y no se te vuelve a cobrar. No hay cargos por cancelar.</p>
+
+    <h2>8. Derecho de arrepentimiento</h2>
+    <p>Tenés derecho a revocar la contratación dentro de los 10 días corridos desde que te suscribiste, sin dar explicaciones y sin costo, desde el <a href="/arrepentimiento">botón de arrepentimiento</a>. Si en ese plazo se te cobró, te devolvemos el importe.</p>
+
+    <h2>9. Si un cobro falla</h2>
+    <p>Si Mercado Pago no puede cobrar tu suscripción, te avisamos por email y seguís usando Lumo {{ grace_days }} días mientras lo resolvés. Si no se regulariza, el acceso se pausa. No borramos tus datos: cuando vuelvas a suscribirte, encontrás todo como lo dejaste.</p>
+
+    <h2>10. Qué podés esperar de Lumo</h2>
+    <p>Las métricas salen de Mercado Libre y pueden tener demoras o diferencias. Las recomendaciones son orientativas: las decisiones sobre tu publicidad y sus resultados son tuyos y dependen de tu negocio, la temporada y la competencia. Trabajamos para que Lumo esté siempre disponible, pero puede haber interrupciones por mantenimiento o por fallas de servicios de terceros.</p>
+
+    <h2>11. Tus datos</h2>
+    <p>Qué guardamos, para qué y cómo borrarlo está explicado en <a href="/privacidad">Privacidad</a>. Los datos de tu tarjeta los maneja únicamente Mercado Pago.</p>
+
+    <h2>12. Cambios en estos términos</h2>
+    <p>Si cambiamos estos términos de forma importante, te avisamos por email antes de que se apliquen.</p>
+
+    <h2>13. Contacto</h2>
+    <p>{% if contact and contact.email %}Escribinos a <a href="{{ contact.mailto }}">{{ contact.email }}</a>{% if contact.whatsapp %} o por <a href="{{ contact.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}.{% else %}Escribinos por los canales de contacto de la portada.{% endif %} Estos términos se rigen por las leyes de la República Argentina. Si sos consumidor, también podés reclamar ante la autoridad de Defensa del Consumidor de tu jurisdicción.</p>
+  </div>
+</main>
+</body>
+</html>

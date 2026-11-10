@@ -855,7 +855,7 @@ function topHTML() {
 }
 function planHTML() {
   var p = D.plan || {};
-  if (p.kind === 'trial') return ' · <b>Prueba gratis: ' + (p.days === 1 ? 'queda 1 día' : 'quedan ' + p.days + ' días') + '</b> <a class="link" href="/suscripcion">Suscribirme</a>';
+  if (p.kind === 'trial') return ' · <b>Prueba gratis: ' + (p.days === 1 ? 'queda 1 día' : 'quedan ' + p.days + ' días') + '</b> <a class="link" href="/suscripcion">Mi suscripción</a>';
   if (p.kind === 'paid' && p.pastDue) return ' · <b>No pudimos cobrar tu suscripción: ' + (p.days === 1 ? 'queda 1 día' : 'quedan ' + p.days + ' días') + ' para regularizarla.</b> <a class="link" href="/suscripcion">Revisar</a>';
   if (p.kind === 'paid') return ' · <a class="link" href="/suscripcion">Mi suscripción</a>';
   return '';

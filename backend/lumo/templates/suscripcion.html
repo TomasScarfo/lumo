@@ -10,8 +10,8 @@
 <link rel="stylesheet" href="/static/site.css">
 </head>
 <body>
-{% set active = plan.kind == 'paid' and plan.status == 'authorized' %}
-{% set can_pay = plan.kind in ('trial', 'expired') or plan.kind == 'paid' %}
+{% set active = plan.kind in ('paid', 'trial') and plan.status == 'authorized' %}
+{% set can_pay = plan.kind in ('none', 'expired', 'paid', 'trial') %}
 <main class="page">
   <div class="row" style="justify-content:space-between">
     <a class="logo" href="{{ home }}"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
@@ -25,6 +25,10 @@
       <h1>No pudimos cobrar tu suscripción</h1>
       <p>Mercado Pago rechazó el último cobro. Tu acceso sigue activo hasta el <b>{{ plan.grace_ends.strftime('%d/%m/%Y') }}</b>.</p>
       <p>Para no perderlo, revisá tu medio de pago en Mercado Pago (Tu perfil → Suscripciones) o volvé a suscribirte acá abajo con otro medio de pago.</p>
+    {% elif plan.kind == 'trial' %}
+      <h1>Estás en tu prueba gratis: te {{ 'queda' if plan.days == 1 else 'quedan' }} {{ plan.days }} {{ 'día' if plan.days == 1 else 'días' }}</h1>
+      <p>Todavía no se te cobró nada. El <b>{{ plan.ends.strftime('%d/%m/%Y') }}</b> Mercado Pago hace el primer cobro de tu plan {{ names[plan.plan] or '' }}. Si cancelás antes, no pagás nada.</p>
+      {% if plan.next_plan %}<p class="invite-note"><b>Tenés un cambio al plan {{ names[plan.next_plan] }} sin terminar.</b> Se aplica cuando completes el pago en Mercado Pago.</p>{% endif %}
     {% elif active %}
       <h1>Tu plan {{ names[plan.plan] or '' }} está activo</h1>
       <p>Mercado Pago lo cobra automáticamente{% if plan.until %}. Próximo cobro: <b>{{ plan.until.strftime('%d/%m/%Y') }}</b>{% endif %}.</p>
@@ -32,18 +36,15 @@
     {% elif plan.kind == 'paid' %}
       <h1>Cancelaste tu suscripción</h1>
       <p>Seguís teniendo acceso hasta el <b>{{ plan.until.strftime('%d/%m/%Y') }}</b>. Después podés volver a suscribirte cuando quieras.</p>
-    {% elif plan.kind == 'trial' %}
-      <h1>Te {{ 'queda' if plan.days == 1 else 'quedan' }} {{ plan.days }} {{ 'día' if plan.days == 1 else 'días' }} de prueba gratis</h1>
-      <p>Tu prueba termina el <b>{{ plan.ends.strftime('%d/%m/%Y') }}</b>. Si te suscribís ahora, el primer cobro se hace recién ese día.</p>
     {% elif plan.reason == 'unpaid' %}
       <h1>Tu acceso está en pausa</h1>
       <p>No pudimos cobrar tu suscripción. No borramos nada: tus datos y tus tareas te esperan. Volvé a suscribirte y seguís donde lo dejaste.</p>
-    {% elif plan.reason == 'cancelled' %}
+    {% elif trial_offer %}
+      <h1>Empezá tu prueba gratis de {{ trial_days }} días</h1>
+      <p>Elegí un plan y cargá tu medio de pago en Mercado Pago. <b>No se cobra nada durante {{ trial_days }} días</b>: el primer cobro es recién el día {{ trial_days + 1 }}. Si cancelás antes, no pagás nada.</p>
+    {% else %}
       <h1>Tu suscripción terminó</h1>
       <p>Tus datos y lo que marcaste en el panel te esperan. Elegí un plan para volver a entrar.</p>
-    {% else %}
-      <h1>Tu prueba gratis terminó</h1>
-      <p>Para seguir viendo tus campañas, recomendaciones y tareas, elegí un plan. Tus datos y lo que marcaste en el panel te esperan.</p>
     {% endif %}
 
     {% if estado == 'pendiente' and not active %}
@@ -82,23 +83,25 @@
           </fieldset>
           <div class="row" style="margin-top:14px">
             <input type="email" name="email" value="{{ email }}" required maxlength="254" autocomplete="email" placeholder="Email de tu cuenta de Mercado Pago" aria-label="Email de tu cuenta de Mercado Pago">
-            <button class="btn" type="submit">{% if active and not plan.past_due %}Cambiar de plan{% else %}Suscribirme con Mercado Pago{% endif %}</button>
+            <button class="btn" type="submit">{% if active and not plan.past_due %}Cambiar de plan{% elif trial_offer %}Empezar mi prueba gratis{% else %}Suscribirme con Mercado Pago{% endif %}</button>
           </div>
         </form>
         <ul class="fine">
+          {% if trial_offer %}<li>La prueba empieza cuando Mercado Pago confirma tu medio de pago. No se cobra nada hasta que termina.</li>{% endif %}
           <li>Usá el mismo email con el que entrás a Mercado Pago.</li>
           <li>El precio está en dólares y se cobra en pesos, al tipo de cambio oficial del día de cada cobro.</li>
           {% if active and not plan.past_due %}<li>El plan nuevo empieza cuando termina el período que ya pagaste: no se cobra dos veces.</li>{% endif %}
           <li>Se renueva solo. Cancelás cuando quieras desde esta página y seguís entrando hasta la fecha ya paga.</li>
           <li>Si un cobro falla, tenés {{ grace_days }} días para regularizarlo antes de que el acceso se pause.</li>
+          <li>Al continuar aceptás los <a href="/terminos">términos y condiciones</a>. Podés arrepentirte dentro de los 10 días desde el <a href="/arrepentimiento">botón de arrepentimiento</a>.</li>
         </ul>
       {% else %}
         <p style="margin-top:14px">El pago en línea todavía no está habilitado.{% if contact %} <a href="{{ contact.whatsapp or contact.mailto }}">Escribinos</a> y te ayudamos a activar tu cuenta.{% endif %}</p>
       {% endif %}
     {% endif %}
 
-    {% if can_cancel and plan.kind == 'paid' and plan.status in ('authorized', 'paused', 'pending') %}
-      <form method="post" action="/suscripcion/cancelar" style="margin-top:22px" onsubmit="return confirm('¿Cancelar la suscripción? Seguís teniendo acceso hasta la fecha ya paga.')">
+    {% if can_cancel and plan.kind in ('paid', 'trial') and plan.status in ('authorized', 'paused', 'pending') %}
+      <form method="post" action="/suscripcion/cancelar" style="margin-top:22px" onsubmit="return confirm('¿Cancelar la suscripción? Seguís teniendo acceso hasta la fecha ya paga o hasta que termine tu prueba.')">
         <input type="hidden" name="csrf" value="{{ csrf }}">
         <button class="btn danger sm" type="submit">Cancelar suscripción</button>
       </form>

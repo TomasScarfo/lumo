@@ -122,10 +122,13 @@ def ars_amount(cfg: dict, plan: str) -> float:
 
 
 # ---------- Prueba gratis ----------
-def start_trial(db, cfg: dict, user_id: int) -> Subscription:
-    sub = Subscription(user_id=int(user_id), status="trial", trial_ends_at=utcnow() + timedelta(days=trial_days(cfg)))
-    db.add(sub)
-    return sub
+def trial_available(sub) -> bool:
+    """La prueba gratis es una sola por cuenta y empieza cuando Mercado Pago confirma el medio de pago."""
+    return sub is None or sub.trial_started_at is None
+
+
+def in_trial(sub) -> bool:
+    return sub.trial_started_at is not None and sub.trial_ends_at > utcnow()
 
 
 def days_left(when) -> int:
@@ -161,14 +164,20 @@ def _parse_date(raw):
 def create_checkout(cfg: dict, sub: Subscription, plan: str, email: str, back_url: str) -> str:
     """Crea la suscripción pendiente en Mercado Pago y devuelve el enlace donde la persona carga su medio de pago.
 
-    El primer cobro se hace cuando termina lo que ya tiene: la prueba gratis o el período pago del plan anterior.
+    Quien nunca usó la prueba gratis no paga nada los primeros días: el primer cobro se agenda para cuando termina la prueba,
+    que empieza a correr recién cuando Mercado Pago confirma el medio de pago. En los demás casos, el primer cobro se hace
+    cuando termina lo que ya tiene (lo que queda de prueba o el período pago del plan anterior).
     Si la cuenta ya tiene una suscripción activa, la nueva queda "en espera" (next_*) y reemplaza a la anterior
     recién cuando Mercado Pago la autoriza: así nadie se queda sin plan por abandonar el pago a mitad de camino."""
     amount = ars_amount(cfg, plan)
     recurring = {"frequency": MONTHS[plan], "frequency_type": "months", "transaction_amount": amount, "currency_id": "ARS"}
     now = utcnow()
     replacing = sub.status == "authorized" and bool(sub.mp_preapproval_id)
-    starts = [d for d in (sub.trial_ends_at, None if sub.past_due_since else sub.paid_until) if d and d > now + timedelta(minutes=10)]
+    if trial_available(sub) and not replacing:
+        sub.trial_ends_at = now + timedelta(days=trial_days(cfg))  # provisorio: vale cuando Mercado Pago autoriza
+        starts = [sub.trial_ends_at]
+    else:
+        starts = [d for d in (sub.trial_ends_at if in_trial(sub) else None, None if sub.past_due_since else sub.paid_until) if d and d > now + timedelta(minutes=10)]
     if starts:
         recurring["start_date"] = _mp_date(max(starts))
     data = _request(cfg, "POST", "/preapproval", {
@@ -229,6 +238,8 @@ def apply(cfg: dict, sub: Subscription, pre: dict) -> None:
         return
     if status == "authorized" and sub.status == "pending":
         sub.past_due_since = None  # volvió a suscribirse después de un cobro rechazado
+    if status == "authorized" and sub.trial_started_at is None:
+        sub.trial_started_at = utcnow()  # medio de pago confirmado: acá empieza la prueba gratis
     if status in ("pending", "authorized", "paused", "cancelled"):
         sub.status = status
     sub.mp_preapproval_id = pid or sub.mp_preapproval_id
@@ -267,7 +278,7 @@ def refresh_amount(cfg: dict, sub: Subscription) -> bool:
     return True
 
 
-def end(cfg: dict, sub: Subscription) -> None:
+def end(cfg: dict, sub: Subscription, keep_email: bool = False) -> None:
     """Da de baja la suscripción en Mercado Pago y deja solo la marca de que la prueba gratis ya se usó."""
     if enabled(cfg):
         for pid in (sub.mp_preapproval_id if sub.status in LIVE else None, sub.next_preapproval_id):
@@ -276,16 +287,18 @@ def end(cfg: dict, sub: Subscription) -> None:
                     cancel(cfg, pid)
                 except MPError:
                     pass
-    sub.status, sub.paid_until, sub.past_due_since, sub.payer_email = "cancelled", None, None, None
+    sub.status, sub.paid_until, sub.past_due_since = "cancelled", None, None
+    if not keep_email:
+        sub.payer_email = None
     sub.next_preapproval_id = sub.next_plan = sub.next_amount_ars = None
-    sub.trial_ends_at = min(sub.trial_ends_at, utcnow())
+    sub.trial_ends_at = min(sub.trial_ends_at or utcnow(), utcnow())
 
 
 def monthly_revenue_usd(cfg: dict, subs) -> float:
     """Ingreso mensual recurrente de las suscripciones que están pagando, en dólares (el anual cuenta un doceavo)."""
     total = 0.0
     for sub in subs:
-        if sub.status == "authorized" and sub.plan in PLANS and not sub.past_due_since:
+        if sub.status == "authorized" and sub.plan in PLANS and not sub.past_due_since and not in_trial(sub):  # en la prueba todavía no paga
             total += (price_usd(cfg, sub.plan) or 0) / MONTHS[sub.plan]
     return round(total, 2)
 

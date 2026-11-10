@@ -215,17 +215,16 @@ class Ingreso(Base):
         fuente = open(os.path.join(os.path.dirname(__file__), "..", "lumo", "panel.html"), encoding="utf-8").read()
         self.assertIn("function principalHTML() { return heroHTML() + kpiHTML() + chartsHTML() + campsHTML(); }", fuente)
 
-    def test_sin_invitacion_empieza_la_prueba_gratis(self):
+    def test_sin_invitacion_va_a_elegir_un_plan_para_empezar_la_prueba(self):
         r = self.connect(self.client, 999)
         self.assertEqual(r.status_code, 302)
-        self.assertTrue(r.headers["Location"].endswith("/panel"))
+        self.assertTrue(r.headers["Location"].endswith("/suscripcion"))
         with Session(self.engine) as s:
             self.assertIsNotNone(s.get(Account, 999))
             self.assertIsNone(s.get(Access, 999))
-            sub = s.get(Subscription, 999)
-            self.assertEqual(sub.status, "trial")
-            self.assertAlmostEqual((sub.trial_ends_at - utcnow()).total_seconds(), 14 * 86400, delta=60)
-        self.assertEqual(self.client.get("/panel").status_code, 200)
+            self.assertIsNone(s.get(Subscription, 999))  # la prueba empieza recién al cargar el medio de pago
+        self.assertTrue(self.client.get("/panel").headers["Location"].endswith("/suscripcion"))
+        self.assertIn("Empezá tu prueba gratis de 14 días", self.client.get("/suscripcion").get_data(as_text=True))
 
     def test_con_invitacion_entra_y_queda_con_acceso(self):
         token = self.invite("Casa Nogal")
@@ -249,9 +248,9 @@ class Ingreso(Base):
         self.assertEqual(self.connect(a, 501).status_code, 302)
         self.connect(b, 502)
         with Session(self.engine) as s:
-            self.assertIsNone(s.get(Access, 502))  # la segunda cuenta solo recibe la prueba gratis
-            self.assertIsNone(s.get(Subscription, 501))
-            self.assertEqual(s.get(Subscription, 502).status, "trial")
+            self.assertIsNone(s.get(Access, 502))  # la segunda cuenta no queda con acceso sin cargo
+        self.assertEqual(a.get("/panel").status_code, 200)
+        self.assertTrue(b.get("/panel").headers["Location"].endswith("/suscripcion"))
 
     def test_invitacion_cancelada_despues_de_abrirla_no_sirve(self):
         token = self.invite()
@@ -334,7 +333,7 @@ class Administracion(Base):
         with Session(self.engine) as s:
             for model in (Access, Account, Snapshot, PanelState):
                 self.assertIsNone(s.get(model, 700), model.__name__)
-        # no recibe una prueba gratis nueva: para volver tiene que suscribirse
+        # ya no entra gratis: para volver tiene que suscribirse
         self.assertTrue(self.connect(self.app.test_client(), 700).headers["Location"].endswith("/suscripcion"))
 
     def test_id_no_numerico_se_ignora(self):

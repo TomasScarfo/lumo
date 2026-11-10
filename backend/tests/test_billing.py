@@ -73,9 +73,14 @@ class Base(unittest.TestCase):
             patcher.start()
             self.addCleanup(patcher.stop)
 
-    def expire_trial(self, uid):
+    def end_trial(self, uid):
+        """Como si ya hubieran pasado los días de prueba."""
+        self.edit(uid, trial_ends_at=utcnow() - timedelta(minutes=1))
+
+    def used_trial(self, uid):
+        """Una cuenta que ya gastó su prueba gratis y hoy no tiene suscripción."""
         with Session(self.engine) as s:
-            s.get(Subscription, uid).trial_ends_at = utcnow() - timedelta(minutes=1)
+            s.add(Subscription(user_id=uid, status="cancelled", plan="monthly", trial_started_at=utcnow() - timedelta(days=40), trial_ends_at=utcnow() - timedelta(days=26)))
             s.commit()
 
     def csrf(self):
@@ -87,9 +92,14 @@ class Base(unittest.TestCase):
         return self.client.post("/suscripcion", data={"plan": plan, "email": email, "csrf": self.csrf()})
 
     def paying(self, uid, plan="monthly", days=30):
-        """Deja la cuenta con la prueba vencida y un plan pago y autorizado."""
+        """Deja la cuenta con un plan autorizado y la prueba gratis ya terminada."""
+        pid = self.trialing(uid, plan, days)
+        self.end_trial(uid)
+        return pid
+
+    def trialing(self, uid, plan="monthly", days=14):
+        """La cuenta eligió un plan y Mercado Pago confirmó su medio de pago: está en la prueba gratis."""
         connect_as(self.client, uid)
-        self.expire_trial(uid)
         self.subscribe(plan)
         pid = self.sub(uid).mp_preapproval_id
         self.mp.authorize(pid, days)
@@ -167,27 +177,68 @@ class Cotizacion(unittest.TestCase):
 class Prueba(Base):
     def test_portada_muestra_los_dos_planes_y_el_ahorro(self):
         html = self.client.get("/").get_data(as_text=True)
-        for texto in ("US$5,99", "US$59,99", "Ahorrás 17%", "14 días gratis, sin tarjeta", "al tipo de cambio oficial del día"):
+        for texto in ("US$5,99", "US$59,99", "Ahorrás 17%", "no se cobra nada hasta el día 15", "al tipo de cambio oficial del día",
+                      'href="/terminos"', 'href="/arrepentimiento"', "Botón de arrepentimiento"):
             self.assertIn(texto, html)
         self.assertNotIn("10 meses", html)
+        self.assertNotIn("sin tarjeta", html.lower())
 
-    def test_la_pagina_de_suscripcion_muestra_dias_planes_y_pesos(self):
-        connect_as(self.client, 800)
-        html = self.client.get("/suscripcion").get_data(as_text=True)
-        for texto in ("Te quedan 14 días de prueba gratis", "US$5,99", "US$59,99", "Ahorrás 17%", "Hoy son $5.990.", "Hoy son $59.990.", "tenés 7 días"):
-            self.assertIn(texto, html)
-
-    def test_prueba_vencida_lleva_a_suscribirse(self):
-        connect_as(self.client, 801)
-        self.expire_trial(801)
+    def test_una_cuenta_nueva_no_entra_hasta_cargar_su_medio_de_pago(self):
+        r = connect_as(self.client, 800)
+        self.assertTrue(r.headers["Location"].endswith("/suscripcion"))
+        self.assertIsNone(self.sub(800))
         self.assertTrue(self.client.get("/panel").headers["Location"].endswith("/suscripcion"))
-        self.assertTrue(self.client.get("/").headers["Location"].endswith("/suscripcion"))
         r = self.client.get("/api/datos")
         self.assertEqual((r.status_code, r.get_json()["error"]), (402, "plan"))
-        self.assertIn("Tu prueba gratis terminó", self.client.get("/suscripcion").get_data(as_text=True))
-        # volver a conectarse no regala otra prueba
-        r = connect_as(self.app.test_client(), 801)
-        self.assertTrue(r.headers["Location"].endswith("/suscripcion"))
+        html = self.client.get("/suscripcion").get_data(as_text=True)
+        for texto in ("Empezá tu prueba gratis de 14 días", "No se cobra nada durante 14 días", "el día 15", "Empezar mi prueba gratis",
+                      "US$5,99", "US$59,99", "Ahorrás 17%", "Hoy son $5.990.", "Hoy son $59.990.", "tenés 7 días", 'href="/terminos"'):
+            self.assertIn(texto, html)
+
+    def test_la_prueba_empieza_cuando_mercado_pago_confirma_el_medio_de_pago(self):
+        connect_as(self.client, 801)
+        self.subscribe("monthly")
+        recurring = self.mp.calls[-1][2]["auto_recurring"]
+        primer_cobro = (utcnow() + timedelta(days=14)).strftime("%Y-%m-%d")
+        self.assertTrue(recurring["start_date"].startswith(primer_cobro))  # no se cobra por 14 días
+        # eligió el plan pero todavía no cargó el medio de pago: no hay prueba ni acceso
+        self.assertIsNone(self.sub(801).trial_started_at)
+        self.assertEqual(self.client.get("/panel").status_code, 302)
+        self.mp.authorize("pre-1", days=14)
+        r = self.client.get("/suscripcion/listo?preapproval_id=pre-1")
+        self.assertTrue(r.headers["Location"].endswith("/panel"))
+        sub = self.sub(801)
+        self.assertIsNotNone(sub.trial_started_at)
+        self.assertEqual(sub.trial_ends_at.strftime("%Y-%m-%d"), primer_cobro)
+        self.assertEqual(self.client.get("/panel").status_code, 200)
+        html = self.client.get("/suscripcion").get_data(as_text=True)
+        self.assertIn("Estás en tu prueba gratis: te quedan 14 días", html)
+        self.assertIn("Todavía no se te cobró nada", html)
+        self.assertIn("trial_start", self.events())
+
+    def test_abandonar_el_pago_no_gasta_la_prueba(self):
+        connect_as(self.client, 802)
+        self.subscribe("monthly")
+        self.subscribe("annual")  # vuelve y elige otro plan
+        self.assertIn("start_date", self.mp.calls[-1][2]["auto_recurring"])
+        self.assertIn("Empezá tu prueba gratis", self.client.get("/suscripcion").get_data(as_text=True))
+
+    def test_la_prueba_es_una_sola_por_cuenta(self):
+        self.trialing(803)
+        self.client.post("/suscripcion/cancelar", data={"csrf": self.csrf()})
+        self.edit(803, paid_until=utcnow() - timedelta(minutes=1), trial_ends_at=utcnow() - timedelta(minutes=1))
+        html = self.client.get("/suscripcion").get_data(as_text=True)
+        self.assertIn("Tu suscripción terminó", html)
+        self.assertNotIn("prueba gratis", html)
+        self.subscribe("monthly")
+        self.assertNotIn("start_date", self.mp.calls[-1][2]["auto_recurring"])  # esta vez cobra enseguida
+
+    def test_cancelar_durante_la_prueba_no_cobra_y_deja_terminarla(self):
+        pid = self.trialing(804)
+        self.client.post("/suscripcion/cancelar", data={"csrf": self.csrf()})
+        self.assertEqual(self.mp.store[pid]["status"], "cancelled")
+        self.assertEqual(self.client.get("/panel").status_code, 200)
+        self.assertIn("Cancelaste tu suscripción", self.client.get("/suscripcion").get_data(as_text=True))
 
     def test_sin_sesion_no_hay_pagina_de_suscripcion(self):
         self.assertEqual(self.client.get("/suscripcion").headers["Location"], "/")
@@ -201,7 +252,7 @@ class Prueba(Base):
 
 
 class Pago(Base):
-    def test_mensual_durante_la_prueba_cobra_en_pesos_al_terminarla(self):
+    def test_mensual_cobra_en_pesos(self):
         connect_as(self.client, 810)
         r = self.subscribe("monthly")
         self.assertEqual(r.headers["Location"], "https://mp.test/checkout/pre-1")
@@ -211,20 +262,17 @@ class Pago(Base):
         self.assertEqual(body["payer_email"], "vende@dor.test")
         self.assertEqual(body["back_url"], "https://lumo.test/suscripcion/listo")
         self.assertEqual(body["auto_recurring"], dict(body["auto_recurring"], frequency=1, frequency_type="months", transaction_amount=5990.0, currency_id="ARS"))
-        self.assertIn("start_date", body["auto_recurring"])
         sub = self.sub(810)
         self.assertEqual((sub.status, sub.mp_preapproval_id, sub.plan, sub.amount_ars), ("pending", "pre-1", "monthly", 5990.0))
 
     def test_anual_cobra_una_vez_por_ano(self):
         connect_as(self.client, 811)
-        self.expire_trial(811)
         self.subscribe("annual")
         recurring = self.mp.calls[-1][2]["auto_recurring"]
         self.assertEqual((recurring["frequency"], recurring["frequency_type"], recurring["transaction_amount"]), (12, "months", 59990.0))
-        self.assertNotIn("start_date", recurring)  # con la prueba vencida cobra enseguida
         self.assertEqual(self.sub(811).plan, "annual")
 
-    def test_vuelta_de_mercado_pago_activa_el_acceso(self):
+    def test_terminada_la_prueba_el_plan_queda_activo(self):
         self.paying(812, "annual", days=365)
         self.assertEqual(self.client.get("/panel").status_code, 200)
         self.assertEqual(self.sub(812).status, "authorized")
@@ -233,7 +281,6 @@ class Pago(Base):
 
     def test_pago_sin_confirmar_queda_pendiente(self):
         connect_as(self.client, 813)
-        self.expire_trial(813)
         self.subscribe()
         r = self.client.get("/suscripcion/listo?preapproval_id=pre-1")
         self.assertTrue(r.headers["Location"].endswith("/suscripcion?estado=pendiente"))
@@ -247,9 +294,8 @@ class Pago(Base):
         otro.post("/suscripcion", data={"plan": "monthly", "email": "a@b.co", "csrf": "c"})
         self.mp.authorize("pre-1")
         connect_as(self.client, 815)
-        self.expire_trial(815)
         self.client.get("/suscripcion/listo?preapproval_id=pre-1")
-        self.assertEqual(self.sub(815).status, "trial")
+        self.assertIsNone(self.sub(815))
         self.assertEqual(self.client.get("/panel").status_code, 302)
 
     def test_validaciones(self):
@@ -280,7 +326,7 @@ class Pago(Base):
         self.app.extensions["lumo_cfg"]["MP_CHECKOUT_ORIGINS"] = "https://www.mercadopago.com.ar"
         r = self.subscribe()
         self.assertEqual(r.status_code, 502)
-        self.assertEqual(self.sub(823).status, "trial")  # no quedó a medio suscribir
+        self.assertIsNone(self.sub(823))  # no quedó a medio suscribir
 
     def test_sin_cotizacion_no_se_puede_pagar(self):
         billing._rate_cache.clear()
@@ -418,16 +464,16 @@ class ChequeoDiario(Base):
         self.cron()
         self.assertEqual(self.sub(881).status, "cancelled")
 
-    def test_avisa_una_vez_que_la_prueba_esta_por_terminar(self):
-        connect_as(self.client, 882)
+    def test_avisa_una_vez_antes_del_primer_cobro(self):
+        self.trialing(882, "annual")
         self.assertEqual(self.cron()["avisos"], 0)  # faltan 14 días
-        self.edit(882, trial_ends_at=utcnow() + timedelta(days=2, hours=1), payer_email="ana@ej.com")
+        self.edit(882, trial_ends_at=utcnow() + timedelta(days=2, hours=1))
         self.assertEqual(self.cron()["avisos"], 1)
         self.assertEqual(self.cron()["avisos"], 0)
         to, subject, text = self.mails[0]
-        self.assertEqual((to, subject), ("ana@ej.com", "Tu prueba gratis de Lumo termina en 3 días"))
-        self.assertIn("US$5,99", text)
-        self.assertIn("https://lumo.test/suscripcion", text)
+        self.assertEqual((to, subject), ("vende@dor.test", "Tu prueba gratis de Lumo termina en 3 días"))
+        for texto in ("primer cobro de tu plan anual (US$59,99)", "cancelá antes de esa fecha", "https://lumo.test/suscripcion"):
+            self.assertIn(texto, text)
 
     def test_avisa_la_suspension(self):
         pid = self.paying(883)
@@ -442,7 +488,6 @@ class ChequeoDiario(Base):
 class Webhook(Base):
     def test_aviso_de_mercado_pago_activa_la_suscripcion(self):
         connect_as(self.client, 820)
-        self.expire_trial(820)
         self.subscribe()
         self.mp.authorize("pre-1")
         self.assertEqual(self.notify_mp("subscription_preapproval", "pre-1").status_code, 200)
@@ -451,11 +496,11 @@ class Webhook(Base):
 
     def test_otros_avisos_se_ignoran(self):
         connect_as(self.client, 821)
-        self.expire_trial(821)
         self.subscribe()
         self.mp.authorize("pre-1")
         self.assertEqual(self.notify_mp("payment", "pre-1").status_code, 200)
         self.assertEqual(self.sub(821).status, "pending")
+        self.assertIsNone(self.sub(821).trial_started_at)
 
     def test_si_mercado_pago_no_responde_pide_reintento(self):
         self.assertEqual(self.notify_mp("preapproval", "inventado").status_code, 502)
@@ -466,7 +511,6 @@ class Firma(Base):
 
     def test_firma_valida_e_invalida(self):
         connect_as(self.client, 830)
-        self.expire_trial(830)
         self.subscribe()
         self.mp.authorize("pre-1")
         post = lambda sig: self.notify_mp("subscription_preapproval", "pre-1", headers={"x-signature": sig, "x-request-id": "req-1"})
@@ -482,7 +526,6 @@ class SinCobro(Base):
 
     def test_sin_mercado_pago_configurado_no_se_cobra(self):
         connect_as(self.client, 840)
-        self.expire_trial(840)
         html = self.client.get("/suscripcion").get_data(as_text=True)
         self.assertIn("todavía no está habilitado", html)
         self.assertIn('href="https://wa.me/5491100000000', html)
@@ -503,7 +546,7 @@ class Administracion(Base):
         self.client = self.app.test_client()
         otro(self, 851, "annual", days=365)
         self.client = self.app.test_client()
-        connect_as(self.client, 852)  # en prueba
+        Base.trialing(self, 852)  # en prueba
         html = self.admin()[0].get("/admin").get_data(as_text=True)
         for texto in ("Pagando", "vende@dor.test", "Mensual", "Anual", "En prueba", "US$10,99"):  # 5,99 + 59,99 / 12
             self.assertIn(texto, html)
@@ -515,7 +558,9 @@ class Administracion(Base):
         self.assertEqual(self.mp.store[pid]["status"], "cancelled")
         sub = self.sub(853)
         self.assertEqual((sub.status, sub.payer_email), ("cancelled", None))
-        self.assertTrue(connect_as(self.app.test_client(), 853).headers["Location"].endswith("/suscripcion"))
+        otro = self.app.test_client()
+        self.assertTrue(connect_as(otro, 853).headers["Location"].endswith("/suscripcion"))
+        self.assertNotIn("prueba gratis", otro.get("/suscripcion").get_data(as_text=True))
 
     def test_borrar_la_propia_cuenta_corta_el_cobro(self):
         pid = self.paying(854)
@@ -527,12 +572,56 @@ class Administracion(Base):
             self.assertIsNone(s.get(Account, 854))
 
 
+class Legales(Base):
+    def test_terminos_con_precios_prueba_y_plazos(self):
+        r = self.client.get("/terminos")
+        html = r.get_data(as_text=True)
+        self.assertEqual(r.status_code, 200)
+        for texto in ("US$5,99 por mes", "US$59,99 por año", "14 días de prueba gratis", "tipo de cambio oficial", "se renueva sola",
+                      "10 días corridos", "7 días", 'href="/arrepentimiento"', 'href="/privacidad"'):
+            self.assertIn(texto, html)
+
+    def test_arrepentimiento_sin_sesion_explica_y_ofrece_contacto(self):
+        html = self.client.get("/arrepentimiento").get_data(as_text=True)
+        for texto in ("10 días corridos", "Ingresar con Mercado Libre", "mailto:hola@lumo.test", "dentro de las 24 horas"):
+            self.assertIn(texto, html)
+        self.assertEqual(self.client.post("/arrepentimiento").headers["Location"], "/arrepentimiento")
+
+    def test_arrepentirse_cancela_corta_el_acceso_y_da_un_codigo(self):
+        pid = self.trialing(890)
+        self.assertEqual(self.client.post("/arrepentimiento", data={}).status_code, 400)  # sin csrf
+        self.mails.clear()
+        r = self.client.post("/arrepentimiento", data={"csrf": self.csrf()})
+        html = r.get_data(as_text=True)
+        self.assertEqual(r.status_code, 200)
+        with Session(self.engine) as s:
+            code = s.execute(select(AuditLog).where(AuditLog.event == "arrepentimiento")).scalars().one().detail
+        self.assertRegex(code, r"^ARR-890-[0-9A-F]{6}$")
+        self.assertIn(code, html)
+        self.assertIn("Ya cancelamos tu suscripción", html)
+        self.assertEqual(self.mp.store[pid]["status"], "cancelled")
+        self.assertEqual(self.client.get("/panel").status_code, 302)  # la contratación quedó sin efecto
+        # aviso a quien administra (para devolver un cobro si lo hubo) y constancia a la persona
+        self.assertEqual([to for to, _, _ in self.mails], ["hola@lumo.test", "vende@dor.test"])
+        self.assertTrue(all(code in text for _, _, text in self.mails))
+        # no vuelve a tener prueba gratis
+        self.subscribe()
+        self.assertNotIn("start_date", self.mp.calls[-1][2]["auto_recurring"])
+
+    def test_arrepentirse_sin_suscripcion_igual_da_constancia(self):
+        connect_as(self.client, 891)
+        html = self.client.post("/arrepentimiento", data={"csrf": self.csrf()}).get_data(as_text=True)
+        self.assertIn("ARR-891-", html)
+        self.assertIn("No encontramos una suscripción activa", html)
+        self.assertEqual(self.mp.calls, [])
+
+
 class Mensajes(unittest.TestCase):
     def test_textos_de_los_avisos(self):
         subject, text, html = notify.billing_mail("pago", "https://lumo.test/suscripcion", until=utcnow())
         self.assertIn("No pudimos cobrar", subject)
         self.assertIn("Ver mi suscripción", html)
-        self.assertIn("mañana", notify.billing_mail("prueba", "x", days=1, price="US$5,99")[0])
+        self.assertIn("mañana", notify.billing_mail("prueba", "x", days=1, until=utcnow(), price="US$5,99", plan="mensual")[0])
         self.assertIn("No borramos nada", notify.billing_mail("baja", "x")[1])
 
 

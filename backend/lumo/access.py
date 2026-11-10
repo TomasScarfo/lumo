@@ -34,20 +34,23 @@ def plan(db, cfg: dict, user_id) -> dict:
         return {"kind": "free"}
     sub = db.get(Subscription, int(user_id))
     if sub is None:
-        return {"kind": "none"}
+        return {"kind": "none"}  # nunca se suscribió: puede empezar su prueba gratis
     now = utcnow()
     base = {"status": sub.status, "plan": sub.plan, "next_plan": sub.next_plan}
     if sub.past_due_since:
         # Cobro rechazado: entra durante los días de gracia y después se suspende hasta que regularice.
         limit = billing.grace_end(cfg, sub)
-        if now < limit and sub.status != "trial":
+        if now < limit:
             return dict(base, kind="paid", past_due=True, grace_ends=limit, days=billing.days_left(limit))
         return dict(base, kind="expired", reason="unpaid")
+    if sub.status == "authorized" and billing.in_trial(sub):
+        # Prueba gratis: ya cargó su medio de pago y todavía no se le cobró nada.
+        return dict(base, kind="trial", days=billing.days_left(sub.trial_ends_at), ends=sub.trial_ends_at)
     if sub.status == "authorized" or (sub.paid_until and sub.paid_until > now):
         return dict(base, kind="paid", until=sub.paid_until)
-    if sub.trial_ends_at > now:
-        return dict(base, kind="trial", days=billing.days_left(sub.trial_ends_at), ends=sub.trial_ends_at)
-    return dict(base, kind="expired", reason="cancelled" if sub.status == "cancelled" and sub.plan else "trial")
+    if sub.trial_started_at is None:
+        return dict(base, kind="expired", reason="new")  # todavía no empezó su prueba gratis
+    return dict(base, kind="expired", reason="cancelled")
 
 
 def has_access(db, cfg: dict, user_id) -> bool:

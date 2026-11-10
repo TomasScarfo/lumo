@@ -25,6 +25,7 @@ SNAPSHOT_TTL = timedelta(hours=3)  # Mercado Libre actualiza los datos una vez a
 MIN_REFRESH = timedelta(minutes=10)  # tope para el botón "Actualizar"
 MAX_STATE_BYTES = 200_000
 MAX_REQUEST_BYTES = 1_000_000
+TERMS_UPDATED = "10 de noviembre de 2026"  # cambiar cuando cambien los términos y condiciones
 SESSION_DAYS = 30
 ADMIN_SESSION_HOURS = 12  # quien administra vuelve a pasar por Mercado Libre pasadas estas horas
 
@@ -264,10 +265,6 @@ def create_app(overrides=None) -> Flask:
                     inv = s.get(Invite, invite_token)
                     access.grant(s, user_id, inv.label)
                     allowed = True
-            if not allowed and s.get(Subscription, user_id) is None:
-                billing.start_trial(s, cfg, user_id)  # primer ingreso: empieza la prueba gratis, una sola por cuenta
-                audit.record(s, "trial_start", actor=user_id)
-                allowed = True
             acc = save_tokens(s, cfg, user_id, tok)
             acc.email = _read_email(tok["access_token"]) or acc.email
             audit.record(s, "login_ok", actor=user_id)
@@ -277,7 +274,7 @@ def create_app(overrides=None) -> Flask:
         session["at"] = int(time.time())  # cuándo entró: las sesiones de administración vencen antes
         session.permanent = True
         if not allowed:
-            log.info("la cuenta %s no tiene la suscripción al día", user_id)
+            log.info("la cuenta %s no tiene una suscripción activa", user_id)  # nueva: va a empezar su prueba gratis
             return redirect("/suscripcion")
         body, ok = _result_body(cfg, tok, user_id)
         if ok:
@@ -638,6 +635,47 @@ def create_app(overrides=None) -> Flask:
         return render_template("privacidad.html", contact=_contact(), home=_home(), logged=bool(uid), csrf=_csrf() if uid else "",
                                audit_days=privacy.AUDIT_DAYS, history_days=privacy.HISTORY_DAYS)
 
+    @app.get("/terminos")
+    def terminos():
+        return render_template("terminos.html", home=_home(), updated=TERMS_UPDATED, **_offer())
+
+    @app.get("/arrepentimiento")
+    def arrepentimiento():
+        """Botón de arrepentimiento: revocar la contratación dentro de los 10 días (Ley 24.240, art. 34; Res. 424/2020)."""
+        uid = _session_uid()
+        return render_template("arrepentimiento.html", home=_home(), contact=_contact(), logged=bool(uid), csrf=_csrf() if uid else "", code=None)
+
+    @app.post("/arrepentimiento")
+    def arrepentimiento_revocar():
+        uid = _session_uid()
+        if not uid:
+            return redirect("/arrepentimiento")
+        _check_csrf()
+        code = "ARR-%d-%s" % (uid, secrets.token_hex(3).upper())
+        with Session(engine) as s:
+            sub, acc = s.get(Subscription, uid), s.get(Account, uid)
+            had = bool(sub and sub.status in billing.LIVE and sub.mp_preapproval_id)
+            to = (acc.email if acc else None) or (sub.payer_email if sub else None)
+            if sub and sub.status != "new":
+                billing.end(cfg, sub, keep_email=True)  # corta el cobro y el acceso; el email queda para poder devolver el dinero
+            audit.record(s, "arrepentimiento", actor=uid, detail=code)
+            s.commit()
+        if notify.enabled(cfg):
+            # A quien administra Lumo, para que revise si hay un cobro que devolver; a la persona, como constancia.
+            aviso = ("Arrepentimiento %s" % code, "La cuenta %d revocó su contratación (código %s).%s\n\nRevisá en Mercado Pago si tuvo un cobro "
+                     "en los últimos 10 días y devolvelo.\n" % (uid, code, " Email: %s." % to if to else ""))
+            copia = ("Tu pedido de arrepentimiento en Lumo: %s" % code, "Recibimos tu pedido de arrepentimiento. Tu código de identificación es %s.\n\n"
+                     "Tu suscripción quedó cancelada y no se te va a volver a cobrar. Si se te cobró en los últimos 10 días, te devolvemos el importe.\n" % code)
+            for dest, (subject, text) in ((cfg.get("CONTACT_EMAIL"), aviso), (to, copia)):
+                if dest:
+                    try:
+                        notify.send_mail(cfg, dest, subject, text, "<pre style='font-family:Arial,sans-serif;white-space:pre-wrap'>%s</pre>" % _esc(text))
+                    except Exception as exc:  # la constancia ya quedó en pantalla y en el registro de actividad
+                        log.warning("aviso de arrepentimiento falló: %s", type(exc).__name__)
+        resp = Response(render_template("arrepentimiento.html", home=_home(), contact=_contact(), logged=True, csrf="", code=code, had_subscription=had), mimetype="text/html")
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
     @app.get("/api/cuenta/exportar")
     def cuenta_exportar():
         uid = _current_user()
@@ -670,10 +708,8 @@ def create_app(overrides=None) -> Flask:
     def _end_subscription(s, uid):
         """Corta el cobro en Mercado Pago y deja solo la marca de que la prueba gratis ya se usó (sin email ni datos de pago)."""
         sub = s.get(Subscription, uid)
-        if sub is None:
-            sub = Subscription(user_id=uid, trial_ends_at=utcnow())
-            s.add(sub)
-        billing.end(cfg, sub)
+        if sub is not None:  # quien nunca se suscribió no tiene nada que cortar
+            billing.end(cfg, sub)
 
     # ---------- Suscripción con Mercado Pago ----------
     def _base_url():
@@ -687,13 +723,14 @@ def create_app(overrides=None) -> Flask:
             acc = s.get(Account, uid)
             email = (sub.payer_email if sub else None) or (acc.email if acc else None) or ""
             can_cancel = bool(sub and sub.mp_preapproval_id and sub.status in billing.LIVE)
+            trial_offer = billing.trial_available(sub)
         pesos = {}
         if billing.enabled(cfg):
             try:
                 pesos = {k: notify.money(billing.ars_amount(cfg, k)) for k in billing.available_plans(cfg)}
             except billing.RateError:
                 log.warning("no se pudo obtener la cotización del dólar")
-        html = render_template("suscripcion.html", plan=p, email=email, csrf=_csrf(), error=error, can_cancel=can_cancel, pesos=pesos, home=_home(),
+        html = render_template("suscripcion.html", plan=p, email=email, csrf=_csrf(), error=error, can_cancel=can_cancel, pesos=pesos, home=_home(), trial_offer=trial_offer,
                                names=billing.NAMES, estado=request.args.get("estado"), billing_on=billing.enabled(cfg), **_offer())
         resp = Response(html, status, mimetype="text/html")
         # El formulario de pago termina en Mercado Pago: esta página, y solo esta, puede enviar hacia sus dominios de pago.
@@ -731,7 +768,7 @@ def create_app(overrides=None) -> Flask:
                 return redirect("/panel")
             sub = s.get(Subscription, uid)
             if sub is None:
-                sub = Subscription(user_id=uid, trial_ends_at=utcnow())
+                sub = Subscription(user_id=uid)
                 s.add(sub)
             if sub.status == "authorized" and sub.plan == plan and not sub.past_due_since:
                 return redirect("/suscripcion")  # ya tiene ese plan al día
@@ -803,8 +840,10 @@ def create_app(overrides=None) -> Flask:
         return redirect("/suscripcion")
 
     def _apply_preapproval(s, sub, pre):
-        before = (sub.status, sub.plan)
+        before, had_trial = (sub.status, sub.plan), sub.trial_started_at
         billing.apply(cfg, sub, pre)
+        if sub.trial_started_at and not had_trial:
+            audit.record(s, "trial_start", target=sub.user_id, detail=sub.plan)
         if (sub.status, sub.plan) != before:
             audit.record(s, "sub_" + sub.status, target=sub.user_id, detail=sub.plan)
 
@@ -826,8 +865,10 @@ def create_app(overrides=None) -> Flask:
                 kind, args = "pago", {"until": p["grace_ends"]}
             else:
                 kind = "baja"
-        elif p["kind"] == "trial" and sub.status != "authorized" and p["days"] <= 3:
-            kind, ref, args = "prueba", sub.trial_ends_at.strftime("%Y-%m-%d"), {"days": p["days"], "price": billing.offer(cfg)["monthly"]}
+        elif p["kind"] == "trial" and p["days"] <= 3:  # se viene el primer cobro: que no sea una sorpresa
+            price = billing.price_usd(cfg, sub.plan or "monthly")
+            kind, ref, args = "prueba", sub.trial_ends_at.strftime("%Y-%m-%d"), {"days": p["days"], "until": sub.trial_ends_at,
+                                                                               "price": billing.usd_label(price) if price else None, "plan": billing.NAMES.get(sub.plan)}
         if not kind or s.get(Notice, (sub.user_id, kind, ref)):
             return 0
         subject, text, html = notify.billing_mail(kind, _base_url() + "/suscripcion", **args)

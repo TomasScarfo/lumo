@@ -73,7 +73,7 @@
         {% elif invited %}
         <p class="invite-note ok"><b>Te invitaron a Lumo{% if label %}, {{ label }}{% endif %}.</b> Conectá tu cuenta de Mercado Libre para activar tu acceso. La invitación es de un solo uso.</p>
         {% else %}
-        <p class="invite-note"><b>{{ trial_days }} días gratis, sin tarjeta.</b>
+        <p class="invite-note"><b>{{ trial_days }} días gratis: no se cobra nada hasta el día {{ trial_days + 1 }}.</b>
           {% if price.monthly %}Después, desde {{ price.monthly }} por mes. Cancelás cuando quieras.{% else %}Conectás tu cuenta de Mercado Libre y empezás. Cancelás cuando quieras.{% endif %}
           ¿Ya tenés cuenta? <a href="{{ app }}/connect" data-app>Ingresá</a>.</p>
         {% endif %}
@@ -182,7 +182,7 @@
       <div class="head center">
         <span class="kicker">Precio</span>
         <h2>Un precio claro, sin letra chica</h2>
-        <p>Empezás con {{ trial_days }} días gratis, sin cargar tarjeta. Si te gusta, elegís cómo pagar.</p>
+        <p>Elegís un plan y probás {{ trial_days }} días gratis. No se cobra nada hasta el día {{ trial_days + 1 }}, y si cancelás antes no pagás.</p>
       </div>
       <div class="price-grid">
         <div class="card">
@@ -215,7 +215,7 @@
       <details><summary>¿Puedo ver más de 3 meses de métricas?</summary><p>Mercado Libre solo permite consultar los últimos 90 días. Lumo guarda tus métricas todos los días desde que te conectás, así que tu historial crece con el tiempo (hasta dos años). Las fechas anteriores a tu conexión que ya no están en Mercado Libre no se pueden recuperar.</p></details>
       <details><summary>¿Puedo elegir el período que quiero ver?</summary><p>Sí. Podés usar 7, 14 o 30 días, o elegir un rango de fechas personalizado dentro de tu historial.</p></details>
       <details><summary>¿De dónde salen las recomendaciones?</summary><p>De comparar el rendimiento real de cada campaña y publicación con el ROAS objetivo que configuraste. Son orientativas: las decisiones y sus resultados dependen de tu negocio, la temporada y la competencia.</p></details>
-      <details><summary>¿Cómo funciona la prueba gratis?</summary><p>Conectás tu cuenta de Mercado Libre y usás Lumo completo durante {{ trial_days }} días, sin cargar tarjeta. Cuando termina, te suscribís con Mercado Pago para seguir. Si te suscribís antes, el primer cobro se hace recién al terminar la prueba.</p></details>
+      <details><summary>¿Cómo funciona la prueba gratis?</summary><p>Conectás tu cuenta de Mercado Libre, elegís un plan y cargás tu medio de pago en Mercado Pago. Desde ese momento usás Lumo completo {{ trial_days }} días sin que se te cobre nada: el primer cobro es recién el día {{ trial_days + 1 }}. Si cancelás antes, no pagás.</p></details>
       <details><summary>¿Cuánto cuesta y cómo se paga?</summary><p>{% if price.monthly %}{{ price.monthly }} por mes{% if price.annual %}, o {{ price.annual }} por año{% if price.saving_pct %} (ahorrás {{ price.saving_pct }}%){% endif %}{% endif %}. {% endif %}Los precios están en dólares y se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día de cada cobro. La suscripción se renueva sola.</p></details>
       <details><summary>¿Qué pasa si falla un cobro?</summary><p>Te avisamos por email y seguís usando Lumo {{ grace_days }} días mientras lo resolvés. Si no se regulariza, el acceso se pausa, pero no borramos nada: cuando vuelvas, encontrás todo como lo dejaste.</p></details>
       <details><summary>¿Cómo cancelo?</summary><p>Desde la página de tu suscripción, con un clic. Seguís teniendo acceso hasta el final del mes ya pagado y no se te vuelve a cobrar.</p></details>
@@ -271,7 +271,7 @@
       <h2>Empezá a entender tu publicidad hoy</h2>
       <p>Probá Lumo {{ trial_days }} días gratis y mirá tus campañas con otros ojos.</p>
       <a class="btn" href="{{ app }}/connect" data-app>{% if invited %}Aceptar la invitación y conectar{% else %}Iniciar prueba gratis de {{ trial_days }} días{% endif %}</a>
-      {% if not invited %}<small>Sin tarjeta para empezar.{% if price.monthly %} Después, desde {{ price.monthly }} por mes.{% endif %}{% if contact %} ¿Dudas? <a href="#contacto">Escribinos</a>.{% endif %}</small>{% endif %}
+      {% if not invited %}<small>No se cobra nada los primeros {{ trial_days }} días.{% if price.monthly %} Después, desde {{ price.monthly }} por mes.{% endif %}{% if contact %} ¿Dudas? <a href="#contacto">Escribinos</a>.{% endif %}</small>{% endif %}
     </div></div>
   </section>
 </main>
@@ -283,6 +283,7 @@
       <nav aria-label="Pie"><a href="{{ app }}/connect" data-app>Ingresar</a>{% if contact %}{% if contact.whatsapp %} · <a href="{{ contact.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}{% if contact.email %} · <a href="{{ contact.mailto }}">Email</a>{% endif %}{% endif %} · <a href="{{ app }}/privacidad" data-app>Privacidad</a></nav>
     </div>
     <p>Lumo es una herramienta independiente: no está afiliada ni respaldada por Mercado Libre. Mercado Libre y Mercado Ads son marcas de sus respectivos titulares.</p>
+    <p class="legal"><a href="{{ app }}/terminos" data-app>Términos y condiciones</a> · <a href="{{ app }}/privacidad" data-app>Privacidad</a> · <a class="regret" href="{{ app }}/arrepentimiento" data-app>Botón de arrepentimiento</a></p>
     <p>© 2026 Lumo</p>
   </div>
 </footer>

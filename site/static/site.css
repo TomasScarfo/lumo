@@ -286,3 +286,10 @@ img, svg, video { max-width: 100%; }
 .adm .kpi b { font: 800 1.3rem var(--font-display); }
 .price-grid .card .plan-price { font: 800 2rem var(--font-display); color: var(--ink); }
 .price-grid .card .plan-price small { font: 500 1rem var(--font-body); color: var(--ink-2); }
+
+/* Documentos legales */
+.page.doc { max-width: 760px; }
+.doc .panel h2 { font-size: 1.15rem; margin: 24px 0 6px; }
+.doc .panel ul { margin: 6px 0; padding-left: 20px; color: var(--ink-2); }
+footer .legal a { margin-right: 2px; }
+footer .legal .regret { font-weight: 700; }
