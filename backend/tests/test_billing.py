@@ -286,8 +286,8 @@ class Pago(Base):
         billing._rate_cache.clear()
         self.app.extensions["lumo_cfg"]["USD_ARS_RATE"] = ""
         connect_as(self.client, 819)
-        csrf = self.csrf()
-        with mock.patch("lumo.billing.requests.get", return_value=Resp(500, {})):
+        with mock.patch("lumo.billing.requests.get", return_value=Resp(500, {})):  # también al abrir la página: si no, guarda la cotización real
+            csrf = self.csrf()
             r = self.client.post("/suscripcion", data={"plan": "monthly", "email": "a@b.co", "csrf": csrf})
         self.assertEqual(r.status_code, 503)
         self.assertIn("No pudimos calcular el precio en pesos", r.get_data(as_text=True))
