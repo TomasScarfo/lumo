@@ -260,3 +260,29 @@ img, svg, video { max-width: 100%; }
   .wk-logo { display: none; }
   .wk-skel { opacity: 1; }
 }
+
+/* Planes de suscripción */
+.plans { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; }
+.plans legend { font: 700 1.05rem var(--font-display); padding: 0; margin-bottom: 10px; }
+@media (min-width: 560px) { .plans { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); } }
+.plan-opt { position: relative; display: block; cursor: pointer; }
+.plan-opt input { position: absolute; opacity: 0; inset: 0; }
+.plan-body { display: grid; gap: 4px; height: 100%; padding: 16px; border: 2px solid var(--line); border-radius: 14px; background: var(--bg); transition: border-color .12s, box-shadow .12s; }
+.plan-opt input:checked + .plan-body { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); background: var(--surface); }
+.plan-opt input:focus-visible + .plan-body { outline: 3px solid var(--accent); outline-offset: 3px; }
+.plan-price { font: 800 1.6rem var(--font-display); }
+.plan-price small { font: 500 .9rem var(--font-body); color: var(--ink-2); }
+.plan-body > small { color: var(--ink-2); font-size: .88rem; min-height: 1.3em; }
+.save { display: inline-block; margin-left: 6px; padding: 1px 9px; border-radius: 999px; background: var(--good-soft); color: var(--good); font: 700 .75rem var(--font-body); vertical-align: middle; }
+.fine { margin: 16px 0 0; padding-left: 18px; color: var(--ink-2); font-size: .9rem; display: grid; gap: 4px; }
+.price-grid { display: grid; gap: 14px; }
+@media (min-width: 640px) { .price-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.price-grid .card { text-align: center; padding: 30px 24px; }
+.price-grid .card.best { border: 2px solid var(--accent); }
+.adm .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 720px) { .adm .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.adm .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; }
+.adm .kpi small { color: var(--ink-3); font-size: .78rem; font-weight: 600; }
+.adm .kpi b { font: 800 1.3rem var(--font-display); }
+.price-grid .card .plan-price { font: 800 2rem var(--font-display); color: var(--ink); }
+.price-grid .card .plan-price small { font: 500 1rem var(--font-body); color: var(--ink-2); }

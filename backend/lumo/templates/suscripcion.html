@@ -10,51 +10,94 @@
 <link rel="stylesheet" href="/static/site.css">
 </head>
 <body>
+{% set active = plan.kind == 'paid' and plan.status == 'authorized' %}
+{% set can_pay = plan.kind in ('trial', 'expired') or plan.kind == 'paid' %}
 <main class="page">
   <div class="row" style="justify-content:space-between">
-    <a class="logo" href="/"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
+    <a class="logo" href="{{ home }}"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
     <div class="row">{% if plan.kind in ('trial', 'paid', 'admin', 'free') %}<a class="btn ghost sm" href="/panel">Ir al panel</a>{% endif %}<a class="btn ghost sm" href="/salir">Salir</a></div>
   </div>
   <div class="panel" style="margin-top:24px">
     {% if plan.kind in ('admin', 'free') %}
       <h1>Tu cuenta tiene acceso sin cargo</h1>
       <p>No necesitás suscribirte para usar Lumo.</p>
+    {% elif plan.past_due %}
+      <h1>No pudimos cobrar tu suscripción</h1>
+      <p>Mercado Pago rechazó el último cobro. Tu acceso sigue activo hasta el <b>{{ plan.grace_ends.strftime('%d/%m/%Y') }}</b>.</p>
+      <p>Para no perderlo, revisá tu medio de pago en Mercado Pago (Tu perfil → Suscripciones) o volvé a suscribirte acá abajo con otro medio de pago.</p>
+    {% elif active %}
+      <h1>Tu plan {{ names[plan.plan] or '' }} está activo</h1>
+      <p>Mercado Pago lo cobra automáticamente{% if plan.until %}. Próximo cobro: <b>{{ plan.until.strftime('%d/%m/%Y') }}</b>{% endif %}.</p>
+      {% if plan.next_plan %}<p class="invite-note"><b>Tenés un cambio al plan {{ names[plan.next_plan] }} sin terminar.</b> Se aplica cuando completes el pago en Mercado Pago.</p>{% endif %}
     {% elif plan.kind == 'paid' %}
-      {% if plan.status == 'authorized' %}
-        <h1>Tu suscripción está activa</h1>
-        <p>Mercado Pago cobra {{ price or 'el plan' }} por mes{% if plan.until %}. Próximo cobro: <b>{{ plan.until.strftime('%d/%m/%Y') }}</b>{% endif %}.</p>
-      {% else %}
-        <h1>Cancelaste tu suscripción</h1>
-        <p>Seguís teniendo acceso hasta el <b>{{ plan.until.strftime('%d/%m/%Y') }}</b>. Después podés volver a suscribirte cuando quieras.</p>
-      {% endif %}
+      <h1>Cancelaste tu suscripción</h1>
+      <p>Seguís teniendo acceso hasta el <b>{{ plan.until.strftime('%d/%m/%Y') }}</b>. Después podés volver a suscribirte cuando quieras.</p>
     {% elif plan.kind == 'trial' %}
       <h1>Te {{ 'queda' if plan.days == 1 else 'quedan' }} {{ plan.days }} {{ 'día' if plan.days == 1 else 'días' }} de prueba gratis</h1>
       <p>Tu prueba termina el <b>{{ plan.ends.strftime('%d/%m/%Y') }}</b>. Si te suscribís ahora, el primer cobro se hace recién ese día.</p>
+    {% elif plan.reason == 'unpaid' %}
+      <h1>Tu acceso está en pausa</h1>
+      <p>No pudimos cobrar tu suscripción. No borramos nada: tus datos y tus tareas te esperan. Volvé a suscribirte y seguís donde lo dejaste.</p>
+    {% elif plan.reason == 'cancelled' %}
+      <h1>Tu suscripción terminó</h1>
+      <p>Tus datos y lo que marcaste en el panel te esperan. Elegí un plan para volver a entrar.</p>
     {% else %}
       <h1>Tu prueba gratis terminó</h1>
-      <p>Para seguir viendo tus campañas, recomendaciones y tareas, suscribite. Tus datos y lo que marcaste en el panel te esperan.</p>
+      <p>Para seguir viendo tus campañas, recomendaciones y tareas, elegí un plan. Tus datos y lo que marcaste en el panel te esperan.</p>
     {% endif %}
 
-    {% if pending and plan.kind != 'paid' %}
+    {% if estado == 'pendiente' and not active %}
       <p class="invite-note" role="status"><b>Estamos esperando la confirmación de Mercado Pago.</b> Suele tardar unos segundos; actualizá esta página en un momento.</p>
+    {% elif estado == 'cambio' %}
+      <p class="invite-note ok" role="status"><b>Listo.</b> {% if plan.next_plan %}Estamos esperando la confirmación de Mercado Pago para cambiar tu plan.{% else %}Tu plan ahora es el {{ names[plan.plan] }}.{% endif %}</p>
     {% endif %}
     {% if error %}<p class="invite-note bad" role="alert"><b>{{ error }}</b></p>{% endif %}
 
-    {% if plan.kind in ('trial', 'expired') or (plan.kind == 'paid' and plan.status != 'authorized') %}
+    {% if can_pay %}
       {% if billing_on %}
-        <div class="idbox"><b>Plan mensual: {{ price }}</b><br>Se cobra automáticamente cada mes con Mercado Pago. Podés cancelar cuando quieras desde esta página.</div>
-        <form method="post" action="/suscripcion" class="row">
+        <form method="post" action="/suscripcion" style="margin-top:20px">
           <input type="hidden" name="csrf" value="{{ csrf }}">
-          <input type="email" name="email" value="{{ email }}" required maxlength="254" autocomplete="email" placeholder="Email de tu cuenta de Mercado Pago" aria-label="Email de tu cuenta de Mercado Pago">
-          <button class="btn" type="submit">Suscribirme con Mercado Pago</button>
+          <fieldset class="plans">
+            <legend>{% if active and not plan.past_due %}Cambiar de plan{% else %}Elegí tu plan{% endif %}</legend>
+            {% if price.annual and not (active and not plan.past_due and plan.plan == 'annual') %}
+            <label class="plan-opt">
+              <input type="radio" name="plan" value="annual" checked>
+              <span class="plan-body">
+                <b>Anual{% if price.saving_pct %} <span class="save">Ahorrás {{ price.saving_pct }}%</span>{% endif %}</b>
+                <span class="plan-price">{{ price.annual }} <small>por año</small></span>
+                <small>{% if price.saving_usd %}{{ price.saving_usd }} menos que pagando mes a mes. {% endif %}{% if pesos.annual %}Hoy son {{ pesos.annual }}.{% endif %}</small>
+              </span>
+            </label>
+            {% endif %}
+            {% if not (active and not plan.past_due and plan.plan == 'monthly') %}
+            <label class="plan-opt">
+              <input type="radio" name="plan" value="monthly"{% if not price.annual or (active and plan.plan == 'annual') %} checked{% endif %}>
+              <span class="plan-body">
+                <b>Mensual</b>
+                <span class="plan-price">{{ price.monthly }} <small>por mes</small></span>
+                <small>{% if pesos.monthly %}Hoy son {{ pesos.monthly }}.{% endif %}</small>
+              </span>
+            </label>
+            {% endif %}
+          </fieldset>
+          <div class="row" style="margin-top:14px">
+            <input type="email" name="email" value="{{ email }}" required maxlength="254" autocomplete="email" placeholder="Email de tu cuenta de Mercado Pago" aria-label="Email de tu cuenta de Mercado Pago">
+            <button class="btn" type="submit">{% if active and not plan.past_due %}Cambiar de plan{% else %}Suscribirme con Mercado Pago{% endif %}</button>
+          </div>
         </form>
-        <p style="margin-top:10px;font-size:.9rem">Usá el mismo email con el que entrás a Mercado Pago.</p>
+        <ul class="fine">
+          <li>Usá el mismo email con el que entrás a Mercado Pago.</li>
+          <li>El precio está en dólares y se cobra en pesos, al tipo de cambio oficial del día de cada cobro.</li>
+          {% if active and not plan.past_due %}<li>El plan nuevo empieza cuando termina el período que ya pagaste: no se cobra dos veces.</li>{% endif %}
+          <li>Se renueva solo. Cancelás cuando quieras desde esta página y seguís entrando hasta la fecha ya paga.</li>
+          <li>Si un cobro falla, tenés {{ grace_days }} días para regularizarlo antes de que el acceso se pause.</li>
+        </ul>
       {% else %}
         <p style="margin-top:14px">El pago en línea todavía no está habilitado.{% if contact %} <a href="{{ contact.whatsapp or contact.mailto }}">Escribinos</a> y te ayudamos a activar tu cuenta.{% endif %}</p>
       {% endif %}
     {% endif %}
 
-    {% if can_cancel and plan.kind == 'paid' and plan.status == 'authorized' %}
+    {% if can_cancel and plan.kind == 'paid' and plan.status in ('authorized', 'paused', 'pending') %}
       <form method="post" action="/suscripcion/cancelar" style="margin-top:22px" onsubmit="return confirm('¿Cancelar la suscripción? Seguís teniendo acceso hasta la fecha ya paga.')">
         <input type="hidden" name="csrf" value="{{ csrf }}">
         <button class="btn danger sm" type="submit">Cancelar suscripción</button>

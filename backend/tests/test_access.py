@@ -4,6 +4,7 @@ import unittest
 from datetime import timedelta
 from unittest import mock
 
+import requests
 from sqlalchemy.orm import Session
 
 from lumo import access, create_app
@@ -189,7 +190,27 @@ class Invitaciones(Base):
         self.assertEqual(self.client.get("/invitacion/" + cancelada).status_code, 404)
 
 
+class VolverALaPortada(Base):
+    cfg = dict(CFG, SITE_URL="https://lumo-sitio.onrender.com")
+
+    def test_volver_al_inicio_va_a_la_portada_y_no_a_la_app(self):
+        self.connect(self.client, 999)
+        html = self.client.get("/suscripcion").get_data(as_text=True)
+        self.assertIn('<a class="logo" href="https://lumo-sitio.onrender.com">', html)
+        self.assertNotIn('<a class="logo" href="/">', html)
+
+    def test_salir_lleva_a_la_portada(self):
+        r = self.client.get("/salir")
+        self.assertEqual(r.headers["Location"], "https://lumo-sitio.onrender.com")
+
+
 class Ingreso(Base):
+    def test_si_mercado_libre_no_responde_al_pedir_el_email_igual_entra(self):
+        with mock.patch("lumo.ml.api_get", side_effect=requests.ConnectionError("sin red")):
+            r = self.connect(self.client, 1)
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(r.headers["Location"].endswith("/panel"))
+
     def test_la_pantalla_principal_ordena_metricas_graficos_y_campanas(self):
         fuente = open(os.path.join(os.path.dirname(__file__), "..", "lumo", "panel.html"), encoding="utf-8").read()
         self.assertIn("function principalHTML() { return heroHTML() + kpiHTML() + chartsHTML() + campsHTML(); }", fuente)

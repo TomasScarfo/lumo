@@ -47,20 +47,30 @@
   </div>
 
   <h2 id="suscripciones">Pruebas y suscripciones</h2>
-  <p class="sub">Cada cuenta nueva empieza una prueba gratis al conectarse. {% if billing_on %}El cobro con Mercado Pago está activo.{% else %}<b>El cobro está desactivado:</b> faltan <code>MP_ACCESS_TOKEN</code> o <code>PLAN_PRICE</code> en Render.{% endif %}</p>
+  <p class="sub">Cada cuenta nueva empieza una prueba gratis al conectarse. {% if billing_on %}El cobro con Mercado Pago está activo.{% else %}<b>El cobro está desactivado:</b> falta <code>MP_ACCESS_TOKEN</code> en Render.{% endif %}</p>
+  <div class="kpis" style="margin-bottom:14px">
+    <div class="kpi"><small>Pagando</small><b>{{ stats.paying }}</b></div>
+    <div class="kpi"><small>Ingreso mensual</small><b>{{ stats.mrr }}</b></div>
+    <div class="kpi"><small>En prueba</small><b>{{ stats.trial }}</b></div>
+    <div class="kpi"><small>Con cobro rechazado</small><b>{{ stats.past_due }}</b></div>
+  </div>
   <div class="tw">
     {% if subs %}
     <table>
-      <thead><tr><th>Cuenta</th><th>Estado</th><th>Email de pago</th></tr></thead>
+      <thead><tr><th>Cuenta</th><th>Estado</th><th>Plan</th><th>Email de pago</th></tr></thead>
       <tbody>
       {% for x in subs %}
         <tr>
           <td><code>{{ x.user_id }}</code></td>
-          <td>{% if x.kind == 'paid' and x.status == 'authorized' %}<span class="pill ex">Pagando</span>{% if x.paid_until %}<br><small>próximo cobro {{ x.paid_until.strftime('%d/%m') }}</small>{% endif %}
-              {% elif x.kind == 'paid' %}<span class="pill at">Canceló</span><br><small>acceso hasta {{ x.paid_until.strftime('%d/%m') }}</small>
+          <td>{% if x.past_due %}<span class="pill re">Cobro rechazado</span><br><small>entra hasta el {{ x.grace_ends.strftime('%d/%m') }}</small>
+              {% elif x.kind == 'paid' and x.status == 'authorized' %}<span class="pill ex">Pagando</span>{% if x.paid_until %}<br><small>próximo cobro {{ x.paid_until.strftime('%d/%m/%y') }}</small>{% endif %}
+              {% elif x.kind == 'paid' %}<span class="pill at">Canceló</span><br><small>acceso hasta {{ x.paid_until.strftime('%d/%m/%y') }}</small>
               {% elif x.kind == 'trial' %}<span class="pill pe">En prueba</span><br><small>{{ x.days }} días restantes</small>
               {% elif x.kind in ('free', 'admin') %}<span class="pill bi">Acceso sin cargo</span>
-              {% else %}<span class="pill us">{{ 'Cancelada' if x.status == 'cancelled' else 'Prueba vencida' }}</span>{% endif %}</td>
+              {% elif x.reason == 'unpaid' %}<span class="pill re">Suspendida por falta de pago</span>
+              {% elif x.reason == 'cancelled' %}<span class="pill us">Cancelada</span>
+              {% else %}<span class="pill us">Prueba vencida</span>{% endif %}</td>
+          <td>{{ x.plan|capitalize if x.plan else '—' }}{% if x.next_plan %}<br><small>cambia a {{ x.next_plan }}</small>{% endif %}</td>
           <td>{{ x.email or '—' }}</td>
         </tr>
       {% endfor %}
@@ -98,7 +108,22 @@
     </table>
     {% if not members and not admins %}<p class="empty">Todavía no hay cuentas.</p>{% endif %}
   </div>
-  <p class="sub" style="margin-top:14px">Quitar el acceso borra los permisos guardados, la copia de datos y las tareas de esa cuenta, y cancela su suscripción si tenía una. Para volver a entrar tendrá que suscribirse o recibir una invitación nueva.</p>
+  <p class="sub" style="margin-top:14px">Quitar el acceso borra todo lo que Lumo guarda de esa cuenta: permisos, email, copia de datos, historial, tareas y avisos. Si tenía una suscripción, se cancela. Para volver a entrar tendrá que suscribirse o recibir una invitación nueva.</p>
+
+  <h2 id="actividad">Actividad reciente</h2>
+  <p class="sub">Los últimos movimientos de acceso y administración. Se conservan un año.</p>
+  <div class="tw">
+    {% if events %}
+    <table>
+      <thead><tr><th>Cuándo (UTC)</th><th>Qué</th><th>Cuenta</th><th>Sobre</th></tr></thead>
+      <tbody>
+      {% for e in events %}
+        <tr><td>{{ e.at.strftime('%d/%m %H:%M') }}</td><td><code>{{ e.event }}</code></td><td>{{ e.actor if e.actor is not none else '—' }}</td><td>{{ e.target or e.detail or '—' }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="empty">Todavía no hay actividad registrada.</p>{% endif %}
+  </div>
 </main>
 <script>
 document.addEventListener('click', function (e) {

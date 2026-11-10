@@ -27,6 +27,7 @@
   --warn-soft: #FBEACB;
   --bad: #B42318;
   --bad-soft: #FADFDB;
+  --s-sales: #2446D6; --s-income: #146C43; --s-spend: #B35C00; --s-clicks: #8A3FB0; --s-prints: #0E7C86;
   --font-display: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
@@ -36,6 +37,7 @@
     --line: #263543; --accent: #8BA0FF; --accent-ink: #0B131A; --accent-soft: #1E2B55;
     --good: #52CC8C; --on-good: #07140D; --good-soft: #143525; --warn: #F2B24E; --warn-soft: #3A2A0D;
     --bad: #FF8F83; --bad-soft: #42201C; color-scheme: dark;
+    --s-sales: #8BA0FF; --s-income: #52CC8C; --s-spend: #F2B24E; --s-clicks: #C79BFF; --s-prints: #5FD0D9;
   }
 }
 :root[data-theme="dark"] {
@@ -43,6 +45,7 @@
   --line: #263543; --accent: #8BA0FF; --accent-ink: #0B131A; --accent-soft: #1E2B55;
   --good: #52CC8C; --on-good: #07140D; --good-soft: #143525; --warn: #F2B24E; --warn-soft: #3A2A0D;
   --bad: #FF8F83; --bad-soft: #42201C; color-scheme: dark;
+  --s-sales: #8BA0FF; --s-income: #52CC8C; --s-spend: #F2B24E; --s-clicks: #C79BFF; --s-prints: #5FD0D9;
 }
 
 * { box-sizing: border-box; }
@@ -86,6 +89,38 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .brand-store { font-size: .85rem; color: var(--ink-3); }
 .seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
 .seg button { border: 0; background: transparent; padding: 7px 13px; border-radius: 999px; font-size: .9rem; font-weight: 600; color: var(--ink-2); min-height: 36px; }
+.seg-wrap { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
+.cmp { position: relative; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: .85rem; color: var(--ink-2); }
+.cmp-l { font-weight: 600; }
+.cmp-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; text-align: left; }
+.cmp-btn:hover, .cmp-btn[aria-expanded="true"] { background: var(--surface-2); }
+.cmp-t { display: flex; flex-direction: column; line-height: 1.25; }
+.cmp-t b { font-weight: 600; font-size: .9rem; }
+.cmp-t span { font-size: .78rem; color: var(--ink-3); }
+.cmp-btn .ic { width: 1em; height: 1em; color: var(--ink-3); }
+.cmp-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 250px; max-width: calc(100vw - 32px); padding: 6px; display: flex; flex-direction: column; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.18); }
+.cmp-opt { display: flex; flex-direction: column; gap: 1px; text-align: left; border: 0; background: transparent; color: var(--ink); font: inherit; padding: 9px 12px; border-radius: 10px; }
+.cmp-opt b { font-weight: 600; font-size: .9rem; }
+.cmp-opt span { font-size: .78rem; color: var(--ink-3); }
+.cmp-opt:hover { background: var(--surface-2); }
+.cmp-opt[aria-selected="true"] { background: var(--accent-soft); }
+.cmp-opt[aria-selected="true"] b { color: var(--accent); }
+.cmp-edit { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 600; min-height: 36px; }
+.cal { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 296px; max-width: calc(100vw - 32px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,.18); padding: 12px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-head button { width: 36px; height: 36px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); font-size: 1.3rem; line-height: 1; }
+.cal-head button:hover:not(:disabled) { background: var(--surface-2); }
+.cal-head button:disabled { color: var(--ink-3); opacity: .4; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 2px; }
+.cal-w { text-align: center; font-size: .75rem; font-weight: 700; color: var(--ink-3); padding: 4px 0; }
+.cal-d { height: 36px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: .9rem; border-radius: 0; }
+.cal-d:disabled { color: var(--ink-3); opacity: .35; }
+.cal-d:hover:not(:disabled) { background: var(--surface-2); border-radius: 999px; }
+.cal-d.in { background: var(--accent-soft); }
+.cal-d.edge { background: var(--accent); color: var(--accent-ink); font-weight: 700; border-radius: 999px; }
+.cal-d.lo:not(.hi) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.cal-d.hi:not(.lo) { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.cal-hint { margin: 8px 2px 0; font-size: .8rem; color: var(--ink-2); }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
 .notice { display: flex; gap: 8px; align-items: flex-start; font-size: .85rem; color: var(--ink-2); background: var(--accent-soft); padding: 9px 12px; border-radius: 10px; }
 .notice .ic { margin-top: 2px; color: var(--accent); }
@@ -116,9 +151,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: .82rem; font-weight: 700; white-space: normal; max-width: 100%; }
 .pill .ic { width: 1.05em; height: 1.05em; }
-.s-excelente { background: var(--good); color: var(--on-good); }
-.s-bien { background: var(--good-soft); color: var(--good); }
-.s-atencion { background: var(--warn-soft); color: var(--warn); }
+.s-supera { background: var(--good); color: var(--on-good); }
+.s-objetivo { background: var(--good-soft); color: var(--good); }
+.s-mejorando { background: var(--accent-soft); color: var(--accent); }
+.s-oportunidad { background: var(--warn-soft); color: var(--warn); }
 .s-revisar { background: var(--bad-soft); color: var(--bad); }
 .s-sindatos { background: var(--surface-2); color: var(--ink-2); }
 .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--surface-2); color: var(--ink-2); white-space: normal; max-width: 100%; }
@@ -148,8 +184,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (min-width: 720px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .kpi-l { font-size: .85rem; color: var(--ink); font-weight: 600; line-height: 1.3; }
-.kpi-v { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.4rem, 5vw, 1.75rem); line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.kpi-d { font-size: .8rem; color: var(--ink-3); line-height: 1.35; margin-top: 2px; }
+.kpi-v { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.45rem, 2.2vw, 1.9rem); line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; margin: 2px 0; }
+.kpi-d { font-size: .78rem; color: var(--ink-3); line-height: 1.35; margin-top: 2px; }
 .delta { display: inline-flex; gap: 4px; align-items: flex-start; font-size: .78rem; font-weight: 600; line-height: 1.3; color: var(--ink-3); }
 .delta .ic { margin-top: 1px; width: 1em; height: 1em; stroke-width: 2.6; }
 .delta.good { color: var(--good); }
@@ -163,7 +199,26 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .chart-box { position: relative; margin-top: 10px; min-height: 210px; touch-action: pan-y; }
 .chart-box svg { display: block; }
 .chart-box text { fill: var(--ink-3); font-family: var(--font-body); font-size: 11.5px; }
-.bar { fill: var(--accent); transition: opacity .1s; }
+.bar { fill: var(--s-sales); transition: opacity .1s; }
+.sline { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.sdot { stroke: var(--surface); stroke-width: 2; }
+.guide { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.mailrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.mailrow input { flex: 1 1 220px; font: inherit; padding: 9px 12px; min-height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.mchips { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin: 10px 0 4px; }
+.mchip { display: flex; flex-direction: column; gap: 2px; text-align: left; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: transparent; color: var(--ink); font: inherit; min-width: 0; }
+.mchip[aria-pressed="true"] { border-color: var(--c); background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.mchip[aria-pressed="false"] { color: var(--ink-3); }
+.mchip[aria-pressed="false"] .mv { color: var(--ink-3); }
+.mchip:hover { background: var(--surface-2); }
+.mt { display: flex; align-items: center; gap: 8px; font-size: .85rem; font-weight: 600; }
+.msw { flex: none; width: 12px; height: 12px; border-radius: 3px; border: 2px solid var(--c); box-sizing: border-box; }
+.mchip[aria-pressed="true"] .msw { background: var(--c); }
+.msw.ln { height: 4px; border-radius: 2px; }
+.mv { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.15; font-variant-numeric: tabular-nums; }
+.mchip .delta { font-size: .75rem; }
+.tt i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.tt div { display: flex; justify-content: space-between; gap: 14px; font-variant-numeric: tabular-nums; }
 .bar.dim { opacity: .45; }
 .grid { stroke: var(--line); stroke-width: 1; }
 .tt { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); padding: 7px 10px; border-radius: 8px; font-size: .82rem; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -100%); z-index: 2; }
@@ -262,9 +317,10 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .rbar { position: relative; height: 10px; background: var(--surface-2); border-radius: 999px; margin: 6px 0 4px; }
 .rbar .fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; }
 .rbar .fill.revisar { background: var(--bad); }
-.rbar .fill.atencion { background: var(--warn); }
-.rbar .fill.bien { background: var(--good); opacity: .75; }
-.rbar .fill.excelente { background: var(--good); }
+.rbar .fill.oportunidad { background: var(--warn); }
+.rbar .fill.mejorando { background: var(--accent); }
+.rbar .fill.objetivo { background: var(--good); opacity: .75; }
+.rbar .fill.supera { background: var(--good); }
 .rbar .fill.sindatos { background: var(--ink-3); }
 .rbar.lg { height: 14px; margin: 8px 0 6px; }
 .rrow { padding: 12px 0; border-top: 1px solid var(--line); }
@@ -308,6 +364,7 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .sw small { display: block; color: var(--ink-3); font-size: .82rem; }
 .sw input { appearance: none; -webkit-appearance: none; width: 46px; height: 28px; border-radius: 999px; background: var(--ink-3); position: relative; flex: none; margin: 0; cursor: pointer; transition: background .15s; }
 .sw input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
+.sw input:disabled { opacity: .5; cursor: not-allowed; }
 .sw input:checked { background: var(--accent); }
 .sw input:checked::after { transform: translateX(18px); background: var(--accent-ink); }
 
@@ -325,7 +382,7 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .foot { font-size: .82rem; color: var(--ink-3); text-align: center; margin-top: 28px; }
 
 /* Sin Publicidad: una sola columna centrada; en pantallas anchas no usa la grilla con menú lateral */
-.wrap.na { display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; }
+.wrap.na { display: flex; flex-direction: column; align-items: stretch; max-width: 760px; margin: 0 auto; }
 .wrap.na > * { grid-column: auto; }
 @media (min-width: 900px) { .wrap.na { gap: 20px; } .na-hero { padding: 24px; } }
 @media (max-width: 480px) { .na-hero { flex-direction: column; } .req { flex-direction: column; gap: 8px; } .na-actions .btn { width: 100%; justify-content: center; } }
@@ -343,10 +400,10 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .req:first-of-type { border-top: 0; padding-top: 0; }
 .req > div { min-width: 0; }
 .req b { display: block; }
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
-.kpi { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
-.kpi b { display: block; font-family: var(--font-display); font-size: 1.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
-.kpi span { font-size: .85rem; color: var(--ink-2); }
+.na .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.na .kpi { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
+.na .kpi b { display: block; font-family: var(--font-display); font-size: 1.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.na .kpi span { font-size: .85rem; color: var(--ink-2); }
 .prod { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
 .prod:first-of-type { border-top: 0; }
 .prod > div { min-width: 0; }
@@ -363,6 +420,16 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .evchart .dv { stroke: var(--ink-2); stroke-width: 1.5; stroke-dasharray: 4 4; }
 .cap { font-size: .8rem; color: var(--ink-3); margin-top: -6px; }
 .say { font-size: .94rem; color: var(--ink-2); }
+.cargando { display: block; box-sizing: border-box; width: min(440px, calc(100% - 32px)); margin: 18vh auto 0; padding: 32px 24px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.cargando h2 { margin: 16px 0 6px; font-size: 1.25rem; line-height: 1.25; }
+.cargando .sub { margin: 0; }
+.cargando .sol { display: block; margin: 0 auto; width: 64px; height: 64px; border-radius: 16px; background: var(--accent); }
+.cargando .sol .rayo { transform-origin: 32px 38px; animation: carga-sube 1.6s ease-in-out infinite alternate; }
+.cargando .barra { height: 4px; margin: 20px auto 0; width: 60%; border-radius: 4px; background: var(--accent-soft); overflow: hidden; }
+.cargando .barra i { display: block; height: 100%; width: 40%; border-radius: 4px; background: var(--accent); animation: carga-barra 1.3s ease-in-out infinite; }
+@keyframes carga-sube { from { transform: translateY(5px); opacity: .6; } to { transform: translateY(0); opacity: 1; } }
+@keyframes carga-barra { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+@media (prefers-reduced-motion: reduce) { .cargando .sol .rayo, .cargando .barra i { animation: none; } }
 .say b { color: var(--ink); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20; background: var(--ink); color: var(--bg); padding: 12px 16px; border-radius: 12px; display: flex; gap: 14px; align-items: center; width: max-content; max-width: calc(100vw - 32px); font-size: .92rem; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
 .toast button { background: none; border: 0; color: var(--bg); text-decoration: underline; text-underline-offset: 3px; font-weight: 700; padding: 4px 0; white-space: nowrap; }
@@ -373,9 +440,9 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .hcard:hover { border-color: var(--accent); }
 .hcard span { color: var(--ink-2); word-break: break-word; }
 .hcard .link { color: var(--accent); font-weight: 700; margin-top: 6px; }
-.brand { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 8px; color: #fff; }
-.brand svg { width: 26px; height: 26px; }
-.brand.wa { background: #25D366; } .brand.mail { background: #EA4335; }
+.contact-ic { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 8px; color: #fff; }
+.contact-ic svg { width: 26px; height: 26px; }
+.contact-ic.wa { background: #25D366; } .contact-ic.mail { background: #EA4335; }
 .hform { display: grid; gap: 12px; margin-top: 14px; }
 .hform label { display: grid; gap: 6px; font-weight: 600; font-size: .92rem; }
 .hform label small { font-weight: 400; color: var(--ink-3); }
@@ -458,8 +525,8 @@ function saveState() {
 /*DATA-END*/
 
 /*LOGIC-START*/
-var S = { days: 7, metric: 'sales', tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
-  showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ sw1: true, sw2: true, sw3: false }, EST.sw || {}) };
+var S = { days: 7, off: 0, cust: false, pick: '', anchor: '', vm: null, cmp: 'prev', cmpOpen: false, cf: '', ct: '', ser: { units: true, sales: true }, tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
+  showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ m1: false, m2: false, m3: false }, EST.sw || {}), mailMsg: '', mailDraft: '' };
 var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
 var r1 = function (n) { return fmtNum(n, 1); };
@@ -468,18 +535,35 @@ var pct1 = function (n) { return r1(n * 100) + '%'; };
 var pctN = function (v) { return v == null ? '—' : Math.round(v * 100) + '%'; };
 var short = function (n) { return n >= 1e6 ? '$' + r1(n / 1e6) + ' M' : n >= 1e3 ? '$' + nf0.format(Math.round(n / 1000)) + ' mil' : '$' + nf0.format(n); };
 var pl = function (n, a, b) { return n + ' ' + (n === 1 ? a : b); };
+/* El ROAS objetivo marca cuánta rentabilidad priorizás. Más alto: la campaña se muestra menos y gana más por cada peso. Más bajo: se muestra más
+   y gana visibilidad, visitas y clics a cambio de algo de rentabilidad. Por eso estar por debajo del objetivo no es "estar mal": es una oportunidad,
+   y más todavía si el ROAS viene mejorando. Estar por encima es rentable, pero también deja margen para mostrarse más. */
 var ST = {
-  excelente: { label: 'Excelente', icon: 'check-circle', rank: 3 },
-  bien: { label: 'Bien', icon: 'check', rank: 2 },
-  atencion: { label: 'Atención', icon: 'alert', rank: 1 },
+  supera: { label: 'Superando el objetivo', icon: 'check-circle', rank: 4 },
+  objetivo: { label: 'En objetivo', icon: 'check', rank: 3 },
+  mejorando: { label: 'Mejorando', icon: 'up', rank: 2 },
+  oportunidad: { label: 'Con oportunidad', icon: 'trend', rank: 1 },
   revisar: { label: 'Revisar', icon: 'x-circle', rank: 0 },
-  sindatos: { label: 'Sin actividad', icon: 'info', rank: 4 }
+  sindatos: { label: 'Sin actividad', icon: 'info', rank: 5 }
 };
-function statusOf(roas, spend, sales, t) {
+/* trend: cuánto cambió el ROAS contra el período de comparación (0,1 = 10% más). null si no se conoce. */
+function statusOf(roas, spend, sales, t, trend) {
   if (!spend) return 'sindatos';
-  if (spend > 0 && sales === 0) return 'revisar';
+  if (sales === 0) return 'revisar';
   var k = roas / t;
-  return k >= 1.25 ? 'excelente' : k >= 1 ? 'bien' : k >= 0.7 ? 'atencion' : 'revisar';
+  if (k >= 1.2) return 'supera';
+  if (k >= 0.9) return 'objetivo';
+  if (trend != null && trend >= 0.05) return 'mejorando';
+  return k < 0.7 ? 'revisar' : 'oportunidad';
+}
+function visTxt(c) {
+  if (c.vis == null) return '';
+  return ' Sus impresiones ' + (c.vis > 0 ? 'subieron ' : 'bajaron ') + Math.round(Math.abs(c.vis) * 100) + '% respecto de ' + cmpText() + '.';
+}
+function trendTxt(c) {
+  if (c.trend == null) return '';
+  if (Math.abs(c.trend) < 0.02) return ' Su ROAS se mantiene igual que en ' + cmpText() + '.';
+  return ' Su ROAS ' + (c.trend > 0 ? 'subió ' : 'bajó ') + Math.round(Math.abs(c.trend) * 100) + '% respecto de ' + cmpText() + '.';
 }
 function agg(arr, from, to) {
   var s = { spend: 0, sales: 0, clicks: 0, prints: 0, units: 0 };
@@ -490,17 +574,18 @@ function roundTo(n, step) { return Math.max(step, Math.round(n / step) * step); 
 function isStrongOrganic(o) { return o.units >= 10 && (o.conv == null || o.conv >= 0.03); }
 
 function lowReco(o) {
-  if (o.sales === 0) return { short: 'Pausar «' + o.name + '»', text: 'Invirtió ' + money(o.spend) + ' y no vendió nada con publicidad. Pausala y revisá precio, fotos y stock antes de volver a activarla.' };
-  if (isStrongOrganic(o)) return { short: 'Probar pausar «' + o.name + '»', text: 'Se vende bien sola: ' + pl(o.units, 'unidad', 'unidades') + ' en 30 días sin contar la publicidad. Es probable que mantenga sus ventas sin anuncios. Probá pausarla unos días y compará.' };
-  if (o.roas < 0.7 * o.target) return { short: 'Pausar «' + o.name + '»', text: 'Su ROAS está muy lejos del objetivo. Pausala o sacala de la campaña mientras mejorás precio, fotos y título.' };
-  return { short: 'Mejorar «' + o.name + '»', text: 'Está cerca del objetivo. Mejorá título, fotos y precio antes de seguir invirtiendo. Si no sube, pausala.' };
+  var wait = o.campTrend != null && o.campTrend >= 0.05 ? ' Su campaña viene mejorando, así que conviene darle unos días antes de decidir.' : '';
+  if (o.sales === 0) return { short: 'Pausar «' + o.name + '»', text: 'Invirtió ' + money(o.spend) + ' y no vendió nada con publicidad. Pausala y revisá precio, fotos y stock antes de volver a activarla.' + wait };
+  if (isStrongOrganic(o)) return { short: 'Probar pausar «' + o.name + '»', text: 'Se vende bien sola: ' + pl(o.units, 'unidad', 'unidades') + ' en 30 días sin contar la publicidad. Es probable que mantenga sus ventas sin anuncios. Probá pausarla unos días y compará.' + wait };
+  if (o.roas < 0.7 * o.target) return { short: 'Pausar «' + o.name + '»', text: 'Su ROAS está lejos del objetivo y es una buena oportunidad de mejora. Pausala o sacala de la campaña mientras mejorás precio, fotos y título.' + wait };
+  return { short: 'Mejorar «' + o.name + '»', text: 'Está cerca del objetivo: hay oportunidad de mejorarla con título, fotos y precio. Si no sube, probá pausarla.' + wait };
 }
 function actReco(o, camps) {
   var cands = camps.filter(function (c) { return c.items.some(function (i) { return i.cat === o.cat; }); })
     .sort(function (a, b) { return b.roas - a.roas; });
   var best = cands[0], txt;
   if (!best) txt = 'No hay una campaña de esta categoría. Creá una nueva con un presupuesto chico y mirá los resultados durante una semana.';
-  else if (best.status === 'revisar') txt = 'La campaña de su categoría («' + best.name + '») hoy está en Revisar, con ROAS $' + r1(best.roas) + '. Conviene crear una campaña aparte con presupuesto chico para no mezclarla.';
+  else if (best.status === 'revisar' || best.status === 'oportunidad') txt = 'La campaña de su categoría («' + best.name + '») hoy tiene ROAS $' + r1(best.roas) + ', por debajo de su objetivo. Conviene crear una campaña aparte con presupuesto chico para no mezclarla.';
   else txt = 'Sumala a «' + best.name + '», que hoy tiene ROAS $' + r1(best.roas) + ' (' + ST[best.status].label + '). Es solo una referencia: no garantiza el mismo resultado, pero esa categoría ya responde bien a la publicidad.' + (best.used >= 0.95 ? ' Esa campaña llega al tope de su presupuesto, así que subilo para que alcance.' : '');
   if (o.stock != null && o.stock < 10) txt += ' Ojo: con ' + pl(o.stock, 'unidad', 'unidades') + ' de stock se puede agotar rápido. Reponé antes de invertir.';
   return txt;
@@ -518,14 +603,50 @@ function groups(items, key) {
   }).sort(function (a, b) { return b.growth - a.growth; });
 }
 
+/* ---------- Período contra el que se compara ---------- */
+function idxOf(d) { return DAYS - 1 - Math.round((END - d) / 864e5); }
+function scaleAgg(a, k) { return { spend: a.spend * k, sales: a.sales * k, clicks: a.clicks * k, prints: a.prints * k, units: a.units * k }; }
+/* Devuelve el tramo de la serie diaria a comparar, o null si no hay datos de ese período. Si tiene otra cantidad de días, se escala al largo del período actual. */
+function cmpWindow(mode) {
+  mode = mode || S.cmp;
+  var n = S.days, s0 = DAYS - S.off - n, a, b;
+  if (mode === 'prev') { a = s0 - n; b = s0; }
+  else if (mode === 'month') {
+    var f = periodStart(), m = new Date(f.getFullYear(), f.getMonth() - 1, f.getDate());
+    if (m.getMonth() !== (f.getMonth() + 11) % 12) m = new Date(f.getFullYear(), f.getMonth(), 0);
+    a = idxOf(m); b = a + n;
+  } else {
+    if (!S.cf || !S.ct) return null;
+    a = idxOf(parseDay(S.cf)); b = idxOf(parseDay(S.ct)) + 1;
+  }
+  if (a < 0 || b > DAYS || b <= a) return null;
+  return { a: a, b: b, scale: n / (b - a) };
+}
+function rangeTxt(f, t) {
+  if (f.getMonth() === t.getMonth() && f.getFullYear() === t.getFullYear()) return f.getDate() === t.getDate() ? dayShort(f) : f.getDate() + ' al ' + dayShort(t);
+  return dayShort(f) + ' al ' + dayShort(t);
+}
+function cmpDates(mode) {
+  var w = cmpWindow(mode);
+  if (!w) return mode === 'custom' && !S.cf ? 'Elegí las fechas' : 'Sin datos de ese período';
+  var f = new Date(END), t = new Date(END);
+  f.setDate(END.getDate() - (DAYS - 1 - w.a)); t.setDate(END.getDate() - (DAYS - w.b));
+  return rangeTxt(f, t);
+}
+var CMP_OPTS = [['prev', 'Período anterior'], ['month', 'Mes anterior'], ['custom', 'Período personalizado']];
+function cmpText() {
+  if (S.cmp === 'month') return 'el mismo período del mes anterior';
+  if (S.cmp === 'custom') return 'el período del ' + dayShort(parseDay(S.cf)) + ' al ' + dayShort(parseDay(S.ct));
+  return 'los ' + S.days + ' días anteriores';
+}
 function compute() {
-  var n = S.days;
+  var n = S.days, o = S.off, cw = cmpWindow();
   var camps = CAMPS.map(function (c) {
-    var cur = agg(c.daily, DAYS - n, DAYS), prev = agg(c.daily, DAYS - 2 * n, DAYS - n);
-    var roas = cur.spend ? cur.sales / cur.spend : 0;
+    var cur = agg(c.daily, DAYS - o - n, DAYS - o), prev = cw ? scaleAgg(agg(c.daily, cw.a, cw.b), cw.scale) : agg(c.daily, 0, 0);
+    var roas = cur.spend ? cur.sales / cur.spend : 0, proas = prev.spend ? prev.sales / prev.spend : 0, trend = proas && cur.spend ? roas / proas - 1 : null, vis = prev.prints ? cur.prints / prev.prints - 1 : null;
     return { id: c.id, name: c.name, budget: c.budget, cur: cur, prev: prev,
       cur30: agg(c.daily, DAYS - 30, DAYS), prev30: agg(c.daily, DAYS - 60, DAYS - 30),
-      roas: roas, target: c.target, acosTarget: c.acosTarget, status: statusOf(roas, cur.spend, cur.sales, c.target), avgSpend: cur.spend / n, used: c.budget ? cur.spend / n / c.budget : 0,
+      roas: roas, target: c.target, acosTarget: c.acosTarget, trend: trend, vis: vis, status: statusOf(roas, cur.spend, cur.sales, c.target, trend), avgSpend: cur.spend / n, used: c.budget ? cur.spend / n / c.budget : 0,
       ctr: cur.prints ? cur.clicks / cur.prints : 0, cpc: cur.clicks ? cur.spend / cur.clicks : 0, cvr: cur.clicks ? cur.units / cur.clicks : 0,
       lostB: c.lostB, lostR: c.lostR, share: c.share, estTarget: c.estTarget, paused: c.status === 'paused',
       dSales: prev.sales ? cur.sales / prev.sales - 1 : 0, items: [] };
@@ -542,7 +663,7 @@ function compute() {
     if (it.camp) {
       var c = byId[it.camp];
       o.spend = c.cur.spend * it.sp; o.sales = c.cur.sales * it.sa; o.roas = o.spend ? o.sales / o.spend : 0;
-      o.target = c.target; o.sp = it.sp; o.status = statusOf(o.roas, o.spend, o.sales, c.target); o.campName = c.name;
+      o.target = c.target; o.sp = it.sp; o.status = statusOf(o.roas, o.spend, o.sales, c.target, null); o.campName = c.name; o.campTrend = c.trend;
       o.ad30 = c.cur30.sales * it.sa; o.prevAd30 = c.prev30.sales * it.sa;
       c.items.push(o);
     }
@@ -553,7 +674,7 @@ function compute() {
     c.items.forEach(function (o, i) { o.kc = o.sp * (1 + ((i % 3) - 1) * 0.12); o.kp = o.sp * (1 + (((i + 1) % 3) - 1) * 0.15); sc += o.kc; sp += o.kp; });
     c.items.forEach(function (o) { o.clicks = c.cur.clicks * o.kc / sc; o.prints = c.cur.prints * o.kp / sp; o.cpc = o.clicks ? o.spend / o.clicks : 0; o.ctr = o.prints ? o.clicks / o.prints : 0; });
   });
-  var lowItems = items.filter(function (o) { return o.active && (o.status === 'atencion' || o.status === 'revisar'); }).map(function (o) {
+  var lowItems = items.filter(function (o) { return o.active && (o.status === 'oportunidad' || o.status === 'revisar'); }).map(function (o) {
     o.shortfall = o.spend * o.target - o.sales;
     o.roasWithout = (tot.spend - o.spend) ? (tot.sales - o.sales) / (tot.spend - o.spend) : 0;
     o.reco = lowReco(o);
@@ -566,31 +687,49 @@ function compute() {
   var catG = groups(items, 'cat'), brandG = groups(items, 'brand');
   var recs = [];
   camps.forEach(function (c) {
-    var base = 'En los últimos ' + n + ' días invertiste ' + money(c.cur.spend) + ' y vendiste ' + money(c.cur.sales) + '. Su ROAS es $' + r1(c.roas) + ' (por cada $1 invertido vendiste $' + r1(c.roas) + ') y el ROAS objetivo de la campaña es $' + r1(c.target) + '.';
+    var pctT = Math.round(c.roas / c.target * 100), tr = trendTxt(c);
+    var base = 'En ' + periodIn() + ' invertiste ' + money(c.cur.spend) + ' y vendiste ' + money(c.cur.sales) + '. Su ROAS es $' + r1(c.roas) + ' (por cada $1 invertido vendiste $' + r1(c.roas) + ') y el ROAS objetivo de la campaña es $' + r1(c.target) + '.';
     if (c.status === 'revisar') {
-      var drop = c.dSales <= -0.25 ? ' Además, las ventas bajaron ' + Math.round(-c.dSales * 100) + '% respecto de los ' + n + ' días anteriores.' : '';
+      var drop = c.dSales <= -0.25 ? ' Además, las ventas bajaron ' + Math.round(-c.dSales * 100) + '% respecto de ' + cmpText() + '.' : '';
       recs.push({ id: 'rec-' + c.id + '-low', camp: c.id, sev: 'urgente', score: c.cur.spend, go: 'camp',
-        title: c.name + ': bajá el presupuesto mientras la revisás',
-        text: base + drop,
+        title: c.name + ': conviene revisarla, bajá el presupuesto mientras tanto',
+        text: base + (c.cur.sales === 0 ? ' No tuvo ventas con publicidad.' : ' Está al ' + pctT + '% de su objetivo' + (c.trend != null ? ' y no viene mejorando.' : '.')) + tr + drop,
         action: 'Bajá el presupuesto diario de ' + money(c.budget) + ' a ' + money(roundTo(c.budget * 0.5, 500)) + ' y revisá sus publicaciones en la sección Alertas.' });
-    } else if (c.status === 'atencion') {
+    } else if (c.status === 'oportunidad') {
       recs.push({ id: 'rec-' + c.id + '-mid', camp: c.id, sev: 'mejora', score: c.cur.spend, go: 'camp',
-        title: c.name + ' rinde un poco menos que tu objetivo',
-        text: base,
-        action: 'Mejorá las publicaciones que menos venden antes de subir el presupuesto.' });
+        title: c.name + ' tiene oportunidad de mejora',
+        text: base + ' Está al ' + pctT + '% de su objetivo: no es que esté mal, hay margen para mejorar su rentabilidad.' + tr,
+        action: 'Mejorá las publicaciones que menos venden antes de subir el presupuesto. Si preferís priorizar rentabilidad, también podés subir el ROAS objetivo: la campaña se va a mostrar menos, pero con mejor retorno por cada $1.' });
+    } else if (c.status === 'mejorando') {
+      recs.push({ id: 'rec-' + c.id + '-up', camp: c.id, sev: 'buena', score: c.cur.spend, go: 'camp',
+        title: c.name + ' viene mejorando',
+        text: base + tr + ' Ya está al ' + pctT + '% de su objetivo.',
+        action: 'No hace falta tocar nada por ahora: dejala seguir y mirá si llega a su objetivo.' });
     }
-    if (c.used >= 0.95 && (c.status === 'excelente' || c.status === 'bien')) {
+    /* Visibilidad (impresiones) contra el período de comparación: manda sobre el ROAS objetivo.
+       Si baja, bajar el ROAS objetivo la recupera. Si sube pero el ROAS cae, subirlo un poco devuelve rentabilidad. */
+    var lostTxt = c.lostR != null && c.lostR >= 0.2 ? ' Hoy pierde ' + Math.round(c.lostR * 100) + '% de las impresiones por ranking.' : '';
+    var visUp = c.vis != null && c.vis >= 0.1 && c.trend != null && c.trend <= -0.05;
+    var visDown = c.vis != null && c.vis <= -0.1 && c.cur.sales > 0;
+    if (visUp) {
+      recs.push({ id: 'rec-' + c.id + '-visup', camp: c.id, sev: 'oportunidad', score: c.cur.spend, go: 'camp',
+        title: c.name + ' gana visibilidad, pero cae su ROAS',
+        text: base + visTxt(c) + tr + ' Se está mostrando más, pero a costa de rentabilidad.',
+        action: 'Probá subir un poco el ROAS objetivo: la campaña se va a mostrar algo menos y recupera rentabilidad. Hacelo de a poco y mirá cómo responde durante unos días.' });
+    } else if (visDown || c.status === 'supera') {
+      var below = c.status === 'oportunidad' || c.status === 'revisar';
+      recs.push({ id: 'rec-' + c.id + '-vis', camp: c.id, sev: 'oportunidad', score: c.cur.sales, go: 'camp',
+        title: visDown ? c.name + ' está perdiendo visibilidad' : c.name + ' tiene margen para ganar visibilidad',
+        text: base + (visDown ? visTxt(c) : ' Su ROAS está ' + (pctT - 100) + '% por encima del objetivo: es rentable, pero es probable que se esté mostrando menos de lo que podría.') + lostTxt + tr + (below ? ' Ojo: ya está por debajo de su objetivo, así que ganar visibilidad le va a costar rentabilidad. Decidilo según lo que priorices.' : ''),
+        action: 'Probá bajar el ROAS objetivo para que tus anuncios se muestren más: vas a ganar visibilidad, visitas, clics y ventas, a cambio de algo de rentabilidad. Hacelo de a poco y mirá cómo responde durante unos días.' });
+    }
+    if (c.used >= 0.95 && (c.status === 'supera' || c.status === 'objetivo')) {
       recs.push({ id: 'rec-' + c.id + '-cap', camp: c.id, sev: 'oportunidad', score: c.cur.sales, go: 'camp',
         title: c.name + ' se queda sin presupuesto',
-        text: 'Gastó casi todo su presupuesto diario (' + Math.round(c.used * 100) + '% en promedio) y su ROAS es $' + r1(c.roas) + ', por encima de tu objetivo. Cuando llega al tope, sus anuncios dejan de mostrarse y es probable que queden ventas sin captar.',
+        text: 'Gastó casi todo su presupuesto diario (' + Math.round(c.used * 100) + '% en promedio) y su ROAS es $' + r1(c.roas) + ', ' + (c.status === 'supera' ? 'por encima de' : 'en línea con') + ' tu objetivo. Cuando llega al tope, sus anuncios dejan de mostrarse y es probable que queden ventas sin captar.',
         action: 'Subí el presupuesto diario de ' + money(c.budget) + ' a ' + money(roundTo(c.budget * 1.3, 500)) + ' (un 30% más) y mirá cómo responde durante unos días.' });
     }
   });
-  var best = camps.filter(function (c) { return c.status === 'excelente'; }).sort(function (a, b) { return b.roas - a.roas; })[0];
-  if (best) recs.push({ id: 'rec-' + best.id + '-best', camp: best.id, sev: 'buena', score: 0, go: 'camp',
-    title: best.name + ' es tu mejor campaña',
-    text: 'Su ROAS es $' + r1(best.roas) + ': por cada $1 invertido vendiste $' + r1(best.roas) + ', bastante por encima de su objetivo de $' + r1(best.target) + '.',
-    action: 'No hace falta tocar nada. Si tenés stock, es la campaña más segura para crecer.' });
   var hot = catG.filter(function (g) { return g.growth >= 0.1 && g.cover < 0.7; })[0];
   if (hot) {
     var free = items.filter(function (o) { return o.cat === hot.name && !o.active; }).length;
@@ -613,16 +752,16 @@ function compute() {
   tasks.sort(function (a, b) { return whenOrder[a.when] - whenOrder[b.when]; });
 
   var daily = [];
-  for (var i = DAYS - n; i < DAYS; i++) {
-    var d = { date: CAMPS[0].daily[i].date, spend: 0, sales: 0, clicks: 0 };
-    CAMPS.forEach(function (c) { d.spend += c.daily[i].spend; d.sales += c.daily[i].sales; d.clicks += c.daily[i].clicks; });
+  for (var i = DAYS - o - n; i < DAYS - o; i++) {
+    var d = { date: CAMPS[0].daily[i].date, spend: 0, sales: 0, clicks: 0, prints: 0, units: 0 };
+    CAMPS.forEach(function (c) { var x = c.daily[i]; d.spend += x.spend; d.sales += x.sales; d.clicks += x.clicks; d.prints += x.prints; d.units += x.units; });
     daily.push(d);
   }
   var tot30 = { sales: 0, ad: 0 };
   items.forEach(function (o) { tot30.sales += o.orgSales + o.ad30; tot30.ad += o.ad30; });
   var openTasks = tasks.filter(function (x) { return !S.done[x.id]; });
   return { camps: camps, items: items, tot: tot, prev: prev, roas: roas, prevRoas: prev.spend ? prev.sales / prev.spend : 0,
-    overall: statusOf(roas, tot.spend, tot.sales, tgtAvg), tgtAvg: tgtAvg, daily: daily, lowItems: lowItems, strong: strong, recs: recs, tasks: tasks,
+    overall: statusOf(roas, tot.spend, tot.sales, tgtAvg, prev.spend && prev.sales ? roas / (prev.sales / prev.spend) - 1 : null), tgtAvg: tgtAvg, daily: daily, lowItems: lowItems, strong: strong, recs: recs, tasks: tasks,
     openTasks: openTasks, catG: catG, brandG: brandG, tot30: tot30,
     openAlerts: strong.filter(function (o) { return !S.done['org-' + o.id]; }).length + lowItems.filter(function (o) { return !S.done['low-' + o.id]; }).length,
     openRecs: recs.filter(function (r) { return !S.done[r.id] && r.sev !== 'buena'; }).length };
@@ -640,10 +779,10 @@ function growthTag(g) {
 }
 function delta(cur, prev, goodUp) {
   if (!prev) return '';
-  var d = cur / prev - 1, a = Math.abs(d), n = S.days;
-  if (a < 0.02) return '<span class="delta">Igual que los ' + n + ' días anteriores</span>';
+  var d = cur / prev - 1, a = Math.abs(d), t = cmpText();
+  if (a < 0.02) return '<span class="delta">Igual que ' + t + '</span>';
   var up = d > 0, cls = goodUp === null ? '' : (up === goodUp ? 'good' : 'bad');
-  return '<span class="delta ' + cls + '">' + icon(up ? 'up' : 'down') + '<span>' + Math.round(a * 100) + '% ' + (up ? 'más' : 'menos') + ' que los ' + n + ' días anteriores</span></span>';
+  return '<span class="delta ' + cls + '">' + icon(up ? 'up' : 'down') + '<span>' + Math.round(a * 100) + '% ' + (up ? 'más' : 'menos') + ' que ' + t + '</span></span>';
 }
 
 var SEV = {
@@ -654,17 +793,70 @@ var SEV = {
 };
 
 /* ---------- Encabezado y pestañas ---------- */
+/* ---------- Selector de rango: un clic elige el desde y el siguiente el hasta ---------- */
+function firstDay() { var d = new Date(END); d.setDate(END.getDate() - (DAYS - 1)); return d; }
+function monthStart(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+function calHTML() {
+  var first = firstDay(), vm = S.vm || monthStart(END), start = new Date(vm), h = '';
+  var prevOk = monthStart(first) < vm, nextOk = new Date(vm.getFullYear(), vm.getMonth() + 1, 1) <= END;
+  var title = vm.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  h += '<div class="cal" role="dialog" aria-label="Elegir rango de fechas"><div class="cal-head">' +
+    '<button type="button" data-act="mnav" data-v="-1" aria-label="Mes anterior"' + (prevOk ? '' : ' disabled') + '>‹</button>' +
+    '<b>' + esc(title.charAt(0).toUpperCase() + title.slice(1)) + '</b>' +
+    '<button type="button" data-act="mnav" data-v="1" aria-label="Mes siguiente"' + (nextOk ? '' : ' disabled') + '>›</button></div><div class="cal-grid">';
+  ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function (w) { h += '<span class="cal-w" aria-hidden="true">' + w + '</span>'; });
+  for (var k = 0; k < (start.getDay() + 6) % 7; k++) h += '<span></span>';
+  var last = new Date(vm.getFullYear(), vm.getMonth() + 1, 0).getDate();
+  for (var n = 1; n <= last; n++) {
+    var d = new Date(vm.getFullYear(), vm.getMonth(), n), off = d < first || d > END;
+    h += '<button type="button" class="cal-d" data-act="day" data-d="' + isoDay(d) + '"' + (off ? ' disabled' : '') + '>' + n + '</button>';
+  }
+  h += '</div><p class="cal-hint" role="status">' + (S.pick === 'cmp' ? (S.anchor ? 'Ahora elegí el último día del período a comparar.' : 'Elegí el primer día del período a comparar.') : S.anchor ? 'Ahora elegí el último día del rango.' : 'Elegí el primer día del rango.') + '</p>' +
+    '<p class="cal-hint">Podés mirar desde el ' + dayShort(first) + (D.since ? '. Lumo guarda tu historial día a día.' : ' (el máximo que informa Mercado Libre). Desde hoy Lumo guarda tu historial día a día.') + '</p></div>';
+  return h;
+}
+/* Sombrea el rango mientras se elige, sin volver a dibujar todo el panel. */
+function paintCal(hover) {
+  var a = S.anchor, b = hover || a, lo = a && b ? (a < b ? a : b) : '', hi = a && b ? (a < b ? b : a) : '';
+  document.querySelectorAll('.cal-d').forEach(function (el) {
+    var d = el.dataset.d, on = a && d >= lo && d <= hi;
+    el.classList.toggle('in', !!(on && d !== lo && d !== hi));
+    el.classList.toggle('edge', !!(on && (d === lo || d === hi)));
+    el.classList.toggle('lo', !!(on && d === lo));
+    el.classList.toggle('hi', !!(on && d === hi));
+  });
+}
+function pickDay(iso) {
+  if (!S.anchor) { S.anchor = iso; return false; }
+  var a = S.anchor < iso ? S.anchor : iso, b = S.anchor < iso ? iso : S.anchor, f = parseDay(a), t = parseDay(b);
+  if (S.pick === 'cmp') { S.cf = a; S.ct = b; S.cmp = 'custom'; S.pick = ''; S.anchor = ''; return true; }
+  S.off = Math.round((END - t) / 864e5); S.days = Math.round((t - f) / 864e5) + 1;
+  S.cust = true; S.pick = ''; S.anchor = '';
+  return true;
+}
+function cmpHTML() {
+  var cur = CMP_OPTS.filter(function (o) { return o[0] === S.cmp; })[0];
+  var items = CMP_OPTS.map(function (o) {
+    return '<button type="button" role="option" class="cmp-opt" data-act="cmpopt" data-v="' + o[0] + '" aria-selected="' + (S.cmp === o[0]) + '"><b>' + o[1] + '</b><span>' + esc(cmpDates(o[0])) + '</span></button>';
+  }).join('');
+  return '<div class="cmp"><span class="cmp-l" id="cmp-l">Comparar con</span>' +
+    '<button type="button" class="cmp-btn" data-act="cmpmenu" aria-haspopup="listbox" aria-expanded="' + S.cmpOpen + '" aria-labelledby="cmp-l"><span class="cmp-t"><b>' + cur[1] + '</b><span>' + esc(cmpDates(S.cmp)) + '</span></span>' + icon('chevron') + '</button>' +
+    (S.cmpOpen ? '<div class="cmp-menu" role="listbox" aria-labelledby="cmp-l">' + items + '</div>' : '') +
+    (S.cmp === 'custom' && S.cf ? '<button type="button" class="cmp-edit" data-act="cmppick">Cambiar fechas</button>' : '') + '</div>';
+}
 function topHTML() {
   var seg = [7, 14, 30].map(function (v) {
-    return '<button data-act="days" data-v="' + v + '" aria-pressed="' + (S.days === v) + '">' + v + ' días</button>';
+    return '<button data-act="days" data-v="' + v + '" aria-pressed="' + (!S.cust && S.days === v) + '">' + v + ' días</button>';
   }).join('');
+  seg += '<button data-act="pick" aria-pressed="' + (S.cust || S.pick === 'range') + '" aria-expanded="' + (S.pick === 'range') + '">Otro rango</button>';
   return '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(D.advertiser.name) + ' · ' + esc(D.advertiser.site) + '</div></div></div>' +
-    '<div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div></header>' +
+    '<div class="seg-wrap"><div class="seg" role="group" aria-label="Período de las métricas de publicidad">' + seg + '</div>' + cmpHTML() + (S.pick ? calHTML() : '') + '</div></header>' +
     '<div class="notice">' + icon('info') + '<span>Datos reales de Mercado Libre hasta el ' + dayLong(END) + '. Se actualizan una vez por día. El período elegido cambia las métricas de publicidad; las ventas orgánicas y las tendencias miran siempre los últimos 30 días. <a class="link" href="/panel?refresh=1">Actualizar ahora</a> · <a class="link" href="/salir">Salir</a>' + (D.admin ? ' · <a class="link" href="/admin">Administrar</a>' : '') + planHTML() + '</span></div>' + notesHTML();
 }
 function planHTML() {
   var p = D.plan || {};
   if (p.kind === 'trial') return ' · <b>Prueba gratis: ' + (p.days === 1 ? 'queda 1 día' : 'quedan ' + p.days + ' días') + '</b> <a class="link" href="/suscripcion">Suscribirme</a>';
+  if (p.kind === 'paid' && p.pastDue) return ' · <b>No pudimos cobrar tu suscripción: ' + (p.days === 1 ? 'queda 1 día' : 'quedan ' + p.days + ' días') + ' para regularizarla.</b> <a class="link" href="/suscripcion">Revisar</a>';
   if (p.kind === 'paid') return ' · <a class="link" href="/suscripcion">Mi suscripción</a>';
   return '';
 }
@@ -680,17 +872,19 @@ function navHTML() {
 /* ---------- Principal ---------- */
 function heroHTML() {
   var o = M.overall;
-  var heads = { excelente: 'Tu publicidad va muy bien', bien: 'Tu publicidad va bien', atencion: 'Tu publicidad rinde, pero podés mejorarla', revisar: 'Tu publicidad necesita atención', sindatos: 'No hay inversión publicitaria en este período' };
-  var low = M.camps.filter(function (c) { return c.status === 'atencion' || c.status === 'revisar'; });
-  var lowSpend = low.reduce(function (a, c) { return a + c.cur.spend; }, 0);
-  var line2 = low.length
-    ? (low.length === 1 ? 'Una campaña está' : low.length + ' campañas están') + ' por debajo de su ROAS objetivo y se llevaron ' + money(lowSpend) + ' (' + Math.round(lowSpend / M.tot.spend * 100) + '% de lo que invertiste).'
-    : 'Todas tus campañas cumplen su ROAS objetivo.';
-  var tone = { excelente: ['var(--good)', 'var(--on-good)'], bien: ['var(--good-soft)', 'var(--good)'], atencion: ['var(--warn-soft)', 'var(--warn)'], revisar: ['var(--bad-soft)', 'var(--bad)'], sindatos: ['var(--surface-2)', 'var(--ink-2)'] }[o];
+  var heads = { supera: 'Tu publicidad rinde por encima de tu objetivo', objetivo: 'Tu publicidad está en su objetivo', mejorando: 'Tu publicidad viene mejorando', oportunidad: 'Tu publicidad tiene margen para mejorar', revisar: 'Hay campañas para revisar', sindatos: 'No hay inversión publicitaria en este período' };
+  var by = function (list) { return M.camps.filter(function (c) { return list.indexOf(c.status) !== -1; }); };
+  var opp = by(['oportunidad', 'revisar']), imp = by(['mejorando']), sup = by(['supera']);
+  var oppSpend = opp.reduce(function (a, c) { return a + c.cur.spend; }, 0), parts = [];
+  if (opp.length) parts.push(pl(opp.length, 'campaña tiene', 'campañas tienen') + ' oportunidad de mejora: están por debajo de su ROAS objetivo y se llevaron ' + money(oppSpend) + ' (' + Math.round(oppSpend / M.tot.spend * 100) + '% de lo que invertiste).');
+  if (imp.length) parts.push(pl(imp.length, 'campaña viene', 'campañas vienen') + ' mejorando y se acerca a su objetivo.');
+  if (sup.length) parts.push(pl(sup.length, 'campaña tiene', 'campañas tienen') + ' margen para ganar visibilidad: rinden por encima del objetivo.');
+  var line2 = parts.length ? parts.join(' ') : 'Todas tus campañas están en su ROAS objetivo.';
+  var tone = { supera: ['var(--good)', 'var(--on-good)'], objetivo: ['var(--good-soft)', 'var(--good)'], mejorando: ['var(--accent-soft)', 'var(--accent)'], oportunidad: ['var(--warn-soft)', 'var(--warn)'], revisar: ['var(--bad-soft)', 'var(--bad)'], sindatos: ['var(--surface-2)', 'var(--ink-2)'] }[o];
   return '<section class="card hero" aria-labelledby="h-hero"><div class="hero-head"><div class="hero-ic" style="background:' + tone[0] + ';color:' + tone[1] + '">' + icon(ST[o].icon) + '</div><div>' +
     '<h1 id="h-hero">' + heads[o] + '</h1><div class="hero-lines">' +
-    '<p><b>ROAS</b> (retorno de la inversión publicitaria): por cada $1 que invertiste en publicidad en los últimos ' + S.days + ' días, vendiste <b>$' + r1(M.roas) + '</b>.</p><p>' + line2 + '</p>' +
-    '<p class="small">Cada campaña se mide contra su propio ROAS objetivo, el que tenés configurado en Mercado Libre.</p></div></div></div></section>';
+    '<p><b>ROAS</b> (retorno de la inversión publicitaria): por cada $1 que invertiste en publicidad en ' + periodIn() + ', vendiste <b>$' + r1(M.roas) + '</b>.</p><p>' + line2 + '</p>' +
+    '<p class="small">El ROAS objetivo es cuánta rentabilidad priorizás en cada campaña. Más alto: te mostrás menos y ganás más por cada peso. Más bajo: te mostrás más y ganás visibilidad con menos rentabilidad. Estar por debajo no es estar mal: es una oportunidad, sobre todo si viene mejorando.</p></div></div></div></section>';
 }
 function tile(label, value, dl, def) { return '<div class="kpi"><span class="kpi-l">' + label + '</span><span class="kpi-v">' + value + '</span>' + dl + '<span class="kpi-d">' + def + '</span></div>'; }
 function kpiHTML() {
@@ -698,7 +892,7 @@ function kpiHTML() {
   var ctr = t.prints ? t.clicks / t.prints : 0, pctr = p.prints ? p.clicks / p.prints : 0;
   var cvr = t.clicks ? t.units / t.clicks : 0, pcvr = p.clicks ? p.units / p.clicks : 0;
   var acos = t.sales ? t.spend / t.sales : 0, pacos = p.sales ? p.spend / p.sales : 0;
-  return '<section aria-labelledby="h-met"><div class="sec-head"><h2 id="h-met">Métricas de publicidad</h2><span class="sub">Últimos ' + S.days + ' días</span></div>' +
+  return '<section aria-labelledby="h-met"><div class="sec-head"><h2 id="h-met">Métricas de publicidad</h2><span class="sub">' + periodSub() + '</span></div>' +
     '<div class="group-t">Resultados</div><div class="kpis">' +
     tile('Inversión publicitaria', money(t.spend), delta(t.spend, p.spend, null), 'Lo que gastaste en tus anuncios.') +
     tile('Ventas por publicidad', money(t.sales), delta(t.sales, p.sales, true), 'Ventas que se atribuyen a tus anuncios.') +
@@ -711,27 +905,50 @@ function kpiHTML() {
     tile('CVR (conversión)', pct1(cvr), delta(cvr, pcvr, true), 'Conversion Rate: de cada 100 clics, cuántos terminan en una compra.') +
     '</div><button class="link" data-act="tab" data-v="glosario" style="margin-top:6px">Ver todas las métricas en el Glosario</button></section>';
 }
-var METRICS = {
-  sales: { tab: 'Ventas', sub: 'Lo que vendiste cada día gracias a la publicidad.', fmt: function (v) { return money(v); }, axis: short },
-  spend: { tab: 'Inversión', sub: 'Lo que invertiste en anuncios cada día.', fmt: function (v) { return money(v); }, axis: short },
-  clicks: { tab: 'Clics', sub: 'Cuántas veces tocaron tus anuncios cada día.', fmt: function (v) { return nf0.format(v) + ' clics'; }, axis: function (v) { return nf0.format(v); } }
-};
+var SERIES = [
+  { k: 'units', label: 'Ventas', kind: 'bar', c: 'var(--s-sales)', val: function (v) { return nf0.format(Math.round(v)); }, tip: function (v) { return pl(Math.round(v), 'venta', 'ventas'); }, axis: function (v) { return nf0.format(v); }, up: true },
+  { k: 'sales', label: 'Ingresos', kind: 'line', c: 'var(--s-income)', val: money, tip: money, axis: short, up: true },
+  { k: 'spend', label: 'Inversión', kind: 'line', c: 'var(--s-spend)', val: money, tip: money, axis: short, up: null },
+  { k: 'clicks', label: 'Clics', kind: 'line', c: 'var(--s-clicks)', val: function (v) { return nf0.format(v); }, tip: function (v) { return nf0.format(v) + ' clics'; }, axis: function (v) { return nf0.format(v); }, up: true },
+  { k: 'prints', label: 'Impresiones', kind: 'line', c: 'var(--s-prints)', val: function (v) { return nf0.format(v); }, tip: function (v) { return nf0.format(v) + ' impresiones'; }, axis: function (v) { return nf0.format(short(v).replace('$', '')); }, up: true }
+];
+function onSeries() { return SERIES.filter(function (x) { return S.ser[x.k]; }); }
+function dayShort(d) { return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }); }
+function periodEnd() { var d = new Date(END); d.setDate(END.getDate() - S.off); return d; }
+function periodStart() { var d = periodEnd(); d.setDate(d.getDate() - (S.days - 1)); return d; }
+function periodIn() { return S.cust ? 'el período del ' + dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'los últimos ' + S.days + ' días'; }
+function periodSub() { return S.cust ? dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'Últimos ' + S.days + ' días'; }
 function dayLong(d) { return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); }
+/* Mientras sea true, los avisos por email se muestran como "Próximamente" y no se pueden activar. */
+var AVISOS_PRONTO = true;
+function mailNote() {
+  var from = (window.LUMO_CONTACT || {}).email;
+  if (!D.mailOn) return '<p class="small" style="margin-top:10px">Guardamos tus preferencias. Los avisos por email todavía no están habilitados en Lumo.</p>';
+  if (!D.email) return '<form class="mailform" id="mailForm"><p class="small">Mercado Libre no nos informó el email de tu cuenta. Escribí a qué dirección querés recibir los avisos.</p>' +
+    '<div class="mailrow"><input type="email" id="mailIn" placeholder="tu@email.com" autocomplete="email" maxlength="200" value="' + esc(S.mailDraft) + '" aria-label="Tu email para los avisos"><button class="btn" type="submit">Guardar</button></div>' +
+    (S.mailMsg ? '<p class="small" role="status">' + esc(S.mailMsg) + '</p>' : '') + '</form>';
+  return '<p class="small" style="margin-top:10px">Los avisos llegan a <b>' + esc(D.email) + '</b>' + (from ? ', desde ' + esc(from) : '') + '. Solo te escribimos por los avisos que activaste.</p>' +
+    '<button class="link" data-act="mailTest">Enviarme un mail de prueba</button>' + (S.mailMsg ? ' <span class="small" role="status">' + esc(S.mailMsg) + '</span>' : '');
+}
 function chartCardHTML() {
-  var tabs = Object.keys(METRICS).map(function (k) {
-    return '<button data-act="metric" data-v="' + k + '" aria-pressed="' + (S.metric === k) + '">' + METRICS[k].tab + '</button>';
+  var t = M.tot, p = M.prev;
+  var chips = SERIES.map(function (x) {
+    return '<button type="button" class="mchip" style="--c:' + x.c + '" data-act="ser" data-v="' + x.k + '" aria-pressed="' + !!S.ser[x.k] + '">' +
+      '<span class="mt"><i class="msw' + (x.kind === 'line' ? ' ln' : '') + '"></i>' + x.label + '</span><span class="mv">' + x.val(t[x.k]) + '</span>' + delta(t[x.k], p[x.k], x.up) + '</button>';
   }).join('');
   var body;
   if (S.table) {
-    body = '<div class="tbl"><table><thead><tr><th>Día</th><th>Inversión</th><th>Ventas</th><th>Clics</th></tr></thead><tbody>' +
+    body = '<div class="tbl"><table><thead><tr><th>Día</th><th>Ventas</th><th>Ingresos</th><th>Inversión</th><th>Clics</th><th>Impresiones</th></tr></thead><tbody>' +
       M.daily.slice().reverse().map(function (d) {
-        return '<tr><td>' + d.date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }) + '</td><td>' + money(d.spend) + '</td><td>' + money(d.sales) + '</td><td>' + nf0.format(d.clicks) + '</td></tr>';
+        return '<tr><td>' + d.date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }) + '</td><td>' + nf0.format(d.units) + '</td><td>' + money(d.sales) + '</td><td>' + money(d.spend) + '</td><td>' + nf0.format(d.clicks) + '</td><td>' + nf0.format(d.prints) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
   } else {
-    body = '<div class="chart-box" id="chartBox" role="img" aria-label="Gráfico de barras por día. Usá la tabla para ver los valores exactos."></div>';
+    body = '<div class="chart-box" id="chartBox" role="img" aria-label="Gráfico por día. Las ventas van en barras y el resto de las métricas en líneas. Usá la tabla para ver los valores exactos."></div>' +
+      (onSeries().length > 1 ? '<p class="small">Cada métrica usa su propia escala, así podés compararlas aunque tengan valores muy distintos. Tocá el gráfico para ver los valores de cada día.</p>' : '');
   }
-  return '<section class="card" aria-labelledby="h-dias"><div class="sec-head"><h2 id="h-dias">Cómo vienen tus días</h2><div class="tabs" role="group" aria-label="Qué mostrar">' + tabs + '</div></div>' +
-    '<p class="sub">' + METRICS[S.metric].sub + '</p>' + body +
+  return '<section class="card" aria-labelledby="h-dias"><div class="sec-head"><h2 id="h-dias">Cómo vienen tus días</h2><span class="sub">' + periodSub() + '</span></div>' +
+    '<p class="sub">Elegí una o más métricas para verlas juntas. Las ventas se ven en barras y el resto en líneas.</p>' +
+    '<div class="mchips" role="group" aria-label="Métricas del gráfico">' + chips + '</div>' + body +
     '<button class="link" data-act="table" aria-pressed="' + S.table + '">' + (S.table ? 'Ver como gráfico' : 'Ver como tabla') + '</button></section>';
 }
 function niceMax(v) {
@@ -741,41 +958,54 @@ function niceMax(v) {
 }
 function drawChart() {
   var box = $('#chartBox'); if (!box || !M) return;
-  var W = Math.max(280, box.clientWidth), H = 210, mg = { l: 54, r: 6, t: 10, b: 26 };
-  var key = S.metric, def = METRICS[key], data = M.daily, N = data.length;
-  var max = niceMax(Math.max.apply(null, data.map(function (d) { return d[key]; })));
+  var on = onSeries(), single = on.length === 1, data = M.daily, N = data.length;
+  var W = Math.max(280, box.clientWidth), H = 220, mg = { l: single ? 54 : 8, r: 8, t: 12, b: 26 };
   var pw = W - mg.l - mg.r, ph = H - mg.t - mg.b, slot = pw / N, gap = N <= 7 ? 6 : N <= 14 ? 4 : 2, bw = Math.max(3, slot - gap);
-  var y = function (v) { return mg.t + ph - v / max * ph; };
+  var max = {};
+  on.forEach(function (x) { max[x.k] = niceMax(Math.max.apply(null, data.map(function (d) { return d[x.k]; }))); });
+  var yv = function (k, v) { return mg.t + ph - v / max[k] * ph; };
+  var cx = function (i) { return mg.l + i * slot + slot / 2; };
   var s = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
   [0, 0.5, 1].forEach(function (f) {
-    var yy = y(max * f);
-    s += '<line class="grid" x1="' + mg.l + '" x2="' + (W - mg.r) + '" y1="' + yy + '" y2="' + yy + '"/><text x="' + (mg.l - 8) + '" y="' + (yy + 4) + '" text-anchor="end">' + def.axis(max * f) + '</text>';
+    var yy = mg.t + ph - ph * f;
+    s += '<line class="grid" x1="' + mg.l + '" x2="' + (W - mg.r) + '" y1="' + yy + '" y2="' + yy + '"/>';
+    if (single) s += '<text x="' + (mg.l - 8) + '" y="' + (yy + 4) + '" text-anchor="end">' + on[0].axis(max[on[0].k] * f) + '</text>';
   });
-  data.forEach(function (d, i) {
-    var x = mg.l + i * slot + (slot - bw) / 2, h = Math.max(1, d[key] / max * ph), top = mg.t + ph - h, r = Math.min(4, bw / 2, h);
-    s += '<path class="bar" d="M' + x + ' ' + (top + h) + 'V' + (top + r) + 'Q' + x + ' ' + top + ' ' + (x + r) + ' ' + top + 'H' + (x + bw - r) + 'Q' + (x + bw) + ' ' + top + ' ' + (x + bw) + ' ' + (top + r) + 'V' + (top + h) + 'Z"/>';
+  on.filter(function (x) { return x.kind === 'bar'; }).forEach(function (x) {
+    data.forEach(function (d, i) {
+      var xx = mg.l + i * slot + (slot - bw) / 2, h = Math.max(1, d[x.k] / max[x.k] * ph), top = mg.t + ph - h, r = Math.min(4, bw / 2, h);
+      s += '<path class="bar" d="M' + xx + ' ' + (top + h) + 'V' + (top + r) + 'Q' + xx + ' ' + top + ' ' + (xx + r) + ' ' + top + 'H' + (xx + bw - r) + 'Q' + (xx + bw) + ' ' + top + ' ' + (xx + bw) + ' ' + (top + r) + 'V' + (top + h) + 'Z"' + (single ? '' : ' style="opacity:.55"') + '/>';
+    });
   });
-  var step = N <= 7 ? 1 : N <= 14 ? 3 : 7;
+  on.filter(function (x) { return x.kind === 'line'; }).forEach(function (x) {
+    s += '<polyline class="sline" stroke="' + x.c + '" points="' + data.map(function (d, i) { return cx(i).toFixed(1) + ',' + yv(x.k, d[x.k]).toFixed(1); }).join(' ') + '"/>';
+    if (N <= 31) data.forEach(function (d, i) { s += '<circle class="sdot" fill="' + x.c + '" cx="' + cx(i).toFixed(1) + '" cy="' + yv(x.k, d[x.k]).toFixed(1) + '" r="3"/>'; });
+  });
+  var step = N <= 7 ? 1 : N <= 14 ? 3 : N <= 31 ? 7 : N <= 120 ? 14 : 30;
   data.forEach(function (d, i) {
     if ((N - 1 - i) % step !== 0) return;
-    var last = i === N - 1, cx = last ? mg.l + pw : mg.l + i * slot + slot / 2;
+    var last = i === N - 1, lx = last ? mg.l + pw : cx(i);
     var lab = N <= 7 ? d.date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric' }) : d.date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-    s += '<text x="' + cx + '" y="' + (H - 7) + '" text-anchor="' + (last ? 'end' : 'middle') + '">' + lab.replace('.', '') + '</text>';
+    s += '<text x="' + lx + '" y="' + (H - 7) + '" text-anchor="' + (last ? 'end' : 'middle') + '">' + lab.replace('.', '') + '</text>';
   });
-  s += '</svg><div class="tt" id="tt" hidden></div>';
+  s += '<line class="guide" id="guide" y1="' + mg.t + '" y2="' + (mg.t + ph) + '" hidden/></svg><div class="tt" id="tt" hidden></div>';
   box.innerHTML = s;
-  var tt = $('#tt'), bars = box.querySelectorAll('.bar');
-  function clear() { tt.hidden = true; bars.forEach(function (b) { b.classList.remove('dim'); }); }
+  var tt = $('#tt'), guide = $('#guide'), bars = box.querySelectorAll('.bar');
+  function clear() { tt.hidden = true; guide.setAttribute('hidden', ''); bars.forEach(function (b) { b.classList.remove('dim'); }); }
   function move(e) {
     var rect = box.getBoundingClientRect(), x = e.clientX - rect.left, i = Math.floor((x - mg.l) / slot);
     if (i < 0 || i >= N) { clear(); return; }
     bars.forEach(function (b, j) { b.classList.toggle('dim', j !== i); });
-    var d = data[i], hh = Math.max(1, d[key] / max * ph);
-    tt.innerHTML = dayLong(d.date) + '<b>' + def.fmt(d[key]) + '</b>';
+    var d = data[i], top = mg.t + ph;
+    tt.innerHTML = dayLong(d.date) + (single ? '<b>' + on[0].tip(d[on[0].k]) + '</b>' : on.map(function (z) {
+      return '<div><span><i style="background:' + z.c + '"></i>' + z.label + '</span><b>' + z.val(d[z.k]) + '</b></div>';
+    }).join(''));
+    on.forEach(function (z) { top = Math.min(top, yv(z.k, d[z.k])); });
+    guide.removeAttribute('hidden'); guide.setAttribute('x1', cx(i)); guide.setAttribute('x2', cx(i));
     tt.hidden = false;
-    var half = tt.offsetWidth / 2, cx = mg.l + i * slot + slot / 2;
-    tt.style.left = Math.min(Math.max(cx, half + 2), W - half - 2) + 'px';
-    tt.style.top = Math.max(mg.t + ph - hh - 6, tt.offsetHeight + 2) + 'px';
+    var half = tt.offsetWidth / 2, c = cx(i);
+    tt.style.left = Math.min(Math.max(c, half + 2), W - half - 2) + 'px';
+    tt.style.top = Math.max(top - 8, tt.offsetHeight + 2) + 'px';
   }
   box.onpointermove = move; box.onpointerdown = move; box.onpointerleave = clear;
 }
@@ -826,7 +1056,7 @@ function itemRow(o) {
 }
 function campsHTML() {
   var q = S.cq.trim().toLowerCase();
-  var sts = [['all', 'Todas']].concat(['excelente', 'bien', 'atencion', 'revisar', 'sindatos'].map(function (k) { return [k, ST[k].label]; }));
+  var sts = [['all', 'Todas']].concat(['supera', 'objetivo', 'mejorando', 'oportunidad', 'revisar', 'sindatos'].map(function (k) { return [k, ST[k].label]; }));
   var chips = sts.map(function (x) {
     var n = x[0] === 'all' ? M.camps.length : M.camps.filter(function (c) { return c.status === x[0]; }).length;
     return '<button class="chip" data-act="fstat" data-v="' + x[0] + '" aria-pressed="' + (S.fstat === x[0]) + '">' + x[1] + ' <b>' + n + '</b></button>';
@@ -858,8 +1088,8 @@ function roasChartHTML() {
       '<div class="rbar lg" aria-hidden="true"><span class="fill ' + c.status + '" style="width:' + Math.max(1, c.roas / max * 100) + '%"></span><i class="mark" style="left:' + (c.target / max * 100) + '%"></i></div>' +
       '<div class="rlab"><span>ROAS $' + r1(c.roas) + ': por cada $1 vendés $' + r1(c.roas) + '</span><span>Objetivo $' + r1(c.target) + '</span></div></div>';
   }).join('');
-  return '<section class="card" aria-labelledby="h-roas"><div class="sec-head"><h2 id="h-roas">ROAS de cada campaña contra su objetivo</h2><span class="sub">Últimos ' + S.days + ' días</span></div>' +
-    '<p class="sub">La marca negra es el ROAS objetivo de la campaña. Si la barra la pasa, la campaña cumple.</p>' + rows + '</section>';
+  return '<section class="card" aria-labelledby="h-roas"><div class="sec-head"><h2 id="h-roas">ROAS de cada campaña contra su objetivo</h2><span class="sub">' + periodSub() + '</span></div>' +
+    '<p class="sub">La marca negra es el ROAS objetivo de la campaña. Si la barra la pasa, rinde por encima de lo que buscás y podés mostrarte más. Si no llega, hay una oportunidad de mejora.</p>' + rows + '</section>';
 }
 function chartsHTML() {
   return '<div class="group-t" style="margin-top:4px">Gráficos</div><div class="stack">' + chartCardHTML() + roasChartHTML() + '</div>';
@@ -913,7 +1143,7 @@ function lowCard(o) {
   var fillW = Math.min(100, o.roas / max * 100), markL = t / max * 100;
   return '<article class="item"><div class="item-top"><div class="chips"><span class="tag">' + o.cat + '</span><span class="tag">' + o.campName + '</span>' + pill(o.status) + '</div><h3>' + o.name + '</h3></div>' +
     statsDL([['Inversión', money(o.spend)], ['Ventas por publicidad', money(o.sales)], ['ROAS actual', '$' + r1(o.roas)], ['ROAS objetivo', '$' + r1(t)]]) +
-    '<div><div class="rbar" aria-hidden="true"><span class="fill ' + (o.status === 'revisar' ? 'revisar' : 'atencion') + '" style="width:' + fillW + '%"></span><i class="mark" style="left:' + markL + '%"></i></div>' +
+    '<div><div class="rbar" aria-hidden="true"><span class="fill ' + (o.status === 'revisar' ? 'revisar' : 'oportunidad') + '" style="width:' + fillW + '%"></span><i class="mark" style="left:' + markL + '%"></i></div>' +
     '<div class="rlab"><span>ROAS actual: por cada $1 vendés $' + r1(o.roas) + '</span><span>Marca negra: tu objetivo ($' + r1(t) + ')</span></div></div>' +
     '<p class="impact">Le faltaron <b>' + money(o.shortfall) + '</b> de ventas para llegar a tu ROAS objetivo con lo que invirtió. Tu ROAS general hoy es <b>$' + r2(M.roas) + '</b> y sin esta publicación sería <b>$' + r2(o.roasWithout) + '</b>.</p>' +
     '<div class="reco"><strong>Recomendación</strong>' + o.reco.text + '</div>' +
@@ -925,14 +1155,14 @@ function alertasHTML() {
     ? shown.map(lowCard).join('') + (low.length > 5 ? '<button class="link" data-act="allLow" aria-expanded="' + S.showAllLow + '">' + (S.showAllLow ? 'Ver solo las 5 más importantes' : 'Ver las ' + low.length + ' publicaciones') + icon('chevron') + '</button>' : '')
     : '<div class="card empty">' + icon('check-circle') + '<p>Todas tus publicaciones con publicidad cumplen el ROAS objetivo de su campaña.</p></div>';
   var orgBlock = M.strong.length ? M.strong.map(orgCard).join('') : '<div class="card empty">' + icon('check-circle') + '<p>No hay publicaciones sin publicidad con buenas ventas orgánicas por ahora.</p></div>';
-  var sw = [['sw1', 'Resumen semanal por email', 'Los lunes a la mañana, con lo más importante de la semana.'], ['sw2', 'Aviso urgente cuando una publicación gasta mucho y no vende', 'Para no seguir gastando donde no rinde.'], ['sw3', 'Aviso cuando una publicación vende bien sin publicidad', 'Para que la actives a tiempo.']];
-  return '<div class="sum"><div class="sum-i"><b>' + M.strong.length + '</b><span>publicaciones sin publicidad que ya venden bien</span></div><div class="sum-i"><b>' + low.length + '</b><span>publicaciones con ROAS por debajo del objetivo</span></div></div>' +
+  var sw = [['m1', 'Resumen semanal por email', 'Los lunes a la mañana, con lo más importante de la semana.'], ['m2', 'Aviso cuando una publicación gasta mucho y no vende', 'Para no seguir gastando donde no rinde. Se revisa una vez por día y no se repite en 7 días.'], ['m3', 'Aviso cuando una publicación vende bien sin publicidad', 'Para que la actives a tiempo. No se repite en 14 días.']];
+  return '<div class="sum"><div class="sum-i"><b>' + M.strong.length + '</b><span>publicaciones sin publicidad que ya venden bien</span></div><div class="sum-i"><b>' + low.length + '</b><span>publicaciones con oportunidad de mejora (ROAS por debajo del objetivo)</span></div></div>' +
     '<section aria-labelledby="h-org"><div class="blk-h"><h2 id="h-org">Vendiendo bien sin publicidad</h2><p class="sub">Publicaciones activas en Mercado Libre pero sin anuncios, con buen desempeño orgánico en los últimos 30 días. Activarlas en publicidad puede ayudarlas a vender más.</p>' +
     '<p class="small">Criterio: 10 o más unidades vendidas en 30 días sin publicidad, conversión del 3% o más (cuando la conocemos) y sin caída respecto de los 30 días anteriores.</p></div><div class="stack">' + orgBlock + '</div></section>' +
-    '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y ROAS por debajo del objetivo</h2><p class="sub">Publicaciones con anuncios activos que no llegan al ROAS objetivo de su campaña y bajan el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en los últimos ' + S.days + ' días.</p></div><div class="stack">' + lowBlock + '</div></section>' +
-    '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Cómo querés que te avisemos</h2></div><div class="switches">' +
-    sw.map(function (s) { return '<label class="sw" for="' + s[0] + '"><span>' + s[1] + '<small>' + s[2] + '</small></span><input type="checkbox" id="' + s[0] + '" role="switch" data-act="sw" data-id="' + s[0] + '"' + (S.sw[s[0]] ? ' checked' : '') + '></label>'; }).join('') +
-    '</div><p class="small" style="margin-top:10px">Guardamos tus preferencias, pero Lumo todavía no envía avisos: el canal (email, WhatsApp u otro) está por definir.</p></section>';
+    '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y oportunidad de mejora</h2><p class="sub">Publicaciones con anuncios activos que están por debajo del ROAS objetivo de su campaña. No es que estén mal: mejorarlas es la forma más directa de subir el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en ' + periodIn() + '.</p></div><div class="stack">' + lowBlock + '</div></section>' +
+    '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Cómo querés que te avisemos</h2>' + (AVISOS_PRONTO ? '<span class="tag">Próximamente</span>' : '') + '</div><div class="switches">' +
+    sw.map(function (s) { return '<label class="sw" for="' + s[0] + '"><span>' + s[1] + '<small>' + s[2] + '</small></span><input type="checkbox" id="' + s[0] + '" role="switch" data-act="sw" data-id="' + s[0] + '"' + (S.sw[s[0]] ? ' checked' : '') + (AVISOS_PRONTO ? ' disabled' : '') + '></label>'; }).join('') +
+    '</div>' + (AVISOS_PRONTO ? '<p class="small" style="margin-top:10px">Estamos preparando los avisos por email. Muy pronto vas a poder activarlos desde acá.</p>' : mailNote()) + '</section>';
 }
 
 /* ---------- Recomendaciones ---------- */
@@ -956,6 +1186,8 @@ var KIND = {
   budget_up: { tag: 'Subir presupuesto', goal: 'Vender más sin que el ROAS baje de tu ROAS objetivo.' },
   budget_down: { tag: 'Bajar presupuesto', goal: 'Mejorar el ROAS gastando menos.' },
   improve: { tag: 'Mejorar publicaciones', goal: 'Mejorar el ROAS o vender más con el mismo presupuesto.' },
+  target_up: { tag: 'Subir ROAS objetivo', goal: 'Recuperar rentabilidad, mostrándote algo menos.' },
+  target_down: { tag: 'Bajar ROAS objetivo', goal: 'Mostrarte más y ganar visibilidad, visitas y ventas, resignando un poco de rentabilidad.' },
   pause: { tag: 'Pausar', goal: 'Dejar de gastar donde no rinde y mejorar el ROAS de tu cuenta.' },
   activate: { tag: 'Activar publicidad', goal: 'Vender más con publicaciones que ya vendían bien sin anuncios.' }
 };
@@ -977,9 +1209,9 @@ function actionFromId(id) {
   if (id.indexOf('rec-') === 0) {
     r = M.recs.filter(function (x) { return x.id === id; })[0];
     if (!r || !r.camp) return null;
-    kind = /-low$/.test(id) ? 'budget_down' : /-cap$/.test(id) ? 'budget_up' : /-mid$/.test(id) ? 'improve' : null;
+    kind = /-low$/.test(id) ? 'budget_down' : /-cap$/.test(id) ? 'budget_up' : /-mid$/.test(id) ? 'improve' : /-vis$/.test(id) ? 'target_down' : /-visup$/.test(id) ? 'target_up' : null;
     if (!kind) return null;
-    verb = { budget_down: 'Bajaste el presupuesto de ', budget_up: 'Subiste el presupuesto de ', improve: 'Mejoraste las publicaciones de ' }[kind];
+    verb = { budget_down: 'Bajaste el presupuesto de ', budget_up: 'Subiste el presupuesto de ', improve: 'Mejoraste las publicaciones de ', target_down: 'Bajaste el ROAS objetivo de ', target_up: 'Subiste el ROAS objetivo de ' }[kind];
     return { kind: kind, scope: r.camp, title: verb + campName(r.camp) };
   }
   if (id.indexOf('low-') === 0) {
@@ -1020,7 +1252,7 @@ function dailySales(scope, from, to) {
 }
 function simAfter(b, act) {
   var s = { days: b.days, spend: b.spend, clicks: b.clicks, sales: b.sales, prints: b.prints };
-  var f = { budget_up: [1.3, 1.25, 1.2], budget_down: [0.55, 0.57, 0.8], improve: [1, 1.1, 1.15] }[act.kind];
+  var f = { budget_up: [1.3, 1.25, 1.2], budget_down: [0.55, 0.57, 0.8], improve: [1, 1.1, 1.15], target_down: [1.25, 1.3, 1.15], target_up: [0.85, 0.82, 0.95] }[act.kind];
   if (f) { s.spend *= f[0]; s.clicks *= f[1]; s.prints *= f[1]; s.sales *= f[2]; }
   else if (act.kind === 'pause') {
     var sp = 0, sa = 0;
@@ -1038,9 +1270,11 @@ function dp(a, b) { return b ? a / b - 1 : 0; }
 function verdictOf(kind, b, a, t) {
   var dS = dp(a.sales, b.sales), dR = dp(a.roas, b.roas);
   if (kind === 'pause') return dR >= 0.02 ? 'mejoro' : dR <= -0.03 ? 'empeoro' : 'igual';
-  if (kind === 'budget_up') return a.roas < t * 0.85 ? 'empeoro' : dS >= 0.08 ? 'mejoro' : 'igual';
+  if (kind === 'target_up') return dR >= 0.08 ? 'mejoro' : dR <= -0.08 ? 'empeoro' : 'igual';
+  if (kind === 'target_down') return dS >= 0.08 ? 'mejoro' : dR <= -0.25 ? 'empeoro' : 'igual';
+  if (kind === 'budget_up') return a.roas < t * 0.85 && dR <= -0.05 ? 'empeoro' : dS >= 0.08 ? 'mejoro' : 'igual';
   if (kind === 'budget_down') return dR >= 0.08 ? 'mejoro' : dR <= -0.08 ? 'empeoro' : 'igual';
-  if (kind === 'activate') return a.roas < t * 0.85 ? 'empeoro' : dS >= 0.05 ? 'mejoro' : 'igual';
+  if (kind === 'activate') return a.roas < t * 0.85 && dR <= -0.05 ? 'empeoro' : dS >= 0.05 ? 'mejoro' : 'igual';
   return (dR >= 0.05 || (dS >= 0.1 && dR >= -0.03)) ? 'mejoro' : dR <= -0.05 ? 'empeoro' : 'igual';
 }
 function evolution(act) {
@@ -1195,7 +1429,8 @@ var GLOSSARY = [
   ]},
   { g: 'Eficiencia', terms: [
     { n: 'ROAS (retorno de la inversión publicitaria)', api: 'roas', d: 'Return On Ad Spend. Cuánto vendés por cada $1 que invertís en publicidad.', ex: 'Invertiste $10.000 y vendiste $60.000 con anuncios: el ROAS es $6 por cada $1.', best: 'Más alto es mejor. Se compara con tu ROAS objetivo.' },
-    { n: 'ROAS objetivo', api: 'roas_target', d: 'El ROAS mínimo que esperás de una campaña. Se configura campaña por campaña en Mercado Libre y Lumo lo lee de ahí. Si una campaña solo informa su ACOS objetivo, usamos ROAS objetivo = 100 ÷ ACOS objetivo.', ex: 'Un ROAS objetivo de $5 equivale a un ACOS objetivo del 20%.', best: 'Es la vara del semáforo de cada campaña.' },
+    { n: 'ROAS objetivo', api: 'roas_target', d: 'El ROAS mínimo que esperás de una campaña. Se configura campaña por campaña en Mercado Libre y Lumo lo lee de ahí. Si una campaña solo informa su ACOS objetivo, usamos ROAS objetivo = 100 ÷ ACOS objetivo.', ex: 'Un ROAS objetivo de $5 equivale a un ACOS objetivo del 20%.', best: 'Más alto: te mostrás menos y ganás más por cada peso. Más bajo: te mostrás más y ganás visibilidad con menos rentabilidad. Si tu visibilidad baja, bajarlo la recupera. Si la visibilidad sube pero cae el ROAS, subirlo un poco devuelve rentabilidad.' },
+    { n: 'Estado de una campaña', api: '', d: 'Lumo compara el ROAS de cada campaña con su objetivo y mira si viene mejorando o empeorando. Superando el objetivo: rinde más de lo que buscás y tiene margen para mostrarse más. En objetivo: está dentro de lo esperado. Mejorando: está por debajo, pero su ROAS sube y se acerca. Con oportunidad: está por debajo y hay margen para mejorarla. Revisar: no vendió o está lejos del objetivo sin mejorar.', ex: 'Estar por debajo del objetivo no es estar mal: es una oportunidad.', best: 'Se compara con el período que elegís en Comparar con.' },
     { n: 'ACOS (costo publicitario de ventas)', api: 'acos', d: 'Advertising Cost of Sales. Qué porcentaje de lo vendido con publicidad se fue en anuncios. Es el ROAS al revés.', ex: 'Invertiste $10.000 y vendiste $60.000: el ACOS es 16,7%. Un ROAS de $5 equivale a un ACOS del 20%.', best: 'Más bajo es mejor.' },
     { n: 'CVR (tasa de conversión)', api: 'cvr', d: 'Conversion Rate. Es el porcentaje de clics que terminan en una compra.', ex: '120 clics y 4 compras es un CVR del 3,3%.', best: 'Más alto es mejor.' }
   ]},
@@ -1223,7 +1458,7 @@ function glossaryListHTML() {
     if (!terms.length) return '';
     any = true;
     return '<section class="gl-group" aria-label="' + grp.g + '"><h2>' + grp.g + '</h2>' + terms.map(function (t) {
-      return '<article class="term"><div class="term-top"><h3>' + t.n + '</h3><code>' + t.api + '</code></div><p>' + t.d + '</p><p class="ex"><b>Ejemplo:</b> ' + t.ex + '</p>' +
+      return '<article class="term"><div class="term-top"><h3>' + t.n + '</h3>' + (t.api ? '<code>' + t.api + '</code>' : '') + '</div><p>' + t.d + '</p><p class="ex"><b>Ejemplo:</b> ' + t.ex + '</p>' +
         '<div class="meta"><span class="tag">' + t.best + '</span>' + (t.check ? '<span class="tag warn">Definición a confirmar</span>' : '') + '</div></article>';
     }).join('') + '</section>';
   }).join('');
@@ -1243,7 +1478,7 @@ var BRAND = {
   wa: ['wa', 'M12 2.2a9.8 9.8 0 0 0-8.4 14.8L2.2 21.8l4.9-1.3A9.8 9.8 0 1 0 12 2.2zm0 1.9a7.9 7.9 0 1 1-4.2 14.6l-.3-.2-2.8.8.8-2.7-.2-.3A7.9 7.9 0 0 1 12 4.1zM8.7 7.6c-.2 0-.5.1-.7.4-.3.3-1 1-1 2.4s1 2.8 1.200 3c.1.200 2 3.100 4.900 4.300 2.400 1 2.900.8 3.400.7.500-.1 1.700-.7 1.900-1.400.2-.7.2-1.200.2-1.400-.1-.1-.3-.2-.7-.4l-1.800-.9c-.3-.1-.5-.1-.7.1l-.9 1.100c-.2.200-.3.200-.6.100-.3-.2-1.200-.4-2.300-1.400-.8-.8-1.400-1.700-1.500-2-.2-.3 0-.4.100-.6l.4-.5c.1-.1.200-.3.300-.5.100-.2 0-.4 0-.5l-.8-2c-.2-.5-.4-.5-.6-.5z'],
   mail: ['mail', 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 2v.5l8 5.300 8-5.300V7zm16 2.900l-8 5.300-8-5.300V17h16z']
 };
-function brandIcon(k) { return '<div class="brand ' + BRAND[k][0] + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="' + BRAND[k][1] + '"/></svg></div>'; }
+function brandIcon(k) { return '<div class="contact-ic ' + BRAND[k][0] + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="' + BRAND[k][1] + '"/></svg></div>'; }
 function ayudaHTML() {
   var c = window.LUMO_CONTACT || {};
   var cards = '';
@@ -1287,16 +1522,34 @@ function goPanelTop() {
 }
 
 document.addEventListener('click', function (e) {
+  if (S.cmpOpen && !e.target.closest('.cmp')) { S.cmpOpen = false; if (!e.target.closest('[data-act]')) render(); }
+  if (S.pick && !e.target.closest('.seg-wrap')) { S.pick = ''; S.anchor = ''; render(); }
   var b = e.target.closest('[data-act]'); if (!b) return;
   var a = b.dataset.act;
   if (a === 'draft' || a === 'glq' || a === 'cq') return;
-  if (a === 'days') S.days = +b.dataset.v;
+  if (a === 'days') { S.days = +b.dataset.v; S.off = 0; S.cust = false; S.pick = ''; S.anchor = ''; }
+  else if (a === 'pick') { S.cmpOpen = false; S.pick = S.pick === 'range' ? '' : 'range'; S.anchor = ''; S.vm = monthStart(S.cust ? periodEnd() : END); }
+  else if (a === 'cmpmenu') { S.cmpOpen = !S.cmpOpen; S.pick = ''; S.anchor = ''; }
+  else if (a === 'cmpopt') {
+    S.cmp = b.dataset.v; S.cmpOpen = false; S.anchor = '';
+    if (S.cmp === 'custom') { S.pick = 'cmp'; S.vm = monthStart(S.cf ? parseDay(S.cf) : periodStart()); } else S.pick = '';
+  }
+  else if (a === 'cmppick') { S.pick = 'cmp'; S.cmpOpen = false; S.anchor = ''; S.vm = monthStart(S.cf ? parseDay(S.cf) : periodStart()); }
+  else if (a === 'mnav') { S.vm = new Date(S.vm.getFullYear(), S.vm.getMonth() + +b.dataset.v, 1); }
+  else if (a === 'day') { if (!pickDay(b.dataset.d)) { render(); paintCal(); return; } }
   else if (a === 'tab' || a === 'goTab') { S.tab = b.dataset.v; render(); goPanelTop(); return; }
   else if (a === 'sort') { var col = COLS.filter(function (x) { return x.k === b.dataset.v; })[0]; S.sort = S.sort.k === col.k ? { k: col.k, d: -S.sort.d } : { k: col.k, d: col.d }; }
   else if (a === 'fstat') S.fstat = b.dataset.v;
   else if (a === 'clearF') { S.fstat = 'all'; S.cq = ''; }
   else if (a === 'toggleAll') { var every = M.camps.every(function (c) { return S.open[c.id]; }); M.camps.forEach(function (c) { S.open[c.id] = !every; }); }
-  else if (a === 'metric') S.metric = b.dataset.v;
+  else if (a === 'mailTest') {
+    S.mailMsg = 'Enviando…';
+    fetch('/api/avisos/prueba', { method: 'POST', credentials: 'same-origin' }).then(function (r) {
+      S.mailMsg = r.ok ? 'Listo, revisá tu bandeja (y el spam).' : r.status === 429 ? 'Esperá un minuto antes de pedir otro.' : 'No pudimos enviarlo. Probá más tarde.';
+      render();
+    }).catch(function () { S.mailMsg = 'No pudimos enviarlo. Probá más tarde.'; render(); });
+  }
+  else if (a === 'ser') { var on0 = onSeries(); if (!(S.ser[b.dataset.v] && on0.length === 1)) S.ser[b.dataset.v] = !S.ser[b.dataset.v]; }
   else if (a === 'table') S.table = !S.table;
   else if (a === 'toggleCamp') S.open[b.dataset.id] = !S.open[b.dataset.id];
   else if (a === 'done') { S.done[b.dataset.id] = true; recordAction(b.dataset.id); }
@@ -1315,8 +1568,16 @@ document.addEventListener('click', function (e) {
   } else return;
   render();
 });
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && (S.cmpOpen || S.pick)) { S.cmpOpen = false; S.pick = ''; S.anchor = ''; render(); }
+});
+document.addEventListener('mouseover', function (e) {
+  var b = e.target.closest && e.target.closest('.cal-d');
+  if (b && S.anchor) paintCal(b.dataset.d);
+});
 document.addEventListener('input', function (e) {
   if (e.target.id === 'newTask') S.draft = e.target.value;
+  if (e.target.id === 'mailIn') S.mailDraft = e.target.value;
   if (e.target.id === 'cq') { S.cq = e.target.value; render(); }
   if (e.target.id === 'glq') { S.q = e.target.value; var l = $('#glList'); if (l) l.innerHTML = glossaryListHTML(); }
 });
@@ -1327,6 +1588,14 @@ document.addEventListener('submit', function (e) {
     var rows = [['Cuenta de Mercado Libre', f.dataset.account], ['Nombre', v('name')], ['Email', v('email')], ['Consulta', v('message')]];
     var body = rows.filter(function (r) { return r[1]; }).map(function (r) { return r[0] + ': ' + r[1]; }).join('\n');
     window.location.href = 'mailto:' + f.dataset.to + '?subject=' + encodeURIComponent('Ayuda con Lumo') + '&body=' + encodeURIComponent(body);
+    return;
+  }
+  if (e.target.id === 'mailForm') {
+    e.preventDefault();
+    var mail = S.mailDraft.trim();
+    fetch('/api/email', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: mail }) })
+      .then(function (r) { if (r.ok) { D.email = mail; S.mailMsg = ''; } else S.mailMsg = 'Ese email no parece válido.'; render(); })
+      .catch(function () { S.mailMsg = 'No pudimos guardarlo. Probá de nuevo.'; render(); });
     return;
   }
   if (e.target.id !== 'addForm') return;
@@ -1343,10 +1612,11 @@ if (typeof ResizeObserver !== 'undefined') new ResizeObserver(function () { draw
 }
 var dyn = document.getElementById('dyn');
 function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-function say(html) { dyn.innerHTML = '<div class="wrap"><section class="card empty" style="margin-top:12vh;text-align:center">' + html + '</section></div>'; }
+function say(html) { dyn.innerHTML = '<section class="cargando" role="status" aria-live="polite">' + html + '</section>'; }
+var SOL = '<svg class="sol" viewBox="0 0 64 64" aria-hidden="true"><g class="rayo"><path d="M18 40a14 14 0 0 1 28 0z" fill="#fff"/></g><rect x="12" y="43" width="40" height="3" rx="1.5" fill="#fff"/></svg>';
 function noAds(c) {
   c = c || {};
-  var ST2 = { ok: ['bien', 'check', 'Listo'], falta: ['revisar', 'x-circle', 'Falta'], revisar: ['atencion', 'alert', 'Revisar'], sindato: ['sindatos', 'info', 'Sin dato'] };
+  var ST2 = { ok: ['objetivo', 'check', 'Listo'], falta: ['revisar', 'x-circle', 'Falta'], revisar: ['oportunidad', 'alert', 'Revisar'], sindato: ['sindatos', 'info', 'Sin dato'] };
   function badge(k) { var t = ST2[k] || ST2.sindato; return '<span class="pill s-' + t[0] + '"><svg class="ic"><use href="#i-' + t[1] + '"/></svg>' + t[2] + '</span>'; }
   function num(v) { return v == null ? '—' : fmtNum(v, 0); }
   var h = '<header class="top"><div class="brand"><img class="brand-mark" src="/static/logo.svg" alt="" width="34" height="34"><div><div class="brand-name">Lumo</div><div class="brand-store">' + esc(c.nick || 'Tu cuenta') + (c.site ? ' · ' + esc(c.site) : '') + '</div></div></div></header>';
@@ -1397,7 +1667,7 @@ var MSG = {
 var qs = new URLSearchParams(location.search), want = [];
 if (qs.get('adv')) want.push('adv=' + encodeURIComponent(qs.get('adv')));
 if (qs.get('refresh') === '1') want.push('refresh=1');
-say('<h2>Trayendo tus datos de Mercado Libre…</h2><p class="sub">La primera vez puede tardar unos segundos.</p>');
+say(SOL + '<h2>Trayendo tus datos de Mercado Libre…</h2><p class="sub">La primera vez puede tardar unos segundos.</p><div class="barra"><i></i></div>');
 fetch('/api/datos' + (want.length ? '?' + want.join('&') : ''), { credentials: 'same-origin' })
   .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
   .then(function (x) {

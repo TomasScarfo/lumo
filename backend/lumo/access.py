@@ -36,11 +36,18 @@ def plan(db, cfg: dict, user_id) -> dict:
     if sub is None:
         return {"kind": "none"}
     now = utcnow()
+    base = {"status": sub.status, "plan": sub.plan, "next_plan": sub.next_plan}
+    if sub.past_due_since:
+        # Cobro rechazado: entra durante los días de gracia y después se suspende hasta que regularice.
+        limit = billing.grace_end(cfg, sub)
+        if now < limit and sub.status != "trial":
+            return dict(base, kind="paid", past_due=True, grace_ends=limit, days=billing.days_left(limit))
+        return dict(base, kind="expired", reason="unpaid")
     if sub.status == "authorized" or (sub.paid_until and sub.paid_until > now):
-        return {"kind": "paid", "status": sub.status, "until": sub.paid_until}
+        return dict(base, kind="paid", until=sub.paid_until)
     if sub.trial_ends_at > now:
-        return {"kind": "trial", "days": billing.days_left(sub.trial_ends_at), "ends": sub.trial_ends_at, "status": sub.status}
-    return {"kind": "expired", "status": sub.status}
+        return dict(base, kind="trial", days=billing.days_left(sub.trial_ends_at), ends=sub.trial_ends_at)
+    return dict(base, kind="expired", reason="cancelled" if sub.status == "cancelled" and sub.plan else "trial")
 
 
 def has_access(db, cfg: dict, user_id) -> bool:

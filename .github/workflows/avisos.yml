@@ -1,0 +1,21 @@
+# Dispara una vez por día los avisos por email de Lumo (resumen semanal y alertas).
+# Necesita dos secretos del repositorio: APP_URL (por ejemplo https://lumo-xxxx.onrender.com, sin barra al final)
+# y CRON_TOKEN (el mismo valor que la variable CRON_TOKEN del servicio "lumo" en Render).
+name: Avisos por email
+permissions: {}   # esta tarea solo llama a Lumo con un secreto: no necesita ningún permiso sobre el repositorio
+on:
+  schedule:
+    - cron: "0 14 * * *"   # 11:00 en Argentina, después de que Mercado Libre actualiza sus datos
+  workflow_dispatch:
+jobs:
+  avisos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar a Lumo
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_TOKEN: ${{ secrets.CRON_TOKEN }}
+        run: |
+          # El servicio gratis de Render se duerme: se reintenta mientras despierta.
+          curl --fail --silent --show-error --max-time 150 --retry 4 --retry-delay 30 --retry-all-errors \
+            -X POST -H "X-Cron-Token: $CRON_TOKEN" "${APP_URL%/}/cron/avisos"
