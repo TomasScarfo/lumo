@@ -10,7 +10,7 @@ from urllib.parse import quote
 
 import requests
 from flask import Flask, Response, abort, jsonify, redirect, render_template, render_template_string, request, session
-from sqlalchemy import create_engine, inspect, select, text
+from sqlalchemy import create_engine, func, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 from werkzeug.exceptions import HTTPException
@@ -27,6 +27,7 @@ MIN_REFRESH = timedelta(minutes=10)  # tope para el botón "Actualizar"
 MAX_STATE_BYTES = 200_000
 MAX_REQUEST_BYTES = 1_000_000
 TERMS_UPDATED = "10 de noviembre de 2026"  # cambiar cuando cambien los términos y condiciones
+ACTIVITY_PAGE = 20  # filas por página en la actividad de /admin
 SESSION_DAYS = 30
 ADMIN_SESSION_HOURS = 12  # quien administra vuelve a pasar por Mercado Libre pasadas estas horas
 
@@ -633,10 +634,14 @@ def create_app(overrides=None) -> Flask:
             stats = {"paying": sum(1 for x in subs if x["kind"] == "paid" and x["status"] == "authorized" and not x["past_due"]),
                      "trial": sum(1 for x in subs if x["kind"] == "trial"), "past_due": sum(1 for x in subs if x["past_due"]),
                      "mrr": billing.usd_label(billing.monthly_revenue_usd(cfg, all_subs))}
-            events = s.execute(select(AuditLog).order_by(AuditLog.id.desc()).limit(40)).scalars().all()
+            total = s.execute(select(func.count()).select_from(AuditLog)).scalar_one()
+            pages = max(1, -(-total // ACTIVITY_PAGE))
+            page = min(max(request.args.get("act", 1, type=int) or 1, 1), pages)
+            events = s.execute(select(AuditLog).order_by(AuditLog.id.desc()).offset((page - 1) * ACTIVITY_PAGE).limit(ACTIVITY_PAGE)).scalars().all()
             events = [{"at": e.at, "event": e.event, "actor": e.actor, "target": e.target, "detail": e.detail} for e in events]
         return render_template("admin.html", csrf=_csrf(), invites=invites, members=members, subs=subs, admins=sorted(access.admin_ids(cfg)),
-                               billing_on=billing.enabled(cfg), stats=stats, events=events)
+                               billing_on=billing.enabled(cfg), stats=stats, events=events,
+                               act={"page": page, "pages": pages})
 
     @app.post("/admin/invitar")
     def admin_invitar():
@@ -645,6 +650,18 @@ def create_app(overrides=None) -> Flask:
             access.create_invite(s, request.form.get("label", ""))
             audit.record(s, "invite_create", actor=admin_uid)
             s.commit()
+        return redirect("/admin#invitaciones")
+
+    @app.post("/admin/invitacion/borrar")
+    def admin_borrar_invitacion():
+        """Saca la invitación de la lista. Si estaba pendiente, el enlace deja de funcionar; quien ya la usó conserva su acceso."""
+        admin_uid = _admin_uid(); _check_csrf()
+        with Session(engine) as s:
+            inv = s.get(Invite, request.form.get("token", ""))
+            if inv:
+                audit.record(s, "invite_delete", actor=admin_uid, target=inv.token[:6])
+                s.delete(inv)
+                s.commit()
         return redirect("/admin#invitaciones")
 
     @app.post("/admin/invitacion/revocar")

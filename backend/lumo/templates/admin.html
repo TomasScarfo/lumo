@@ -16,38 +16,8 @@
     <div class="row"><a class="btn ghost sm" href="/panel">Ver mi panel</a><a class="btn ghost sm" href="/salir">Salir</a></div>
   </div>
 
-  <h2 id="invitaciones">Invitaciones</h2>
-  <p class="sub">Para dar acceso sin cargo (sin prueba ni suscripción). Creá un enlace por persona: se usa una sola vez y vence a los 14 días. Quien lo abra conecta su cuenta de Mercado Libre y queda con acceso gratis.</p>
-  <form method="post" action="/admin/invitar" class="row" style="margin-bottom:16px">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    <input type="text" name="label" maxlength="120" placeholder="Nombre de la persona o del negocio" aria-label="Nombre de la persona o del negocio">
-    <button class="btn" type="submit">Crear invitación</button>
-  </form>
-  <div class="tw">
-    {% if invites %}
-    <table>
-      <thead><tr><th>Para</th><th>Estado</th><th>Enlace</th><th></th></tr></thead>
-      <tbody>
-      {% for i in invites %}
-        <tr>
-          <td><b>{{ i.label }}</b></td>
-          <td>
-            {% if i.state == 'pendiente' %}<span class="pill pe" style="padding:2px 10px">Pendiente</span><br><small>vence {{ i.expires.strftime('%d/%m') }}</small>
-            {% elif i.state == 'usada' %}<span class="pill bi" style="padding:2px 10px">Usada</span><br><small>cuenta {{ i.used_by }}</small>
-            {% else %}<span class="pill us" style="padding:2px 10px">{{ i.state|capitalize }}</span>{% endif %}
-          </td>
-          <td>{% if i.state == 'pendiente' %}<div class="linkbox"><input type="text" readonly value="{{ i.url }}" aria-label="Enlace de invitación" onfocus="this.select()"><button class="btn ghost sm" type="button" data-copy="{{ i.url }}">Copiar</button></div>{% else %}<span class="sub">—</span>{% endif %}</td>
-          <td>{% if i.state == 'pendiente' %}
-            <form method="post" action="/admin/invitacion/revocar" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="token" value="{{ i.token }}"><button class="btn danger sm" type="submit">Cancelar</button></form>{% endif %}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {% else %}<p class="empty">Todavía no creaste invitaciones.</p>{% endif %}
-  </div>
-
   <h2 id="suscripciones">Pruebas y suscripciones</h2>
-  <p class="sub">Cada cuenta nueva empieza una prueba gratis al conectarse. {% if billing_on %}El cobro con Mercado Pago está activo.{% else %}<b>El cobro está desactivado:</b> falta <code>MP_ACCESS_TOKEN</code> en Render.{% endif %}</p>
+  <p class="sub">Cada cuenta nueva empieza su prueba gratis cuando Mercado Pago confirma su medio de pago. {% if billing_on %}El cobro con Mercado Pago está activo.{% else %}<b>El cobro está desactivado:</b> falta <code>MP_ACCESS_TOKEN</code> en Render.{% endif %}</p>
   <div class="kpis" style="margin-bottom:14px">
     <div class="kpi"><small>Pagando</small><b>{{ stats.paying }}</b></div>
     <div class="kpi"><small>Ingreso mensual</small><b>{{ stats.mrr }}</b></div>
@@ -110,8 +80,37 @@
   </div>
   <p class="sub" style="margin-top:14px">Quitar el acceso borra todo lo que Lumo guarda de esa cuenta: permisos, email, copia de datos, historial, tareas y avisos. Si tenía una suscripción, se cancela. Para volver a entrar tendrá que suscribirse o recibir una invitación nueva.</p>
 
+  <h2 id="invitaciones">Invitaciones</h2>
+  <p class="sub">Para dar acceso sin cargo (sin prueba ni suscripción). Creá un enlace por persona: se usa una sola vez y vence a los 14 días. Quien lo abra conecta su cuenta de Mercado Libre y queda con acceso gratis.</p>
+  <form method="post" action="/admin/invitar" class="row" style="margin-bottom:16px">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="text" name="label" maxlength="120" placeholder="Nombre de la persona o del negocio" aria-label="Nombre de la persona o del negocio">
+    <button class="btn" type="submit">Crear invitación</button>
+  </form>
+  <div class="tw">
+    {% if invites %}
+    <table>
+      <thead><tr><th>Para</th><th>Estado</th><th>Enlace</th><th></th></tr></thead>
+      <tbody>
+      {% for i in invites %}
+        <tr>
+          <td><b>{{ i.label }}</b></td>
+          <td>
+            {% if i.state == 'pendiente' %}<span class="pill pe" style="padding:2px 10px">Pendiente</span><br><small>vence {{ i.expires.strftime('%d/%m') }}</small>
+            {% elif i.state == 'usada' %}<span class="pill bi" style="padding:2px 10px">Usada</span><br><small>cuenta {{ i.used_by }}</small>
+            {% else %}<span class="pill us" style="padding:2px 10px">{{ i.state|capitalize }}</span>{% endif %}
+          </td>
+          <td>{% if i.state == 'pendiente' %}<div class="linkbox"><input type="text" readonly value="{{ i.url }}" aria-label="Enlace de invitación" onfocus="this.select()"><button class="btn ghost sm" type="button" data-copy="{{ i.url }}">Copiar</button></div>{% else %}<span class="sub">—</span>{% endif %}</td>
+          <td><form method="post" action="/admin/invitacion/borrar" class="inline" onsubmit="return confirm('{% if i.state == 'pendiente' %}¿Borrar esta invitación? El enlace deja de funcionar.{% else %}¿Borrar esta invitación de la lista?{% endif %}')"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="token" value="{{ i.token }}"><button class="btn danger sm" type="submit">Borrar</button></form></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="empty">Todavía no creaste invitaciones.</p>{% endif %}
+  </div>
+
   <h2 id="actividad">Actividad reciente</h2>
-  <p class="sub">Los últimos movimientos de acceso y administración. Se conservan un año.</p>
+  <p class="sub">Los movimientos de acceso, administración y suscripciones, del más reciente al más viejo. Se conservan un año.</p>
   <div class="tw">
     {% if events %}
     <table>
@@ -124,6 +123,13 @@
     </table>
     {% else %}<p class="empty">Todavía no hay actividad registrada.</p>{% endif %}
   </div>
+  {% if act.pages > 1 %}
+  <nav class="pager" aria-label="Páginas de la actividad">
+    {% if act.page > 1 %}<a class="btn ghost sm" href="?act={{ act.page - 1 }}#actividad">← Más recientes</a>{% else %}<span></span>{% endif %}
+    <span>Página {{ act.page }} de {{ act.pages }}</span>
+    {% if act.page < act.pages %}<a class="btn ghost sm" href="?act={{ act.page + 1 }}#actividad">Anteriores →</a>{% else %}<span></span>{% endif %}
+  </nav>
+  {% endif %}
 </main>
 <script>
 document.addEventListener('click', function (e) {
