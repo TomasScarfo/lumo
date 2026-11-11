@@ -17,13 +17,14 @@ class PortadaEstatica(unittest.TestCase):
     def test_los_botones_van_a_la_app_y_la_despiertan(self):
         html = build_site.render()
         self.assertNotIn('href="/connect"', html)
-        self.assertIn('href="__APP_URL__/connect" data-app', html)
+        self.assertIn('href="__APP_URL__/connect?plan=annual" data-app', html)
+        self.assertIn('href="__APP_URL__/entrar" data-app', html)
         self.assertIn("fetch(APP + '/healthz'", html)
         self.assertIn('id="waking"', html)
 
     def test_la_portada_de_la_app_no_trae_la_espera(self):
         html = create_app(CFG).test_client().get("/").get_data(as_text=True)
-        self.assertIn('href="/connect" data-app', html)
+        self.assertIn('href="/connect?plan=annual" data-app', html)
         self.assertNotIn('id="waking"', html)
 
 

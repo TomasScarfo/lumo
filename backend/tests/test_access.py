@@ -71,7 +71,7 @@ class Portada(Base):
         r = self.client.get("/")
         html = r.get_data(as_text=True)
         self.assertEqual(r.status_code, 200)
-        self.assertIn("Iniciar prueba gratis de 14 días", html)
+        self.assertIn("Probar gratis 14 días", html)
         self.assertIn("Ejemplo con datos ficticios", html)
         self.assertIn("no está afiliada", html)
 

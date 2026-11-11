@@ -232,6 +232,14 @@ def create_app(overrides=None) -> Flask:
         session["invite"] = token
         return render_template("landing.html", invited=True, label=label, **_offer())
 
+    @app.get("/entrar")
+    def entrar():
+        """"Ingresar" de la portada: quien ya tiene sesión en este navegador va directo, sin pasar por Mercado Libre."""
+        uid = _session_uid()
+        if uid:
+            return redirect("/admin" if access.is_admin(cfg, uid) else "/panel" if _current_user() else "/suscripcion")
+        return redirect("/connect")
+
     @app.get("/connect")
     def connect():
         if missing_config():

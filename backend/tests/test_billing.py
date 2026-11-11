@@ -593,6 +593,31 @@ class Administracion(Base):
             self.assertIsNone(s.get(Account, 854))
 
 
+class Portada(Base):
+    def test_los_planes_van_primero_y_los_botones_de_prueba_llevan_a_ellos(self):
+        html = self.client.get("/").get_data(as_text=True)
+        self.assertLess(html.index('id="precio"'), html.index('id="que-hace"'))  # justo después de la presentación
+        self.assertNotIn("sin letra chica", html)
+        self.assertIn("Probalo 14 días gratis", html)
+        self.assertIn('<a class="btn" href="#precio">Probar gratis 14 días</a>', html)
+        self.assertIn('href="#precio">Elegir mi plan y probar gratis</a>', html)
+        # solo los botones de cada plan (y el de invitación) llevan a Mercado Libre
+        self.assertEqual(html.count('/connect?plan='), 2)
+        self.assertNotIn('href="/connect" data-app', html)
+        self.assertIn('href="/entrar" data-app>Ingresar', html)
+
+    def test_ingresar_con_sesion_no_pasa_por_mercado_libre(self):
+        self.assertEqual(self.client.get("/entrar").headers["Location"], "/connect")  # sin sesión: hay que identificarse
+        self.trialing(895)
+        self.assertEqual(self.client.get("/entrar").headers["Location"], "/panel")
+        nuevo = self.app.test_client()
+        connect_as(nuevo, 896)  # se identificó pero todavía no eligió plan
+        self.assertEqual(nuevo.get("/entrar").headers["Location"], "/suscripcion")
+        admin = self.app.test_client()
+        connect_as(admin, 1)
+        self.assertEqual(admin.get("/entrar").headers["Location"], "/admin")
+
+
 class Legales(Base):
     def test_terminos_con_precios_prueba_y_plazos(self):
         r = self.client.get("/terminos")
