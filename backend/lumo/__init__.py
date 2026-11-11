@@ -68,7 +68,6 @@ def load_config(overrides=None) -> dict:
         "SMTP_USER": os.environ.get("SMTP_USER", os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com")),
         "SMTP_PASSWORD": os.environ.get("SMTP_PASSWORD", ""),
         "CRON_TOKEN": os.environ.get("CRON_TOKEN", ""),
-        "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
         # Cobro con Mercado Pago. Sin MP_ACCESS_TOKEN, la prueba gratis funciona igual pero no se puede pagar.
         "MP_ACCESS_TOKEN": os.environ.get("MP_ACCESS_TOKEN", ""),
         "MP_WEBHOOK_SECRET": os.environ.get("MP_WEBHOOK_SECRET", ""),
@@ -190,14 +189,10 @@ def create_app(overrides=None) -> Flask:
         msg = "Hola, quiero probar Lumo."
         if user_id:
             msg += " Mi ID de Mercado Libre es %s" % user_id + (" y mi email es %s." % user_email if user_email else ".")
-        email, wa = cfg.get("CONTACT_EMAIL"), cfg.get("CONTACT_WHATSAPP")
+        email = cfg.get("CONTACT_EMAIL")
         if email:
             out["email"] = email
             out["mailto"] = "mailto:%s?subject=%s&body=%s" % (email, quote("Acceso a Lumo"), quote(msg))
-        digits = re.sub(r"\D", "", wa or "")
-        if digits:
-            out["whatsapp"] = "https://wa.me/%s?text=%s" % (digits, quote(msg))
-            out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
         return out or None
 
     def _home():

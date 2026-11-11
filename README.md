@@ -21,7 +21,7 @@ python -m unittest discover -s tests
 
 1. Subir esta carpeta a un repositorio de GitHub.
 2. En Supabase, copiar la cadena de conexión "Session pooler" (Project Settings, Database).
-3. En Render: New, Blueprint, elegir el repositorio. Cargar `ML_CLIENT_ID`, `ML_CLIENT_SECRET`, `REDIRECT_URI`, `DATABASE_URL` y `ADMIN_USER_IDS`. Opcionales: `CONTACT_EMAIL`, `CONTACT_WHATSAPP` y `CONTACT_LINKEDIN` (ya tienen valores por defecto).
+3. En Render: New, Blueprint, elegir el repositorio. Cargar `ML_CLIENT_ID`, `ML_CLIENT_SECRET`, `REDIRECT_URI`, `DATABASE_URL` y `ADMIN_USER_IDS`. Opcionales: `CONTACT_EMAIL` (ya tienen valores por defecto).
 4. En Mercado Libre: poner en la app la misma dirección que `REDIRECT_URI` (la dirección de Render más `/callback`).
 5. Para cobrar: en Mercado Pago (Tus integraciones, crear aplicación) copiar el Access Token de producción y cargarlo en Render como `MP_ACCESS_TOKEN`. Los precios ya vienen cargados (`PLAN_PRICE_USD` y `PLAN_PRICE_ANNUAL_USD`).
 6. En esa misma aplicación de Mercado Pago, en Webhooks, poner `https://TU-APP.onrender.com/webhooks/mercadopago`, marcar los eventos "Planes y suscripciones" y "Pagos de suscripciones" (así Lumo se entera de los cobros rechazados) y copiar la clave secreta en Render como `MP_WEBHOOK_SECRET`.

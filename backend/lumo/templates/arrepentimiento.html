@@ -36,7 +36,7 @@
       {% else %}
         <p>Para identificar tu cuenta, ingresá con Mercado Libre y volvé a esta página.</p>
         <div class="row" style="margin-top:14px"><a class="btn" href="/connect">Ingresar con Mercado Libre</a></div>
-        {% if contact %}<p style="margin-top:16px">¿No podés ingresar? Pedilo{% if contact.email %} por email a <a href="mailto:{{ contact.email }}?subject=Arrepentimiento">{{ contact.email }}</a>{% endif %}{% if contact.whatsapp %}{% if contact.email %} o{% endif %} por <a href="{{ contact.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}, y te damos el código dentro de las 24 horas.</p>{% endif %}
+        {% if contact %}<p style="margin-top:16px">¿No podés ingresar? Pedilo{% if contact.email %} por email a <a href="mailto:{{ contact.email }}?subject=Arrepentimiento">{{ contact.email }}</a>{% endif %}, y te damos el código dentro de las 24 horas.</p>{% endif %}
       {% endif %}
     {% endif %}
   </div>
