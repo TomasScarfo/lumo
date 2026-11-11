@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{{ title }} · Lumo</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<main class="err">
+  <a class="logo" href="{{ home }}" aria-label="Lumo, inicio"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
+  <section class="err-box" role="alert">
+    <div class="err-sol" aria-hidden="true">
+      <svg viewBox="0 0 120 72"><path d="M20 62a40 40 0 0 1 80 0z"/><rect x="4" y="66" width="112" height="4" rx="2"/></svg>
+    </div>
+    <p class="err-code">{{ code }}</p>
+    <h1>{{ title }}</h1>
+    <p class="err-text">{{ text }}</p>
+    {% if ref %}<p class="err-ref">Código del problema: <code>{{ ref }}</code></p>{% endif %}
+    <div class="row err-actions">
+      <a class="btn" href="{{ home }}">Volver al inicio</a>
+      {% if mailto %}<a class="btn ghost" href="{{ mailto }}">Avisarnos</a>{% endif %}
+    </div>
+  </section>
+</main>
+</body>
+</html>
