@@ -333,6 +333,17 @@ class Pago(Base):
             r = self.client.post("/suscripcion", data={"plan": "monthly", "email": "a@b.co", "csrf": csrf})
         self.assertEqual(r.status_code, 502)
         self.assertIn("no pudo iniciar el pago", r.get_data(as_text=True))
+        self.assertIn("Detalle técnico: Mercado Pago respondió 500: x", r.get_data(as_text=True))
+
+    def test_credenciales_de_prueba_con_un_email_real(self):
+        connect_as(self.client, 824)
+        csrf = self.csrf()
+        msg = "Both payer and collector must be real or test users"
+        with mock.patch("lumo.billing.requests.request", return_value=Resp(400, {"message": msg})):
+            html = self.client.post("/suscripcion", data={"plan": "monthly", "email": "real@ej.com", "csrf": csrf}).get_data(as_text=True)
+        self.assertIn("modo de prueba de Mercado Pago", html)
+        self.assertIn(msg, html)
+        self.assertIsNone(self.sub(824))  # no quedó nada a medio guardar
 
     def test_la_pagina_de_pago_solo_deja_salir_hacia_mercado_pago(self):
         """Los navegadores bloquean la redirección de un formulario si su destino no está en form-action."""
@@ -347,6 +358,7 @@ class Pago(Base):
         self.app.extensions["lumo_cfg"]["MP_CHECKOUT_ORIGINS"] = "https://www.mercadopago.com.ar"
         r = self.subscribe()
         self.assertEqual(r.status_code, 502)
+        self.assertIn("El enlace de pago es de mp.test", r.get_data(as_text=True))
         self.assertIsNone(self.sub(823))  # no quedó a medio suscribir
 
     def test_sin_cotizacion_no_se_puede_pagar(self):

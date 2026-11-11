@@ -729,7 +729,7 @@ def create_app(overrides=None) -> Flask:
         uri = cfg["REDIRECT_URI"]
         return uri[: -len("/callback")] if uri.endswith("/callback") else request.url_root.rstrip("/")
 
-    def _suscripcion_page(uid, error=None, status=200):
+    def _suscripcion_page(uid, error=None, status=200, detail=None):
         with Session(engine) as s:
             p = access.plan(s, cfg, uid)
             sub = s.get(Subscription, uid)
@@ -743,7 +743,7 @@ def create_app(overrides=None) -> Flask:
                 pesos = {k: notify.money(billing.ars_amount(cfg, k)) for k in billing.available_plans(cfg)}
             except billing.RateError:
                 log.warning("no se pudo obtener la cotización del dólar")
-        html = render_template("suscripcion.html", plan=p, email=email, csrf=_csrf(), error=error, can_cancel=can_cancel, pesos=pesos, home=_home(), trial_offer=trial_offer,
+        html = render_template("suscripcion.html", plan=p, email=email, csrf=_csrf(), error=error, detail=detail, can_cancel=can_cancel, pesos=pesos, home=_home(), trial_offer=trial_offer,
                                chosen=request.form.get("plan") or session.get("plan"),
                                names=billing.NAMES, estado=request.args.get("estado"), billing_on=billing.enabled(cfg), **_offer())
         resp = Response(html, status, mimetype="text/html")
@@ -793,10 +793,17 @@ def create_app(overrides=None) -> Flask:
                 return _suscripcion_page(uid, "No pudimos calcular el precio en pesos en este momento. Probá de nuevo en unos minutos.", 503)
             except billing.MPError as exc:
                 log.warning("crear suscripción falló para %s: %s %s", uid, exc.status, exc.message)
-                return _suscripcion_page(uid, "Mercado Pago no pudo iniciar el pago. Probá de nuevo en unos minutos.", 502)
+                detail = "Mercado Pago respondió %s: %s" % (exc.status, exc.message or "sin detalle")
+                if "test" in (exc.message or "").lower():
+                    # Con credenciales de prueba, Mercado Pago solo acepta usuarios de prueba (y al revés).
+                    return _suscripcion_page(uid, "Lumo está en modo de prueba de Mercado Pago: para pagar hay que usar el email de un usuario de prueba "
+                                                  "de Mercado Pago, no una cuenta real.", 502, detail)
+                return _suscripcion_page(uid, "Mercado Pago no pudo iniciar el pago. Revisá el email y probá de nuevo en unos minutos.", 502, detail)
             if not any(url == o or url.startswith(o + "/") for o in _checkout_origins()):
-                log.warning("Mercado Pago devolvió un enlace de pago fuera de los dominios permitidos")
-                return _suscripcion_page(uid, "Mercado Pago no pudo iniciar el pago. Probá de nuevo en unos minutos.", 502)
+                host = url.split("/")[2] if url.count("/") >= 2 else url
+                log.warning("Mercado Pago devolvió un enlace de pago fuera de los dominios permitidos: %s", host)
+                return _suscripcion_page(uid, "Mercado Pago no pudo iniciar el pago. Probá de nuevo en unos minutos.", 502,
+                                         "El enlace de pago es de %s, que no está en MP_CHECKOUT_ORIGINS." % host)
             audit.record(s, "sub_checkout", actor=uid, detail=plan)
             s.commit()
         return redirect(url)
