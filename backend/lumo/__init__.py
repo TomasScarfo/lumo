@@ -13,6 +13,7 @@ from flask import Flask, Response, abort, jsonify, redirect, render_template, re
 from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
+from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import access, ads, audit, billing, cuenta, history, ml, notify, privacy, security
@@ -44,6 +45,22 @@ ul{padding-left:20px}li{margin:4px 0}code{background:var(--line);padding:1px 6px
 </style></head><body><main>{{ body|safe }}</main></body></html>"""
 
 
+ERRORES = {
+    400: ("No pudimos entender el pedido", "Algo del enlace o del formulario no llegó bien. Volvé al inicio y probá de nuevo."),
+    403: ("No tenés permiso para ver esto", "Esta pantalla no está disponible para tu cuenta. Si creés que es un error, escribinos."),
+    404: ("No encontramos esta página", "Puede que el enlace esté mal escrito o que la página ya no exista. Volvé al inicio y seguí desde ahí."),
+    405: ("Esa acción no está disponible acá", "Volvé al inicio y probá de nuevo desde el panel."),
+    413: ("El archivo es demasiado grande", "Probá con uno más liviano."),
+    429: ("Estás yendo muy rápido", "Esperá un momento y probá de nuevo."),
+    500: ("Algo salió mal de nuestro lado", "No es culpa tuya. Ya quedó registrado. Probá de nuevo en un rato y, si sigue, avisanos."),
+    502: ("Lumo está despertando", "Esperá unos segundos y recargá la página."),
+    503: ("Lumo está descansando un momento", "Esperá unos segundos y recargá la página."),
+    504: ("Lumo tardó demasiado en responder", "Esperá unos segundos y recargá la página."),
+}
+ERRORES_4XX = ("No pudimos abrir esto", "Volvé al inicio y probá de nuevo.")
+ERRORES_5XX = ERRORES[500]
+
+
 def page(body: str, status: int = 200):
     return render_template_string(PAGE, body=body), status
 
@@ -68,7 +85,6 @@ def load_config(overrides=None) -> dict:
         "SMTP_USER": os.environ.get("SMTP_USER", os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com")),
         "SMTP_PASSWORD": os.environ.get("SMTP_PASSWORD", ""),
         "CRON_TOKEN": os.environ.get("CRON_TOKEN", ""),
-        "CONTACT_WHATSAPP": os.environ.get("CONTACT_WHATSAPP", "5491145597516"),
         # Cobro con Mercado Pago. Sin MP_ACCESS_TOKEN, la prueba gratis funciona igual pero no se puede pagar.
         "MP_ACCESS_TOKEN": os.environ.get("MP_ACCESS_TOKEN", ""),
         "MP_WEBHOOK_SECRET": os.environ.get("MP_WEBHOOK_SECRET", ""),
@@ -190,19 +206,44 @@ def create_app(overrides=None) -> Flask:
         msg = "Hola, quiero probar Lumo."
         if user_id:
             msg += " Mi ID de Mercado Libre es %s" % user_id + (" y mi email es %s." % user_email if user_email else ".")
-        email, wa = cfg.get("CONTACT_EMAIL"), cfg.get("CONTACT_WHATSAPP")
+        email = cfg.get("CONTACT_EMAIL")
         if email:
             out["email"] = email
             out["mailto"] = "mailto:%s?subject=%s&body=%s" % (email, quote("Acceso a Lumo"), quote(msg))
-        digits = re.sub(r"\D", "", wa or "")
-        if digits:
-            out["whatsapp"] = "https://wa.me/%s?text=%s" % (digits, quote(msg))
-            out["phone"] = "+%s %s %s %s %s" % (digits[:2], digits[2], digits[3:5], digits[5:9], digits[9:]) if len(digits) == 13 and digits.startswith("549") else "+" + digits
         return out or None
 
     def _home():
         site = cfg.get("SITE_URL", "")
         return site if site.startswith("https://") else "/"
+
+    def _error_page(code, ref=None):
+        """Pantalla de error en lenguaje simple. Las rutas /api/ responden JSON; todo lo demás, una página de Lumo."""
+        title, text = ERRORES.get(code) or (ERRORES_5XX if code >= 500 else ERRORES_4XX)
+        if request.path.startswith("/api/") or (request.accept_mimetypes.best == "application/json"):
+            resp = jsonify({"error": "not_found" if code == 404 else "error", "status": code, "message": title})
+            resp.status_code = code
+        else:
+            email = cfg.get("CONTACT_EMAIL")
+            mailto = None
+            if email and code != 404:
+                body = "Hola, me apareció el error %s en Lumo (%s)." % (code, request.path) + (" Código: %s." % ref if ref else "")
+                mailto = "mailto:%s?subject=%s&body=%s" % (email, quote("Error en Lumo"), quote(body))
+            home = "/" if _session_uid() else _home()
+            resp = Response(render_template("error.html", code=code, title=title, text=text, ref=ref, home=home, mailto=mailto), code)
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
+    @app.errorhandler(HTTPException)
+    def _http_error(exc):
+        if exc.code is None or exc.code < 400 or exc.response is not None:
+            return exc  # redirecciones y respuestas armadas a mano (por ejemplo abort(redirect(...))) pasan tal cual
+        return _error_page(exc.code)
+
+    @app.errorhandler(Exception)
+    def _unexpected_error(exc):
+        ref = secrets.token_hex(3).upper()
+        log.exception("error inesperado %s en %s %s", ref, request.method, request.path)
+        return _error_page(500, ref)
 
     def _offer():
         return {"contact": _contact(), "trial_days": billing.trial_days(cfg), "grace_days": billing.grace_days(cfg), "price": billing.offer(cfg)}

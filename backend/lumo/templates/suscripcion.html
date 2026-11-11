@@ -96,7 +96,7 @@
           <li>Al continuar aceptás los <a href="/terminos">términos y condiciones</a>. Podés arrepentirte dentro de los 10 días desde el <a href="/arrepentimiento">botón de arrepentimiento</a>.</li>
         </ul>
       {% else %}
-        <p style="margin-top:14px">El pago en línea todavía no está habilitado.{% if contact %} <a href="{{ contact.whatsapp or contact.mailto }}">Escribinos</a> y te ayudamos a activar tu cuenta.{% endif %}</p>
+        <p style="margin-top:14px">El pago en línea todavía no está habilitado.{% if contact %} <a href="{{ contact.mailto }}">Escribinos</a> y te ayudamos a activar tu cuenta.{% endif %}</p>
       {% endif %}
     {% endif %}
 

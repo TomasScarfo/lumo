@@ -11,6 +11,8 @@ class PortadaEstatica(unittest.TestCase):
         """site/ se genera con build_site.py: si cambia la portada, los estilos o el logo, hay que volver a generarla."""
         self.assertEqual((build_site.OUT / "index.html").read_text(encoding="utf-8"), build_site.render(),
                          "La portada estática quedó vieja: correr `cd backend && python build_site.py`")
+        self.assertEqual((build_site.OUT / "404.html").read_text(encoding="utf-8"), build_site.render_404(),
+                         "La página 404 de la portada quedó vieja: correr `cd backend && python build_site.py`")
         for name in build_site.ASSETS:
             self.assertEqual((build_site.OUT / "static" / name).read_bytes(), (build_site.STATIC / name).read_bytes(), name)
 

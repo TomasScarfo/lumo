@@ -14,7 +14,7 @@ from lumo.tokens import save_tokens
 KEY = "clave-de-prueba-larga-y-aleatoria"
 CFG = {"ML_CLIENT_ID": "123", "ML_CLIENT_SECRET": "secreto-de-prueba", "REDIRECT_URI": "https://lumo.test/callback",
        "ENCRYPTION_KEY": KEY, "SECRET_KEY": "otra-clave-de-sesion", "DATABASE_URL": "sqlite://", "ADMIN_USER_IDS": "1, 2;x",
-       "CONTACT_EMAIL": "hola@lumo.test", "CONTACT_WHATSAPP": "+54 9 11 0000-0000"}
+       "CONTACT_EMAIL": "hola@lumo.test"}
 ADS = [{"advertiser_id": 9, "site_id": "MLA", "advertiser_name": "Negocio"}]
 
 
@@ -75,23 +75,23 @@ class Portada(Base):
         self.assertIn("Ejemplo con datos ficticios", html)
         self.assertIn("no está afiliada", html)
 
-    def test_seccion_de_contacto_con_whatsapp_y_email(self):
+    def test_el_contacto_es_solo_por_email_sin_whatsapp(self):
         html = self.client.get("/").get_data(as_text=True)
         self.assertIn('id="contacto"', html)
         self.assertIn("mailto:hola@lumo.test", html)
-        self.assertIn("https://wa.me/5491100000000?text=", html)
-        self.assertIn("+54 9 11 0000 0000", html)
+        for texto in ("wa.me", "WhatsApp", "b-wa", 'name="phone"'):
+            self.assertNotIn(texto, html)
 
     def test_contacto_con_logos_de_marca(self):
         html = self.client.get("/").get_data(as_text=True)
-        for marca in ("b-wa", "b-mail"):
+        for marca in ("b-mail",):
             self.assertIn('href="#%s"' % marca, html)
 
     def test_formulario_arma_el_mail_hacia_lumo_con_solo_el_email_obligatorio(self):
         html = self.client.get("/").get_data(as_text=True)
         self.assertIn('id="consulta" data-to="hola@lumo.test"', html)
         self.assertEqual(html.count("required"), 1)
-        for campo in ("email", "name", "phone", "sells", "interests", "message"):
+        for campo in ("email", "name", "sells", "interests", "message"):
             self.assertIn('name="%s"' % campo, html)
 
     def test_ya_no_hay_envio_por_servidor(self):
@@ -102,13 +102,13 @@ class Portada(Base):
         html = self.client.get("/panel").get_data(as_text=True)
         self.assertIn("window.LUMO_CONTACT=", html)
         self.assertIn("hola@lumo.test", html)
-        self.assertIn("https://wa.me/5491100000000", html)
+        self.assertNotIn("wa.me", html)
         self.assertIn("function ayudaHTML", html)
 
     def test_sin_datos_de_contacto_no_hay_seccion(self):
-        app = create_app(dict(CFG, CONTACT_EMAIL="", CONTACT_WHATSAPP=""))
+        app = create_app(dict(CFG, CONTACT_EMAIL=""))
         html = app.test_client().get("/").get_data(as_text=True)
-        for texto in ("mailto:", "wa.me", 'id="contacto"'):
+        for texto in ("mailto:", 'id="contacto"'):
             self.assertNotIn(texto, html)
 
     def test_contacto_por_defecto(self):
@@ -117,7 +117,7 @@ class Portada(Base):
         with mock.patch.dict(os.environ, quitar, clear=True):
             cfg = load_config()
         self.assertEqual(cfg["CONTACT_EMAIL"], "lumoads.ml@gmail.com")
-        self.assertEqual(cfg["CONTACT_WHATSAPP"], "5491145597516")
+        self.assertNotIn("CONTACT_WHATSAPP", cfg)
 
     def test_solo_se_usa_el_logo_nuevo(self):
         """El logo es el amanecer (semicírculo sobre una línea). La "L" vieja no tiene que aparecer en ningún lado."""

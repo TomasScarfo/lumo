@@ -184,7 +184,7 @@ a.card.contact .go svg { width: 18px; height: 18px; }
 
 .brand { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 14px; color: #fff; }
 .brand svg { width: 28px; height: 28px; }
-.brand.wa { background: #25D366; } .brand.mail { background: #EA4335; }
+.brand.mail { background: #EA4335; }
 .inquiry { margin: 22px auto 0; max-width: 720px; display: grid; gap: 14px; }
 .inquiry .sub { color: var(--ink-2); margin-top: -8px; }
 .inquiry label { display: grid; gap: 6px; font-weight: 600; font-size: .93rem; }
@@ -293,3 +293,20 @@ img, svg, video { max-width: 100%; }
 .doc .panel ul { margin: 6px 0; padding-left: 20px; color: var(--ink-2); }
 footer .legal a { margin-right: 2px; }
 footer .legal .regret { font-weight: 700; }
+
+/* Pantalla de error (404, 500, etc.): una sola columna, el amanecer y lo justo para volver. */
+.err { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 28px 20px 40px; }
+.err-box { width: 100%; max-width: 520px; margin: auto; padding: 36px 24px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
+.err-sol { position: relative; width: 120px; height: 72px; margin: 0 auto 10px; }
+.err-sol::before { content: ""; position: absolute; left: 50%; bottom: 0; width: 150px; height: 150px; margin-left: -75px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,214,102,.55), rgba(255,214,102,0) 68%); animation: err-luz 3.2s ease-in-out infinite alternate; }
+.err-sol svg { position: relative; display: block; width: 120px; height: 72px; fill: var(--accent); }
+.err-code { margin: 8px 0 0; font: 800 3.4rem/1 var(--font-display); letter-spacing: -.02em; color: var(--accent); }
+.err-box h1 { margin: 10px 0 10px; font-size: 1.6rem; }
+.err-text { color: var(--ink-2); }
+.err-ref { margin-top: 14px; font-size: .9rem; color: var(--ink-3); }
+.err-actions { justify-content: center; gap: 10px; margin-top: 24px; }
+.err-actions .btn { margin: 0; }
+@keyframes err-luz { from { opacity: .45; transform: scale(.9); } to { opacity: 1; transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .err-sol::before { animation: none; } }
+@media (max-width: 420px) { .err-box { padding: 28px 18px; } .err-code { font-size: 2.8rem; } .err-actions .btn { width: 100%; } }

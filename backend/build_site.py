@@ -11,7 +11,7 @@ from pathlib import Path
 
 from flask import render_template
 
-from lumo import create_app
+from lumo import ERRORES, create_app
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site"
@@ -28,9 +28,18 @@ def render() -> str:
         return render_template("landing.html", invited=False, label=None, app=APP_PLACEHOLDER, **app.extensions["lumo_offer"]())
 
 
+def render_404() -> str:
+    """Render sirve 404.html de la carpeta publicada cuando alguien abre una dirección que no existe."""
+    app = create_app({"DATABASE_URL": "sqlite://", "SECRET_KEY": "build", "ML_CLIENT_ID": "build"})
+    title, text = ERRORES[404]
+    with app.test_request_context("/"):
+        return render_template("error.html", code=404, title=title, text=text, ref=None, home="/", mailto=None)
+
+
 def build() -> None:
     (OUT / "static").mkdir(parents=True, exist_ok=True)
     (OUT / "index.html").write_text(render(), encoding="utf-8")
+    (OUT / "404.html").write_text(render_404(), encoding="utf-8")
     for name in ASSETS:
         shutil.copyfile(STATIC / name, OUT / "static" / name)
 
