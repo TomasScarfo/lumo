@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Botón de arrepentimiento · Lumo</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<main class="page doc">
+  <a class="logo" href="{{ home }}"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
+  <div class="panel" style="margin-top:24px">
+    {% if code %}
+      <h1>Recibimos tu pedido de arrepentimiento</h1>
+      <p>Tu código de identificación es:</p>
+      <div class="idbox"><code>{{ code }}</code></div>
+      <p>Guardalo: es la constancia de tu pedido.</p>
+      {% if had_subscription %}
+      <p>Ya cancelamos tu suscripción y no se te va a volver a cobrar. Si se te cobró dentro de los últimos 10 días, te devolvemos el importe por el mismo medio de pago.</p>
+      {% else %}
+      <p>No encontramos una suscripción activa en esta cuenta, así que no hay nada para cancelar ni cobros pendientes. Si creés que se te cobró, escribinos con este código.</p>
+      {% endif %}
+      <div class="row" style="margin-top:16px"><a class="btn ghost" href="{{ home }}">Volver al inicio</a></div>
+    {% else %}
+      <h1>Botón de arrepentimiento</h1>
+      <p>Tenés derecho a revocar la contratación de Lumo dentro de los <b>10 días corridos</b> desde que te suscribiste, sin dar explicaciones y sin costo. Si en ese plazo se te cobró, te devolvemos el importe.</p>
+      {% if logged %}
+        <form method="post" action="/arrepentimiento" style="margin-top:18px" onsubmit="return confirm('¿Revocar la contratación? Se cancela tu suscripción y perdés el acceso a Lumo.')">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <button class="btn" type="submit">Revocar mi contratación</button>
+        </form>
+        <p style="margin-top:12px;font-size:.92rem">Al confirmar, cancelamos tu suscripción en el momento y te damos un código de identificación del pedido.</p>
+        <p style="font-size:.92rem">¿Solo querés dejar de pagar al final del período? Eso es <a href="/suscripcion">cancelar la suscripción</a>.</p>
+      {% else %}
+        <p>Para identificar tu cuenta, ingresá con Mercado Libre y volvé a esta página.</p>
+        <div class="row" style="margin-top:14px"><a class="btn" href="/connect">Ingresar con Mercado Libre</a></div>
+        {% if contact %}<p style="margin-top:16px">¿No podés ingresar? Pedilo{% if contact.email %} por email a <a href="mailto:{{ contact.email }}?subject=Arrepentimiento">{{ contact.email }}</a>{% endif %}{% if contact.whatsapp %}{% if contact.email %} o{% endif %} por <a href="{{ contact.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}, y te damos el código dentro de las 24 horas.</p>{% endif %}
+      {% endif %}
+    {% endif %}
+  </div>
+</main>
+</body>
+</html>

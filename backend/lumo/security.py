@@ -38,7 +38,7 @@ HEADERS = {
 HSTS = "max-age=31536000; includeSubDomains"
 
 # Páginas públicas que se pueden guardar en caché; todo lo demás (panel, admin, API, invitaciones) no se guarda nunca.
-CACHEABLE = ("/", "/privacidad", "/.well-known/security.txt")
+CACHEABLE = ("/", "/privacidad", "/terminos", "/.well-known/security.txt")
 
 
 def apply_headers(resp, request_path: str, secure: bool):
@@ -108,6 +108,8 @@ LIMITS = (
     ("/api/email", True, 10, 60),
     ("/api/cuenta", False, 10, 60),
     ("/cuenta", True, 10, 60),
+    ("/arrepentimiento", True, 10, 60),
+    ("/suscripcion", True, 20, 60),
     ("/api/", False, 120, 60),
 )
 

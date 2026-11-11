@@ -104,12 +104,12 @@ def organic(data: dict) -> list:
     return sorted(out, key=lambda x: -x[2])
 
 
-def _layout(title: str, blocks_html: str, blocks_text: str, link: str, why: str):
+def _layout(title: str, blocks_html: str, blocks_text: str, link: str, why: str, button: str = "Abrir mi panel"):
     html = ("<div style='font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#13202C'>"
             "<h2 style='margin:0 0 4px;color:#2446D6'>Lumo</h2><h1 style='font-size:20px;margin:0 0 16px'>%s</h1>%s"
-            "<p style='margin:20px 0'><a href='%s' style='background:#2446D6;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none'>Abrir mi panel</a></p>"
-            "<p style='font-size:12px;color:#5A6B7C'>%s</p></div>") % (escape(title), blocks_html, escape(link, quote=True), escape(why))
-    text = "%s\n\n%s\nAbrí tu panel: %s\n\n%s\n" % (title, blocks_text, link, why)
+            "<p style='margin:20px 0'><a href='%s' style='background:#2446D6;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none'>%s</a></p>"
+            "<p style='font-size:12px;color:#5A6B7C'>%s</p></div>") % (escape(title), blocks_html, escape(link, quote=True), escape(button), escape(why))
+    text = "%s\n\n%s\n%s: %s\n\n%s\n" % (title, blocks_text, button, link, why)
     return text, html
 
 
@@ -132,6 +132,26 @@ def list_mail(subject: str, title: str, intro: str, lines: list, link: str, why:
     h = "<p>%s</p><ul>%s</ul>" % (escape(intro), "".join("<li>%s</li>" % escape(x) for x in lines))
     t = intro + "\n" + "".join("- %s\n" % x for x in lines)
     return (subject,) + _layout(title, h, t, link, why)
+
+
+def billing_mail(kind: str, link: str, until: datetime = None, days: int = None, price: str = None, plan: str = None):
+    """Avisos de la suscripción: "pago" (cobro rechazado), "baja" (acceso suspendido) y "prueba" (la prueba gratis termina y viene el primer cobro)."""
+    why = "Te escribimos porque tenés una cuenta en Lumo. Este aviso es sobre tu suscripción."
+    if kind == "pago":
+        subject = title = "No pudimos cobrar tu suscripción de Lumo"
+        lines = ["Mercado Pago rechazó el cobro de tu suscripción.",
+                 "Tu acceso sigue activo hasta el %s. Para no perderlo, revisá tu medio de pago en Mercado Pago o volvé a suscribirte desde Lumo." % until.strftime("%d/%m/%Y")]
+    elif kind == "baja":
+        subject = title = "Tu acceso a Lumo quedó en pausa"
+        lines = ["No pudimos cobrar tu suscripción y se terminó el plazo para regularizarla.",
+                 "No borramos nada: tus datos y tus tareas te esperan. Cuando vuelvas a suscribirte, seguís donde lo dejaste."]
+    else:
+        subject = title = "Tu prueba gratis de Lumo termina %s" % ("mañana" if days == 1 else "en %d días" % days)
+        what = "tu plan %s" % plan if plan else "tu plan"
+        lines = ["El %s Mercado Pago hace el primer cobro de %s%s." % (until.strftime("%d/%m/%Y"), what, " (%s)" % price if price else ""),
+                 "Si querés seguir, no tenés que hacer nada. Si no, cancelá antes de esa fecha desde tu suscripción y no se te cobra."]
+    h = "".join("<p>%s</p>" % escape(x) for x in lines)
+    return (subject,) + _layout(title, h, "\n".join(lines) + "\n", link, why, "Ver mi suscripción")
 
 
 def _due(s: Session, uid: int, kind: str, ref: str, every: timedelta, now) -> bool:

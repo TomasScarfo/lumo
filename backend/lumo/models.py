@@ -110,3 +110,28 @@ class Notice(Base):
     kind = Column(String(8), primary_key=True)
     ref = Column(String(64), primary_key=True)
     sent_at = Column(DateTime, nullable=False, default=utcnow)
+
+
+class Subscription(Base):
+    """Suscripción de una cuenta. La prueba gratis empieza cuando Mercado Pago confirma el medio de pago, y es una sola por cuenta:
+    por eso la fila no se borra."""
+
+    __tablename__ = "subscription"
+
+    user_id = Column(BigInteger, primary_key=True, autoincrement=False)
+    trial_started_at = Column(DateTime, nullable=True)  # cuándo empezó la prueba gratis; vacío: todavía no la usó
+    trial_ends_at = Column(DateTime, nullable=False, default=utcnow)  # día del primer cobro; solo vale si trial_started_at tiene fecha
+    # new | pending | authorized | paused | cancelled (los últimos cuatro son los estados de Mercado Pago)
+    status = Column(String(32), nullable=False, default="new")
+    mp_preapproval_id = Column(String(64), nullable=True)
+    payer_email = Column(String(254), nullable=True)
+    paid_until = Column(DateTime, nullable=True)  # próximo cobro informado por Mercado Pago: hasta ahí ya está pago
+    plan = Column(String(16), nullable=True)  # monthly | annual
+    amount_ars = Column(Float, nullable=True)  # monto en pesos cargado en Mercado Pago: se actualiza con la cotización
+    past_due_since = Column(DateTime, nullable=True)  # primer cobro rechazado sin resolver: desde ahí corren los días de gracia
+    # Cambio de plan en curso: reemplaza al actual cuando Mercado Pago lo autoriza.
+    next_preapproval_id = Column(String(64), nullable=True)
+    next_plan = Column(String(16), nullable=True)
+    next_amount_ars = Column(Float, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+    updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)

@@ -46,7 +46,7 @@
   <div class="wrap">
     <a class="logo" href="/" aria-label="Lumo, inicio"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
     <nav class="links" aria-label="Secciones">
-      <a href="#que-hace">Qué hace</a><a href="#como">Cómo funciona</a><a href="#panel">El panel</a><a href="#seguridad">Seguridad</a><a href="#preguntas">Preguntas</a><a href="#contacto">Contacto</a>
+      <a href="#que-hace">Qué hace</a><a href="#como">Cómo funciona</a><a href="#panel">El panel</a><a href="#seguridad">Seguridad</a><a href="#precio">Precio</a><a href="#preguntas">Preguntas</a><a href="#contacto">Contacto</a>
     </nav>
     <a class="btn sm" href="__APP_URL__/connect" data-app>Ingresar</a>
   </div>
@@ -60,7 +60,7 @@
         <h1>Sabé qué mejorar en tu publicidad, <em>sin descifrar métricas</em>.</h1>
         <p class="lead">Lumo lee tus campañas de Product Ads y te explica, en palabras simples, qué está funcionando, qué no y qué conviene hacer primero. Sin planillas ni jerga.</p>
         <div class="cta-row">
-          <a class="btn" href="__APP_URL__/connect" data-app>Ingresar con Mercado Libre</a>
+          <a class="btn" href="__APP_URL__/connect" data-app>Iniciar prueba gratis de 14 días</a>
           <a class="btn ghost" href="#como">Ver cómo funciona</a>
         </div>
         <ul class="chips" aria-label="Garantías">
@@ -69,8 +69,9 @@
           <li><svg><use href="#i-power"/></svg>Te desconectás cuando quieras</li>
         </ul>
         
-        <p class="invite-note"><b>Lumo está en acceso por invitación.</b>
-          ¿Todavía no tenés acceso? <a href="#contacto">Pedilo acá</a>.</p>
+        <p class="invite-note"><b>14 días gratis: no se cobra nada hasta el día 15.</b>
+          Después, desde US$5,99 por mes. Cancelás cuando quieras.
+          ¿Ya tenés cuenta? <a href="__APP_URL__/connect" data-app>Ingresá</a>.</p>
         
       </div>
 
@@ -172,19 +173,49 @@
     </div>
   </section>
 
-  <section class="block alt" id="preguntas">
+  <section class="block alt" id="precio">
+    <div class="wrap" style="max-width:820px">
+      <div class="head center">
+        <span class="kicker">Precio</span>
+        <h2>Un precio claro, sin letra chica</h2>
+        <p>Elegís un plan y probás 14 días gratis. No se cobra nada hasta el día 15, y si cancelás antes no pagás.</p>
+      </div>
+      <div class="price-grid">
+        <div class="card">
+          <h3>Mensual</h3>
+          <p class="plan-price" style="margin:10px 0 6px">US$5,99 <small>por mes</small></p>
+          <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
+          <a class="btn ghost" href="__APP_URL__/connect?plan=monthly" data-app style="margin-top:16px">Probar gratis el mensual</a>
+        </div>
+        
+        <div class="card best">
+          <h3>Anual <span class="save">Ahorrás 17%</span></h3>
+          <p class="plan-price" style="margin:10px 0 6px">US$59,99 <small>por año</small></p>
+          <p>Lo mismo, pagando una vez al año: US$11,89 menos que mes a mes.</p>
+          <a class="btn" href="__APP_URL__/connect?plan=annual" data-app style="margin-top:16px">Probar gratis el anual</a>
+        </div>
+        
+      </div>
+      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">14 días gratis en cualquiera de los dos: no se cobra nada hasta el día 15. Precios en dólares. Se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día.</p>
+    </div>
+  </section>
+
+  <section class="block" id="preguntas">
     <div class="wrap" style="max-width:820px">
       <div class="head center">
         <span class="kicker">Preguntas frecuentes</span>
         <h2>Lo que más nos preguntan</h2>
       </div>
       <details><summary>¿Lumo modifica mis campañas?</summary><p>No. Lumo solo lee tus datos y te dice qué mejorar. Cualquier cambio, como subir un presupuesto o pausar una publicación, lo hacés vos desde Mercado Libre.</p></details>
-      <details><summary>¿Qué necesito para usarlo?</summary><p>Una cuenta de Mercado Libre con Publicidad (Product Ads) habilitada y una invitación a Lumo. Si todavía no tenés campañas, el panel te lo avisa y se completa cuando crees la primera.</p></details>
+      <details><summary>¿Qué necesito para usarlo?</summary><p>Una cuenta de Mercado Libre con Publicidad (Product Ads) habilitada. Si todavía no tenés campañas, el panel te lo avisa y se completa cuando crees la primera.</p></details>
       <details><summary>¿Cada cuánto se actualizan los datos?</summary><p>Mercado Libre actualiza sus métricas una vez por día, alrededor de las 10 de la mañana (hora de Argentina). Lumo guarda una copia por unas horas para cargar rápido, y tenés un botón para actualizar cuando lo necesites.</p></details>
       <details><summary>¿Puedo ver más de 3 meses de métricas?</summary><p>Mercado Libre solo permite consultar los últimos 90 días. Lumo guarda tus métricas todos los días desde que te conectás, así que tu historial crece con el tiempo (hasta dos años). Las fechas anteriores a tu conexión que ya no están en Mercado Libre no se pueden recuperar.</p></details>
       <details><summary>¿Puedo elegir el período que quiero ver?</summary><p>Sí. Podés usar 7, 14 o 30 días, o elegir un rango de fechas personalizado dentro de tu historial.</p></details>
       <details><summary>¿De dónde salen las recomendaciones?</summary><p>De comparar el rendimiento real de cada campaña y publicación con el ROAS objetivo que configuraste. Son orientativas: las decisiones y sus resultados dependen de tu negocio, la temporada y la competencia.</p></details>
-      <details><summary>¿Por qué es por invitación?</summary><p>Lumo está en una etapa inicial y se abre de a poco. Cada cuenta se habilita con una invitación para cuidar la calidad de la experiencia.</p></details>
+      <details><summary>¿Cómo funciona la prueba gratis?</summary><p>Conectás tu cuenta de Mercado Libre, elegís un plan y cargás tu medio de pago en Mercado Pago. Desde ese momento usás Lumo completo 14 días sin que se te cobre nada: el primer cobro es recién el día 15. Si cancelás antes, no pagás.</p></details>
+      <details><summary>¿Cuánto cuesta y cómo se paga?</summary><p>US$5,99 por mes, o US$59,99 por año (ahorrás 17%). Los precios están en dólares y se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día de cada cobro. La suscripción se renueva sola.</p></details>
+      <details><summary>¿Qué pasa si falla un cobro?</summary><p>Te avisamos por email y seguís usando Lumo 7 días mientras lo resolvés. Si no se regulariza, el acceso se pausa, pero no borramos nada: cuando vuelvas, encontrás todo como lo dejaste.</p></details>
+      <details><summary>¿Cómo cancelo?</summary><p>Desde la página de tu suscripción, con un clic. Seguís teniendo acceso hasta el final del mes ya pagado y no se te vuelve a cobrar.</p></details>
       <details><summary>¿Puedo ver varias cuentas juntas?</summary><p>Hoy, cada persona ve su propia cuenta de Mercado Libre. Estamos trabajando en una vista de cartera pensada para agencias y consultores.</p></details>
     </div>
   </section>
@@ -195,7 +226,7 @@
       <div class="head center">
         <span class="kicker">Contacto</span>
         <h2>¿Querés probar Lumo o tenés preguntas?</h2>
-        <p>Escribime por el canal que prefieras y coordinamos tu acceso.</p>
+        <p>Escribime por el canal que prefieras y te ayudo a empezar.</p>
       </div>
       <div class="grid c2">
         <a class="card contact" href="https://wa.me/5491145597516?text=Hola%2C%20quiero%20probar%20Lumo." target="_blank" rel="noopener"><div class="brand wa"><svg><use href="#b-wa"/></svg></div><h3>WhatsApp</h3><p>+54 9 11 4559 7516</p><span class="go">Escribir un mensaje <svg><use href="#i-arrow"/></svg></span></a>
@@ -235,9 +266,9 @@
   <section class="block" style="padding-bottom:40px">
     <div class="cta-band"><div class="cta-box">
       <h2>Empezá a entender tu publicidad hoy</h2>
-      <p>Conectá tu cuenta de Mercado Libre y mirá tus campañas con otros ojos.</p>
-      <a class="btn" href="__APP_URL__/connect" data-app>Ingresar con Mercado Libre</a>
-      <small>Acceso por invitación. <a href="#contacto">Pedí el tuyo</a>.</small>
+      <p>Probá Lumo 14 días gratis y mirá tus campañas con otros ojos.</p>
+      <a class="btn" href="__APP_URL__/connect" data-app>Iniciar prueba gratis de 14 días</a>
+      <small>No se cobra nada los primeros 14 días. Después, desde US$5,99 por mes. ¿Dudas? <a href="#contacto">Escribinos</a>.</small>
     </div></div>
   </section>
 </main>
@@ -249,6 +280,7 @@
       <nav aria-label="Pie"><a href="__APP_URL__/connect" data-app>Ingresar</a> · <a href="https://wa.me/5491145597516?text=Hola%2C%20quiero%20probar%20Lumo." target="_blank" rel="noopener">WhatsApp</a> · <a href="mailto:lumoads.ml@gmail.com?subject=Acceso%20a%20Lumo&amp;body=Hola%2C%20quiero%20probar%20Lumo.">Email</a> · <a href="__APP_URL__/privacidad" data-app>Privacidad</a></nav>
     </div>
     <p>Lumo es una herramienta independiente: no está afiliada ni respaldada por Mercado Libre. Mercado Libre y Mercado Ads son marcas de sus respectivos titulares.</p>
+    <p class="legal"><a href="__APP_URL__/terminos" data-app>Términos y condiciones</a> · <a href="__APP_URL__/privacidad" data-app>Privacidad</a> · <a class="regret" href="__APP_URL__/arrepentimiento" data-app>Botón de arrepentimiento</a></p>
     <p>© 2026 Lumo</p>
   </div>
 </footer>

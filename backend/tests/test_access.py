@@ -8,7 +8,7 @@ import requests
 from sqlalchemy.orm import Session
 
 from lumo import access, create_app
-from lumo.models import Access, Account, Invite, PanelState, Snapshot, utcnow
+from lumo.models import Access, Account, Invite, PanelState, Snapshot, Subscription, utcnow
 from lumo.tokens import save_tokens
 
 KEY = "clave-de-prueba-larga-y-aleatoria"
@@ -22,6 +22,14 @@ def tok(uid, refresh="RT"):
     return {"access_token": "AT-%s" % uid, "refresh_token": refresh, "expires_in": 21600, "scope": "read", "user_id": uid}
 
 
+def connect_as(client, uid, advertisers=ADS):
+    """Recorre /connect y /callback como si Mercado Libre devolviera una cuenta con ese id."""
+    loc = client.get("/connect").headers["Location"]
+    state = loc.split("state=")[1].split("&")[0]
+    with mock.patch("lumo.ml.exchange_code", return_value=tok(uid)), mock.patch("lumo.ml.advertisers", return_value=advertisers):
+        return client.get("/callback?code=abc&state=" + state)
+
+
 class Base(unittest.TestCase):
     cfg = CFG
 
@@ -31,11 +39,7 @@ class Base(unittest.TestCase):
         self.client = self.app.test_client()
 
     def connect(self, client, uid, advertisers=ADS):
-        """Recorre /connect y /callback como si Mercado Libre devolviera una cuenta con ese id."""
-        loc = client.get("/connect").headers["Location"]
-        state = loc.split("state=")[1].split("&")[0]
-        with mock.patch("lumo.ml.exchange_code", return_value=tok(uid)), mock.patch("lumo.ml.advertisers", return_value=advertisers):
-            return client.get("/callback?code=abc&state=" + state)
+        return connect_as(client, uid, advertisers)
 
     def invite(self, label="Cliente", days=14):
         with Session(self.engine) as s:
@@ -63,11 +67,11 @@ class Ayudantes(unittest.TestCase):
 
 
 class Portada(Base):
-    def test_es_publica_y_ofrece_ingresar(self):
+    def test_es_publica_y_ofrece_la_prueba_gratis(self):
         r = self.client.get("/")
         html = r.get_data(as_text=True)
         self.assertEqual(r.status_code, 200)
-        self.assertIn("Ingresar con Mercado Libre", html)
+        self.assertIn("Iniciar prueba gratis de 14 días", html)
         self.assertIn("Ejemplo con datos ficticios", html)
         self.assertIn("no está afiliada", html)
 
@@ -114,11 +118,6 @@ class Portada(Base):
             cfg = load_config()
         self.assertEqual(cfg["CONTACT_EMAIL"], "lumoads.ml@gmail.com")
         self.assertEqual(cfg["CONTACT_WHATSAPP"], "5491145597516")
-
-    def test_pagina_sin_acceso_ofrece_whatsapp_y_email(self):
-        html = Ingreso.denied_html(self)
-        self.assertIn("wa.me/5491100000000", html)
-        self.assertIn("mailto:hola@lumo.test", html)
 
     def test_solo_se_usa_el_logo_nuevo(self):
         """El logo es el amanecer (semicírculo sobre una línea). La "L" vieja no tiene que aparecer en ningún lado."""
@@ -195,9 +194,10 @@ class VolverALaPortada(Base):
     cfg = dict(CFG, SITE_URL="https://lumo-sitio.onrender.com")
 
     def test_volver_al_inicio_va_a_la_portada_y_no_a_la_app(self):
-        html = self.connect(self.client, 999).get_data(as_text=True)
-        self.assertIn('href="https://lumo-sitio.onrender.com">Volver al inicio', html)
-        self.assertNotIn('href="/">Volver al inicio', html)
+        self.connect(self.client, 999)
+        html = self.client.get("/suscripcion").get_data(as_text=True)
+        self.assertIn('<a class="logo" href="https://lumo-sitio.onrender.com">', html)
+        self.assertNotIn('<a class="logo" href="/">', html)
 
     def test_salir_lleva_a_la_portada(self):
         r = self.client.get("/salir")
@@ -205,9 +205,6 @@ class VolverALaPortada(Base):
 
 
 class Ingreso(Base):
-    def denied_html(self):
-        return Base.connect(self, self.client, 999).get_data(as_text=True)
-
     def test_si_mercado_libre_no_responde_al_pedir_el_email_igual_entra(self):
         with mock.patch("lumo.ml.api_get", side_effect=requests.ConnectionError("sin red")):
             r = self.connect(self.client, 1)
@@ -218,34 +215,16 @@ class Ingreso(Base):
         fuente = open(os.path.join(os.path.dirname(__file__), "..", "lumo", "panel.html"), encoding="utf-8").read()
         self.assertIn("function principalHTML() { return heroHTML() + kpiHTML() + chartsHTML() + campsHTML(); }", fuente)
 
-    def test_pantalla_sin_acceso_arma_el_mensaje_con_el_id_y_el_email(self):
-        from urllib.parse import quote
-        with mock.patch("lumo.ml.api_get", return_value={"email": "ana@ej.com"}):
-            html = self.denied_html()
-        texto = "Hola, quiero probar Lumo. Mi ID de Mercado Libre es 999 y mi email es ana@ej.com."
-        self.assertIn("https://wa.me/5491100000000?text=" + quote(texto), html)
-        self.assertIn("body=" + quote(texto), html)
-
-    def test_pantalla_sin_acceso_sin_email_igual_lleva_el_id(self):
-        from urllib.parse import quote
-        with mock.patch("lumo.ml.api_get", return_value={}):
-            html = self.denied_html()
-        self.assertIn(quote("Mi ID de Mercado Libre es 999."), html)
-        self.assertNotIn(quote("mi email es"), html)
-
-    def test_sin_invitacion_no_entra_ni_se_guardan_sus_datos(self):
+    def test_sin_invitacion_va_a_elegir_un_plan_para_empezar_la_prueba(self):
         r = self.connect(self.client, 999)
-        html = r.get_data(as_text=True)
-        self.assertEqual(r.status_code, 403)
-        self.assertIn("Todavía no tenés acceso", html)
-        self.assertIn("999", html)
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(r.headers["Location"].endswith("/suscripcion"))
         with Session(self.engine) as s:
-            self.assertIsNone(s.get(Account, 999))
+            self.assertIsNotNone(s.get(Account, 999))
             self.assertIsNone(s.get(Access, 999))
-        with self.client.session_transaction() as sess:
-            self.assertNotIn("uid", sess)
-        self.assertEqual(self.client.get("/panel").status_code, 302)
-        self.assertEqual(self.client.get("/api/datos").status_code, 401)
+            self.assertIsNone(s.get(Subscription, 999))  # la prueba empieza recién al cargar el medio de pago
+        self.assertTrue(self.client.get("/panel").headers["Location"].endswith("/suscripcion"))
+        self.assertIn("Empezá tu prueba gratis de 14 días", self.client.get("/suscripcion").get_data(as_text=True))
 
     def test_con_invitacion_entra_y_queda_con_acceso(self):
         token = self.invite("Casa Nogal")
@@ -267,9 +246,11 @@ class Ingreso(Base):
         a.get("/invitacion/" + token)
         b.get("/invitacion/" + token)
         self.assertEqual(self.connect(a, 501).status_code, 302)
-        self.assertEqual(self.connect(b, 502).status_code, 403)
+        self.connect(b, 502)
         with Session(self.engine) as s:
-            self.assertIsNone(s.get(Access, 502))
+            self.assertIsNone(s.get(Access, 502))  # la segunda cuenta no queda con acceso sin cargo
+        self.assertEqual(a.get("/panel").status_code, 200)
+        self.assertTrue(b.get("/panel").headers["Location"].endswith("/suscripcion"))
 
     def test_invitacion_cancelada_despues_de_abrirla_no_sirve(self):
         token = self.invite()
@@ -277,7 +258,9 @@ class Ingreso(Base):
         with Session(self.engine) as s:
             s.get(Invite, token).revoked = True
             s.commit()
-        self.assertEqual(self.connect(self.client, 503).status_code, 403)
+        self.connect(self.client, 503)
+        with Session(self.engine) as s:
+            self.assertIsNone(s.get(Access, 503))
 
     def test_administrador_entra_sin_invitacion(self):
         r = self.connect(self.client, 1)
@@ -297,8 +280,8 @@ class Ingreso(Base):
         with Session(self.engine) as s:
             s.delete(s.get(Access, 504))
             s.commit()
-        self.assertEqual(self.client.get("/panel").status_code, 302)
-        self.assertEqual(self.client.get("/api/datos").status_code, 401)
+        self.assertTrue(self.client.get("/panel").headers["Location"].endswith("/suscripcion"))
+        self.assertEqual(self.client.get("/api/datos").status_code, 402)
 
 
 class Administracion(Base):
@@ -350,7 +333,8 @@ class Administracion(Base):
         with Session(self.engine) as s:
             for model in (Access, Account, Snapshot, PanelState):
                 self.assertIsNone(s.get(model, 700), model.__name__)
-        self.assertEqual(self.connect(self.app.test_client(), 700).status_code, 403)
+        # ya no entra gratis: para volver tiene que suscribirse
+        self.assertTrue(self.connect(self.app.test_client(), 700).headers["Location"].endswith("/suscripcion"))
 
     def test_id_no_numerico_se_ignora(self):
         c = self.admin_client()

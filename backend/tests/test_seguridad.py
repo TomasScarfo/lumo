@@ -188,9 +188,9 @@ class Auditoria(Base):
         self.assertEqual([e[0] for e in ev], ["login_ok", "invite_create", "access_grant", "access_remove"])
         self.assertEqual(ev[2], ("access_grant", 1, "77"))
 
-    def test_acceso_denegado_queda_registrado(self):
+    def test_el_ingreso_de_una_cuenta_nueva_queda_registrado(self):
         self.connect(self.client, 50)
-        self.assertEqual(self.events(), [("login_denied", None, "50")])
+        self.assertEqual(self.events(), [("login_ok", 50, None)])
 
     def test_el_registro_no_guarda_emails_ni_tokens(self):
         c = self.admin_client()
@@ -235,9 +235,10 @@ class Cifrado(unittest.TestCase):
     def test_los_tokens_no_se_guardan_en_claro(self):
         app = create_app(CFG)
         with Session(app.extensions["lumo_engine"]) as s:
-            acc = save_tokens(s, CFG, 3, tok(3))
+            # Valores largos: un texto cifrado al azar puede contener "RT" por casualidad, pero no estos.
+            acc = save_tokens(s, CFG, 3, tok(3, refresh="RT-refresco-secreto-3"))
             self.assertNotIn("AT-3", acc.access_token)
-            self.assertNotIn("RT", acc.refresh_token)
+            self.assertNotIn("RT-refresco-secreto-3", acc.refresh_token)
 
 
 class Privacidad(Base):
@@ -309,7 +310,16 @@ class Privacidad(Base):
         """Si se agrega una tabla con datos de una cuenta y no se suma a privacy.PER_USER, el borrado quedaría incompleto."""
         from lumo.models import Base as Models
         con_usuario = {m.class_ for m in Models.registry.mappers if "user_id" in m.columns}
-        self.assertEqual(con_usuario, set(privacy.PER_USER))
+        self.assertEqual(con_usuario, set(privacy.PER_USER) | set(privacy.KEPT_MINIMAL))
+
+    def test_de_la_suscripcion_solo_queda_la_marca_de_la_prueba(self):
+        from lumo import billing
+        from lumo.models import Subscription
+        sub = Subscription(user_id=77, trial_ends_at=utcnow() + timedelta(days=5), status="authorized", plan="annual", payer_email="ana@ej.com",
+                           paid_until=utcnow() + timedelta(days=200), past_due_since=utcnow(), next_preapproval_id="x", next_plan="monthly")
+        billing.end({}, sub)
+        self.assertEqual((sub.status, sub.payer_email, sub.paid_until, sub.past_due_since, sub.next_preapproval_id, sub.next_plan), ("cancelled", None, None, None, None, None))
+        self.assertLessEqual(sub.trial_ends_at, utcnow())
 
     def test_plazos_de_conservacion(self):
         now = utcnow()

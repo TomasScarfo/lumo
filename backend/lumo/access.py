@@ -1,10 +1,12 @@
-"""Quién puede usar Lumo: administradores (variable de entorno), cuentas con acceso e invitaciones de un solo uso."""
+"""Quién puede usar Lumo: administradores (variable de entorno), cuentas con acceso sin cargo, invitaciones de un solo uso
+y cuentas en prueba gratis o con la suscripción al día."""
 import secrets
 from datetime import timedelta
 
 from sqlalchemy import update
 
-from .models import Access, Invite, utcnow
+from . import billing
+from .models import Access, Invite, Subscription, utcnow
 
 INVITE_DAYS = 14
 
@@ -22,10 +24,37 @@ def is_admin(cfg: dict, user_id) -> bool:
     return user_id is not None and int(user_id) in admin_ids(cfg)
 
 
-def has_access(db, cfg: dict, user_id) -> bool:
+def plan(db, cfg: dict, user_id) -> dict:
+    """Por qué entra (o no) una cuenta: admin, free (acceso sin cargo), paid, trial, expired o none (nunca ingresó)."""
     if user_id is None:
-        return False
-    return is_admin(cfg, user_id) or db.get(Access, int(user_id)) is not None
+        return {"kind": "none"}
+    if is_admin(cfg, user_id):
+        return {"kind": "admin"}
+    if db.get(Access, int(user_id)) is not None:
+        return {"kind": "free"}
+    sub = db.get(Subscription, int(user_id))
+    if sub is None:
+        return {"kind": "none"}  # nunca se suscribió: puede empezar su prueba gratis
+    now = utcnow()
+    base = {"status": sub.status, "plan": sub.plan, "next_plan": sub.next_plan}
+    if sub.past_due_since:
+        # Cobro rechazado: entra durante los días de gracia y después se suspende hasta que regularice.
+        limit = billing.grace_end(cfg, sub)
+        if now < limit:
+            return dict(base, kind="paid", past_due=True, grace_ends=limit, days=billing.days_left(limit))
+        return dict(base, kind="expired", reason="unpaid")
+    if sub.status == "authorized" and billing.in_trial(sub):
+        # Prueba gratis: ya cargó su medio de pago y todavía no se le cobró nada.
+        return dict(base, kind="trial", days=billing.days_left(sub.trial_ends_at), ends=sub.trial_ends_at)
+    if sub.status == "authorized" or (sub.paid_until and sub.paid_until > now):
+        return dict(base, kind="paid", until=sub.paid_until)
+    if sub.trial_started_at is None:
+        return dict(base, kind="expired", reason="new")  # todavía no empezó su prueba gratis
+    return dict(base, kind="expired", reason="cancelled")
+
+
+def has_access(db, cfg: dict, user_id) -> bool:
+    return plan(db, cfg, user_id)["kind"] in ("admin", "free", "paid", "trial")
 
 
 def create_invite(db, label: str, days: int = INVITE_DAYS) -> Invite:

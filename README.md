@@ -23,13 +23,24 @@ python -m unittest discover -s tests
 2. En Supabase, copiar la cadena de conexión "Session pooler" (Project Settings, Database).
 3. En Render: New, Blueprint, elegir el repositorio. Cargar `ML_CLIENT_ID`, `ML_CLIENT_SECRET`, `REDIRECT_URI`, `DATABASE_URL` y `ADMIN_USER_IDS`. Opcionales: `CONTACT_EMAIL`, `CONTACT_WHATSAPP` y `CONTACT_LINKEDIN` (ya tienen valores por defecto).
 4. En Mercado Libre: poner en la app la misma dirección que `REDIRECT_URI` (la dirección de Render más `/callback`).
-5. Abrir la dirección de Render, ingresar con Mercado Libre y crear invitaciones en `/admin`.
+5. Para cobrar: en Mercado Pago (Tus integraciones, crear aplicación) copiar el Access Token de producción y cargarlo en Render como `MP_ACCESS_TOKEN`. Los precios ya vienen cargados (`PLAN_PRICE_USD` y `PLAN_PRICE_ANNUAL_USD`).
+6. En esa misma aplicación de Mercado Pago, en Webhooks, poner `https://TU-APP.onrender.com/webhooks/mercadopago`, marcar los eventos "Planes y suscripciones" y "Pagos de suscripciones" (así Lumo se entera de los cobros rechazados) y copiar la clave secreta en Render como `MP_WEBHOOK_SECRET`.
+7. Abrir la dirección de Render e ingresar con Mercado Libre. En `/admin` se ven las pruebas y suscripciones.
 
-## Acceso
+## Acceso y cobro
 
-Lumo es por invitación. Entran los administradores (`ADMIN_USER_IDS`), las cuentas habilitadas en `/admin` y quien abre un enlace `/invitacion/...` de un solo uso. Las cuentas que ya estaban conectadas antes de este control siguen entrando.
-
-Los secretos se cargan solo en Render. Nunca van en GitHub ni en el chat.
+- **Prueba gratis:** 14 días (`TRIAL_DAYS`), una sola por cuenta. Empieza cuando la persona elige un plan y Mercado Pago confirma su medio de pago; no se cobra nada hasta el día 15. Si cancela antes, no paga.
+- **Planes:** mensual (`PLAN_PRICE_USD`) y anual (`PLAN_PRICE_ANNUAL_USD`). El ahorro del anual se calcula solo y se muestra como descuento.
+- **Dólares y pesos:** el precio se muestra en dólares y Mercado Pago cobra en pesos. Lumo convierte con el dólar oficial vendedor (`USD_RATE_URL`) al suscribirse y, cada día, actualiza el monto de las suscripciones activas si la cotización se movió más de 1 %. `USD_ARS_RATE` fija la cotización a mano.
+- **Renovación:** automática, cada mes o cada año. Tres días antes del primer cobro se manda un email de aviso.
+- **Legales:** `/terminos` (términos y condiciones) y `/arrepentimiento` (botón de arrepentimiento: cancela en el momento, da un código y avisa por email a `CONTACT_EMAIL` para devolver el cobro si lo hubo). Las devoluciones se hacen a mano desde Mercado Pago. La factura todavía no se emite desde Lumo.
+- **Cobro rechazado:** la cuenta sigue entrando 7 días (`GRACE_DAYS`) y recibe un email. Si no regulariza, el acceso se pausa; no se borra nada.
+- **Cambio de plan:** desde `/suscripcion`. El plan nuevo empieza cuando termina lo ya pago y reemplaza al anterior recién cuando Mercado Pago lo confirma.
+- **Cancelación:** desde `/suscripcion`; sigue entrando hasta la fecha ya paga. Borrar la cuenta o quitar el acceso desde `/admin` también corta el cobro.
+- **Acceso sin cargo:** administradores (`ADMIN_USER_IDS`), cuentas habilitadas en `/admin` y quien abre un enlace `/invitacion/...` entran gratis, sin vencimiento.
+- **Chequeo diario:** la tarea de GitHub que llama a `/cron/avisos` también sincroniza las suscripciones con Mercado Pago, actualiza montos y manda los avisos (prueba por terminar, cobro rechazado, acceso pausado). Necesita `CRON_TOKEN` y, para los emails, `SMTP_PASSWORD`.
+- Sin `MP_ACCESS_TOKEN`, la prueba funciona pero no se puede pagar (la página invita a escribir).
+- Para probar pagos sin dinero real, usar las credenciales y usuarios de prueba de Mercado Pago.
 
 ## Portada estática
 
