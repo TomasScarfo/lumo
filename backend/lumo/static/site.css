@@ -310,3 +310,4 @@ footer .legal .regret { font-weight: 700; }
 @keyframes err-luz { from { opacity: .45; transform: scale(.9); } to { opacity: 1; transform: scale(1.05); } }
 @media (prefers-reduced-motion: reduce) { .err-sol::before { animation: none; } }
 @media (max-width: 420px) { .err-box { padding: 28px 18px; } .err-code { font-size: 2.8rem; } .err-actions .btn { width: 100%; } }
+.adm .pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; color: var(--ink-2); font-size: .92rem; }

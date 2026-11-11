@@ -52,7 +52,7 @@
     {% elif estado == 'cambio' %}
       <p class="invite-note ok" role="status"><b>Listo.</b> {% if plan.next_plan %}Estamos esperando la confirmación de Mercado Pago para cambiar tu plan.{% else %}Tu plan ahora es el {{ names[plan.plan] }}.{% endif %}</p>
     {% endif %}
-    {% if error %}<p class="invite-note bad" role="alert"><b>{{ error }}</b></p>{% endif %}
+    {% if error %}<p class="invite-note bad" role="alert"><b>{{ error }}</b>{% if detail %}<br><small>Detalle técnico: {{ detail }}</small>{% endif %}</p>{% endif %}
 
     {% if can_pay %}
       {% if billing_on %}

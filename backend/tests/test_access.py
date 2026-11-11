@@ -71,7 +71,7 @@ class Portada(Base):
         r = self.client.get("/")
         html = r.get_data(as_text=True)
         self.assertEqual(r.status_code, 200)
-        self.assertIn("Iniciar prueba gratis de 14 días", html)
+        self.assertIn("Probar gratis 14 días", html)
         self.assertIn("Ejemplo con datos ficticios", html)
         self.assertIn("no está afiliada", html)
 
@@ -335,6 +335,46 @@ class Administracion(Base):
                 self.assertIsNone(s.get(model, 700), model.__name__)
         # ya no entra gratis: para volver tiene que suscribirse
         self.assertTrue(self.connect(self.app.test_client(), 700).headers["Location"].endswith("/suscripcion"))
+
+    def test_orden_de_las_secciones(self):
+        html = self.admin_client().get("/admin").get_data(as_text=True)
+        orden = [html.index('id="%s"' % x) for x in ("suscripciones", "accesos", "invitaciones", "actividad")]
+        self.assertEqual(orden, sorted(orden))
+
+    def test_borrar_invitaciones_de_cualquier_estado(self):
+        pendiente, usada = self.invite("Pendiente"), self.invite("Usada")
+        self.client.get("/invitacion/" + usada)
+        self.connect(self.client, 710)
+        c = self.admin_client()
+        csrf = self.csrf(c)
+        self.assertEqual(c.get("/admin").get_data(as_text=True).count('action="/admin/invitacion/borrar"'), 2)
+        for token in (pendiente, usada):
+            self.assertEqual(c.post("/admin/invitacion/borrar", data={"token": token, "csrf": csrf}).status_code, 302)
+        with Session(self.engine) as s:
+            self.assertEqual(s.query(Invite).count(), 0)
+            self.assertIsNotNone(s.get(Access, 710))  # quien ya la usó conserva su acceso
+        self.assertEqual(self.app.test_client().get("/invitacion/" + pendiente).status_code, 404)  # el enlace ya no sirve
+        self.assertEqual(c.post("/admin/invitacion/borrar", data={"token": pendiente}).status_code, 400)  # sin csrf
+        self.assertEqual(self.client.post("/admin/invitacion/borrar", data={"token": "x"}).status_code, 404)  # no administra
+
+    def test_actividad_por_paginas(self):
+        from lumo import ACTIVITY_PAGE
+        from lumo.models import AuditLog
+        with Session(self.engine) as s:
+            s.add_all([AuditLog(event="evento_%02d" % i) for i in range(45)])
+            s.commit()
+        c = self.admin_client()
+        p1 = c.get("/admin").get_data(as_text=True)
+        self.assertEqual(p1.count("<code>evento_") + p1.count("<code>login_ok"), ACTIVITY_PAGE)
+        self.assertIn("evento_44", p1)  # lo más reciente primero
+        self.assertIn("Página 1 de 3", p1)
+        self.assertIn('href="?act=2#actividad"', p1)
+        p3 = c.get("/admin?act=3").get_data(as_text=True)
+        self.assertIn("Página 3 de 3", p3)
+        self.assertIn("evento_00", p3)
+        self.assertNotIn("evento_44", p3)
+        self.assertIn("Página 3 de 3", c.get("/admin?act=99").get_data(as_text=True))  # fuera de rango: la última
+        self.assertIn("Página 1 de 3", c.get("/admin?act=abc").get_data(as_text=True))
 
     def test_id_no_numerico_se_ignora(self):
         c = self.admin_client()

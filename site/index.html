@@ -45,9 +45,9 @@
   <div class="wrap">
     <a class="logo" href="/" aria-label="Lumo, inicio"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
     <nav class="links" aria-label="Secciones">
-      <a href="#que-hace">Qué hace</a><a href="#como">Cómo funciona</a><a href="#panel">El panel</a><a href="#seguridad">Seguridad</a><a href="#precio">Precio</a><a href="#preguntas">Preguntas</a><a href="#contacto">Contacto</a>
+      <a href="#precio">Planes</a><a href="#que-hace">Qué hace</a><a href="#como">Cómo funciona</a><a href="#panel">El panel</a><a href="#seguridad">Seguridad</a><a href="#preguntas">Preguntas</a><a href="#contacto">Contacto</a>
     </nav>
-    <a class="btn sm" href="__APP_URL__/connect" data-app>Ingresar</a>
+    <a class="btn sm" href="__APP_URL__/entrar" data-app>Ingresar</a>
   </div>
 </header>
 
@@ -59,7 +59,7 @@
         <h1>Sabé qué mejorar en tu publicidad, <em>sin descifrar métricas</em>.</h1>
         <p class="lead">Lumo lee tus campañas de Product Ads y te explica, en palabras simples, qué está funcionando, qué no y qué conviene hacer primero. Sin planillas ni jerga.</p>
         <div class="cta-row">
-          <a class="btn" href="__APP_URL__/connect" data-app>Iniciar prueba gratis de 14 días</a>
+          <a class="btn" href="#precio">Probar gratis 14 días</a>
           <a class="btn ghost" href="#como">Ver cómo funciona</a>
         </div>
         <ul class="chips" aria-label="Garantías">
@@ -70,7 +70,7 @@
         
         <p class="invite-note"><b>14 días gratis: no se cobra nada hasta el día 15.</b>
           Después, desde US$5,99 por mes. Cancelás cuando quieras.
-          ¿Ya tenés cuenta? <a href="__APP_URL__/connect" data-app>Ingresá</a>.</p>
+          ¿Ya tenés cuenta? <a href="__APP_URL__/entrar" data-app>Ingresá</a>.</p>
         
       </div>
 
@@ -99,6 +99,33 @@
           <p>Su ROAS está 22% por encima del objetivo. Podés bajarlo para mostrarte más y ganar clics y ventas, a cambio de algo de rentabilidad.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="block" id="precio">
+    <div class="wrap" style="max-width:820px">
+      <div class="head center">
+        <span class="kicker">Planes</span>
+        <h2>Probalo 14 días gratis</h2>
+        <p>Elegí tu plan. No se cobra nada hasta el día 15, y si cancelás antes no pagás.</p>
+      </div>
+      <div class="price-grid">
+        <div class="card">
+          <h3>Mensual</h3>
+          <p class="plan-price" style="margin:10px 0 6px">US$5,99 <small>por mes</small></p>
+          <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
+          <a class="btn ghost" href="__APP_URL__/connect?plan=monthly" data-app style="margin-top:16px">Probar gratis el mensual</a>
+        </div>
+        
+        <div class="card best">
+          <h3>Anual <span class="save">Ahorrás 17%</span></h3>
+          <p class="plan-price" style="margin:10px 0 6px">US$59,99 <small>por año</small></p>
+          <p>Lo mismo, pagando una vez al año: US$11,89 menos que mes a mes.</p>
+          <a class="btn" href="__APP_URL__/connect?plan=annual" data-app style="margin-top:16px">Probar gratis el anual</a>
+        </div>
+        
+      </div>
+      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, conectás tu cuenta de Mercado Libre y cargás tu medio de pago en Mercado Pago. Precios en dólares. Se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día.</p>
     </div>
   </section>
 
@@ -172,34 +199,7 @@
     </div>
   </section>
 
-  <section class="block alt" id="precio">
-    <div class="wrap" style="max-width:820px">
-      <div class="head center">
-        <span class="kicker">Precio</span>
-        <h2>Un precio claro, sin letra chica</h2>
-        <p>Elegís un plan y probás 14 días gratis. No se cobra nada hasta el día 15, y si cancelás antes no pagás.</p>
-      </div>
-      <div class="price-grid">
-        <div class="card">
-          <h3>Mensual</h3>
-          <p class="plan-price" style="margin:10px 0 6px">US$5,99 <small>por mes</small></p>
-          <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
-          <a class="btn ghost" href="__APP_URL__/connect?plan=monthly" data-app style="margin-top:16px">Probar gratis el mensual</a>
-        </div>
-        
-        <div class="card best">
-          <h3>Anual <span class="save">Ahorrás 17%</span></h3>
-          <p class="plan-price" style="margin:10px 0 6px">US$59,99 <small>por año</small></p>
-          <p>Lo mismo, pagando una vez al año: US$11,89 menos que mes a mes.</p>
-          <a class="btn" href="__APP_URL__/connect?plan=annual" data-app style="margin-top:16px">Probar gratis el anual</a>
-        </div>
-        
-      </div>
-      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">14 días gratis en cualquiera de los dos: no se cobra nada hasta el día 15. Precios en dólares. Se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día.</p>
-    </div>
-  </section>
-
-  <section class="block" id="preguntas">
+  <section class="block alt" id="preguntas">
     <div class="wrap" style="max-width:820px">
       <div class="head center">
         <span class="kicker">Preguntas frecuentes</span>
@@ -264,7 +264,7 @@
     <div class="cta-band"><div class="cta-box">
       <h2>Empezá a entender tu publicidad hoy</h2>
       <p>Probá Lumo 14 días gratis y mirá tus campañas con otros ojos.</p>
-      <a class="btn" href="__APP_URL__/connect" data-app>Iniciar prueba gratis de 14 días</a>
+      <a class="btn" href="#precio">Elegir mi plan y probar gratis</a>
       <small>No se cobra nada los primeros 14 días. Después, desde US$5,99 por mes. ¿Dudas? <a href="#contacto">Escribinos</a>.</small>
     </div></div>
   </section>
@@ -274,7 +274,7 @@
   <div class="wrap">
     <div class="foot-top">
       <a class="logo" href="/" style="font-size:1.1rem"><img src="/static/logo.svg" alt="" width="28" height="28">Lumo</a>
-      <nav aria-label="Pie"><a href="__APP_URL__/connect" data-app>Ingresar</a> · <a href="mailto:lumoads.ml@gmail.com?subject=Acceso%20a%20Lumo&amp;body=Hola%2C%20quiero%20probar%20Lumo.">Email</a> · <a href="__APP_URL__/privacidad" data-app>Privacidad</a></nav>
+      <nav aria-label="Pie"><a href="__APP_URL__/entrar" data-app>Ingresar</a> · <a href="mailto:lumoads.ml@gmail.com?subject=Acceso%20a%20Lumo&amp;body=Hola%2C%20quiero%20probar%20Lumo.">Email</a> · <a href="__APP_URL__/privacidad" data-app>Privacidad</a></nav>
     </div>
     <p>Lumo es una herramienta independiente: no está afiliada ni respaldada por Mercado Libre. Mercado Libre y Mercado Ads son marcas de sus respectivos titulares.</p>
     <p class="legal"><a href="__APP_URL__/terminos" data-app>Términos y condiciones</a> · <a href="__APP_URL__/privacidad" data-app>Privacidad</a> · <a class="regret" href="__APP_URL__/arrepentimiento" data-app>Botón de arrepentimiento</a></p>
