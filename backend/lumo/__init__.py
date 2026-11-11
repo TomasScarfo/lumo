@@ -236,6 +236,8 @@ def create_app(overrides=None) -> Flask:
     def connect():
         if missing_config():
             return redirect("/")
+        if request.args.get("plan") in billing.PLANS:
+            session["plan"] = request.args["plan"]  # el plan que eligió en la portada: queda marcado al volver de Mercado Libre
         verifier, challenge = ml.new_pkce()
         state = secrets.token_urlsafe(24)
         session["oauth_state"] = state
@@ -269,7 +271,10 @@ def create_app(overrides=None) -> Flask:
             acc.email = _read_email(tok["access_token"]) or acc.email
             audit.record(s, "login_ok", actor=user_id)
             s.commit()
+        chosen = session.get("plan")
         session.clear()
+        if chosen in billing.PLANS:
+            session["plan"] = chosen
         session["uid"] = user_id  # Lumo recuerda a la persona en este navegador
         session["at"] = int(time.time())  # cuándo entró: las sesiones de administración vencen antes
         session.permanent = True
@@ -731,6 +736,7 @@ def create_app(overrides=None) -> Flask:
             except billing.RateError:
                 log.warning("no se pudo obtener la cotización del dólar")
         html = render_template("suscripcion.html", plan=p, email=email, csrf=_csrf(), error=error, can_cancel=can_cancel, pesos=pesos, home=_home(), trial_offer=trial_offer,
+                               chosen=request.form.get("plan") or session.get("plan"),
                                names=billing.NAMES, estado=request.args.get("estado"), billing_on=billing.enabled(cfg), **_offer())
         resp = Response(html, status, mimetype="text/html")
         # El formulario de pago termina en Mercado Pago: esta página, y solo esta, puede enviar hacia sus dominios de pago.

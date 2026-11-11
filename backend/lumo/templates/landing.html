@@ -189,17 +189,18 @@
           <h3>Mensual</h3>
           <p class="plan-price" style="margin:10px 0 6px">{{ price.monthly or '—' }} <small>por mes</small></p>
           <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
+          <a class="btn ghost" href="{{ app }}/connect?plan=monthly" data-app style="margin-top:16px">Probar gratis el mensual</a>
         </div>
         {% if price.annual %}
         <div class="card best">
           <h3>Anual{% if price.saving_pct %} <span class="save">Ahorrás {{ price.saving_pct }}%</span>{% endif %}</h3>
           <p class="plan-price" style="margin:10px 0 6px">{{ price.annual }} <small>por año</small></p>
           <p>Lo mismo, pagando una vez al año{% if price.saving_usd %}: {{ price.saving_usd }} menos que mes a mes{% endif %}.</p>
+          <a class="btn" href="{{ app }}/connect?plan=annual" data-app style="margin-top:16px">Probar gratis el anual</a>
         </div>
         {% endif %}
       </div>
-      <p style="text-align:center;margin-top:22px"><a class="btn" href="{{ app }}/connect" data-app>Iniciar prueba gratis de {{ trial_days }} días</a></p>
-      <p style="text-align:center;margin-top:12px;color:var(--ink-2);font-size:.92rem">Precios en dólares. Se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día.</p>
+      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">{{ trial_days }} días gratis en cualquiera de los dos: no se cobra nada hasta el día {{ trial_days + 1 }}. Precios en dólares. Se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día.</p>
     </div>
   </section>
 

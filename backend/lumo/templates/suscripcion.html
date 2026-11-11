@@ -62,7 +62,7 @@
             <legend>{% if active and not plan.past_due %}Cambiar de plan{% else %}Elegí tu plan{% endif %}</legend>
             {% if price.annual and not (active and not plan.past_due and plan.plan == 'annual') %}
             <label class="plan-opt">
-              <input type="radio" name="plan" value="annual" checked>
+              <input type="radio" name="plan" value="annual"{% if chosen != 'monthly' %} checked{% endif %}>
               <span class="plan-body">
                 <b>Anual{% if price.saving_pct %} <span class="save">Ahorrás {{ price.saving_pct }}%</span>{% endif %}</b>
                 <span class="plan-price">{{ price.annual }} <small>por año</small></span>
@@ -72,7 +72,7 @@
             {% endif %}
             {% if not (active and not plan.past_due and plan.plan == 'monthly') %}
             <label class="plan-opt">
-              <input type="radio" name="plan" value="monthly"{% if not price.annual or (active and plan.plan == 'annual') %} checked{% endif %}>
+              <input type="radio" name="plan" value="monthly"{% if not price.annual or chosen == 'monthly' or (active and plan.plan == 'annual') %} checked{% endif %}>
               <span class="plan-body">
                 <b>Mensual</b>
                 <span class="plan-price">{{ price.monthly }} <small>por mes</small></span>

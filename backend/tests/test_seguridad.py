@@ -235,9 +235,10 @@ class Cifrado(unittest.TestCase):
     def test_los_tokens_no_se_guardan_en_claro(self):
         app = create_app(CFG)
         with Session(app.extensions["lumo_engine"]) as s:
-            acc = save_tokens(s, CFG, 3, tok(3))
+            # Valores largos: un texto cifrado al azar puede contener "RT" por casualidad, pero no estos.
+            acc = save_tokens(s, CFG, 3, tok(3, refresh="RT-refresco-secreto-3"))
             self.assertNotIn("AT-3", acc.access_token)
-            self.assertNotIn("RT", acc.refresh_token)
+            self.assertNotIn("RT-refresco-secreto-3", acc.refresh_token)
 
 
 class Privacidad(Base):

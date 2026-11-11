@@ -195,6 +195,27 @@ class Prueba(Base):
                       "US$5,99", "US$59,99", "Ahorrás 17%", "Hoy son $5.990.", "Hoy son $59.990.", "tenés 7 días", 'href="/terminos"'):
             self.assertIn(texto, html)
 
+    def test_el_plan_elegido_en_la_portada_queda_marcado_al_conectarse(self):
+        html = self.client.get("/").get_data(as_text=True)
+        self.assertIn('href="/connect?plan=annual" data-app', html)
+        self.assertIn('href="/connect?plan=monthly" data-app', html)
+        c = self.app.test_client()
+        c.get("/connect?plan=monthly")  # connect_as vuelve a pasar por /connect: el plan tiene que sobrevivir a todo el ingreso
+        with c.session_transaction() as sess:
+            self.assertEqual(sess["plan"], "monthly")
+        loc = c.get("/connect").headers["Location"]
+        state = loc.split("state=")[1].split("&")[0]
+        from test_access import tok
+        with mock.patch("lumo.ml.exchange_code", return_value=tok(805)), mock.patch("lumo.ml.advertisers", return_value=[]):
+            self.assertTrue(c.get("/callback?code=abc&state=" + state).headers["Location"].endswith("/suscripcion"))
+        html = c.get("/suscripcion").get_data(as_text=True)
+        self.assertIn('value="monthly" checked', html)
+        self.assertNotIn('value="annual" checked', html)
+        self.assertIn('value="annual" checked', self.client.get("/suscripcion").get_data(as_text=True) if connect_as(self.client, 806) else "")
+        self.client.get("/connect?plan=vitalicio")
+        with self.client.session_transaction() as sess:
+            self.assertNotIn("plan", sess)
+
     def test_la_prueba_empieza_cuando_mercado_pago_confirma_el_medio_de_pago(self):
         connect_as(self.client, 801)
         self.subscribe("monthly")
