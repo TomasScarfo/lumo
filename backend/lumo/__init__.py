@@ -80,7 +80,10 @@ def load_config(overrides=None) -> dict:
         "ML_API_BASE": os.environ.get("ML_API_BASE", "https://api.mercadolibre.com"),
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com"),
-        # Avisos por email. Sin SMTP_PASSWORD (contraseña de aplicación de Gmail) no se envía nada.
+        # Avisos por email. Se envían por la API de Brevo (BREVO_API_KEY), que sirve en el plan gratis de Render; MAIL_FROM es el remitente
+        # verificado en Brevo. Sin Brevo, usa SMTP (SMTP_PASSWORD, contraseña de aplicación de Gmail). Sin ninguno no se envía nada.
+        "BREVO_API_KEY": os.environ.get("BREVO_API_KEY", ""),
+        "MAIL_FROM": os.environ.get("MAIL_FROM", ""),
         "SMTP_HOST": os.environ.get("SMTP_HOST", "smtp.gmail.com"),
         "SMTP_PORT": os.environ.get("SMTP_PORT", "587"),
         "SMTP_USER": os.environ.get("SMTP_USER", os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com")),
@@ -524,8 +527,8 @@ def create_app(overrides=None) -> Flask:
             try:
                 notify.send_mail(cfg, acc.email, "Prueba de avisos de Lumo", "Si leés esto, los avisos de Lumo te van a llegar a este mail.\n",
                                  "<p>Si leés esto, los avisos de Lumo te van a llegar a este mail.</p>")
-            except Exception as exc:  # smtplib y red: no se detalla al usuario
-                log.warning("mail de prueba falló: %s", type(exc).__name__)
+            except Exception as exc:  # proveedor y red: al usuario no se le detalla, pero el motivo queda en el registro
+                log.warning("mail de prueba falló: %s", notify.why(exc))
                 return _json({"error": "envio"}, 502)
             notify._mark(s, uid, "test", "x", now)
             s.commit()
@@ -542,7 +545,7 @@ def create_app(overrides=None) -> Flask:
             abort(403)
         cobros = _billing_tick()  # no depende del correo: mantiene al día las suscripciones aunque no haya SMTP
         if not notify.enabled(cfg):
-            return _json({"ok": False, "motivo": "SMTP_PASSWORD sin configurar", "cobros": cobros}, 503)
+            return _json({"ok": False, "motivo": "envío de mails sin configurar (BREVO_API_KEY)", "cobros": cobros}, 503)
         result = {"cuentas": 0, "enviados": 0, "errores": 0}
         with Session(engine) as s:
             rows = s.execute(select(PanelState)).scalars().all()
@@ -742,7 +745,7 @@ def create_app(overrides=None) -> Flask:
                     try:
                         notify.send_mail(cfg, dest, subject, text, "<pre style='font-family:Arial,sans-serif;white-space:pre-wrap'>%s</pre>" % _esc(text))
                     except Exception as exc:  # la constancia ya quedó en pantalla y en el registro de actividad
-                        log.warning("aviso de arrepentimiento falló: %s", type(exc).__name__)
+                        log.warning("aviso de arrepentimiento falló: %s", notify.why(exc))
         resp = Response(render_template("arrepentimiento.html", home=_home(), contact=_contact(), logged=True, csrf="", code=code, had_subscription=had), mimetype="text/html")
         resp.headers["Cache-Control"] = "no-store"
         return resp
@@ -954,7 +957,7 @@ def create_app(overrides=None) -> Flask:
         try:
             notify.send_mail(cfg, to, subject, text, html)
         except Exception as exc:  # el correo no puede frenar el registro del cobro
-            log.warning("aviso de suscripción a %s falló: %s", sub.user_id, type(exc).__name__)
+            log.warning("aviso de suscripción a %s falló: %s", sub.user_id, notify.why(exc))
             return 0
         notify._mark(s, sub.user_id, kind, ref, now)
         return 1

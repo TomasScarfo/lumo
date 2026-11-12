@@ -13,7 +13,7 @@ Una persona conecta su cuenta de Mercado Libre (OAuth 2 con PKCE). Lumo **solo l
 | Dato | Dónde | Clasificación | Protección |
 |---|---|---|---|
 | Tokens de Mercado Libre (`account.access_token`, `refresh_token`) | Base de datos | **Secreto** | Cifrado Fernet (AES-128-CBC + HMAC) con `ENCRYPTION_KEY`; rotación con `ENCRYPTION_KEY_PREVIOUS` |
-| `ENCRYPTION_KEY`, `SECRET_KEY`, `ML_CLIENT_SECRET`, `SMTP_PASSWORD`, `CRON_TOKEN` | Variables de entorno de Render / secretos de GitHub | **Secreto** | Nunca en el repositorio; `.env` ignorado por git |
+| `ENCRYPTION_KEY`, `SECRET_KEY`, `ML_CLIENT_SECRET`, `BREVO_API_KEY`, `SMTP_PASSWORD`, `CRON_TOKEN` | Variables de entorno de Render / secretos de GitHub | **Secreto** | Nunca en el repositorio; `.env` ignorado por git |
 | ID de Mercado Libre, email (`account.email`) | Base de datos | **Personal** | Acceso solo por la sesión de esa persona; borrado y descarga disponibles |
 | Métricas de campañas (`snapshot`, `campaign_day`) | Base de datos | **Confidencial** (datos comerciales del cliente) | Aislado por `user_id`; conservación limitada a 730 días |
 | Estado del panel (`panel_state`) | Base de datos | Confidencial | Solo esa cuenta; tamaño tope 200 KB |
@@ -27,7 +27,7 @@ Una persona conecta su cuenta de Mercado Libre (OAuth 2 con PKCE). Lumo **solo l
 | Aplicación Flask (gunicorn) | Render (servicio `lumo`) | Todos |
 | Portada estática | Render (servicio `lumo-sitio`) | Ninguno personal |
 | Base de datos PostgreSQL | Supabase | Todos |
-| Envío de avisos | Google (Gmail SMTP, `lumoads.ml@gmail.com`) | Email, texto del aviso |
+| Envío de avisos | Brevo (API por HTTPS, remitente `lumoads.ml@gmail.com`) | Email, texto del aviso |
 | Tarea diaria | GitHub Actions | Ninguno (solo `APP_URL` y `CRON_TOKEN`) |
 | Origen de los datos | Mercado Libre | Tokens y métricas |
 | Tipografías | Google Fonts | IP de quien visita (ver riesgo R-09) |
@@ -39,7 +39,7 @@ Una persona conecta su cuenta de Mercado Libre (OAuth 2 con PKCE). Lumo **solo l
 Persona ──HTTPS──▶ Render (Flask) ──HTTPS──▶ API de Mercado Libre
                         │
                         ├──TLS (sslmode=require)──▶ Supabase (PostgreSQL)
-                        └──STARTTLS──▶ Gmail SMTP ──▶ email de la persona
+                        └──HTTPS (API key)──▶ Brevo ──▶ email de la persona
 GitHub Actions ──HTTPS + X-Cron-Token──▶ /cron/avisos
 ```
 

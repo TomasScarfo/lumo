@@ -36,7 +36,8 @@ No se tratan datos sensibles, ni se toman decisiones automatizadas sobre las per
 |---|---|---|---|---|
 | Render | Hosting de la app y la portada | Todos | ⬜ confirmar | ⬜ aceptar el acuerdo de tratamiento (DPA) |
 | Supabase | Base de datos | Todos | ⬜ confirmar | ⬜ DPA |
-| Google | SMTP de los avisos; Google Fonts | Email y contenido del aviso; IP de quien visita | — | ⬜ DPA de Google Workspace / términos de Gmail |
+| Brevo | Envío de los avisos por email | Email y contenido del aviso | — | ⬜ DPA de Brevo |
+| Google | Google Fonts | IP de quien visita | — | Términos de Google Fonts |
 | GitHub | Código y tarea diaria | Ninguno personal | — | — |
 | Mercado Libre | Origen de los datos | — | — | Términos de la API |
 

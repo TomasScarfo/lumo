@@ -38,7 +38,7 @@ python -m unittest discover -s tests
 - **Cambio de plan:** desde `/suscripcion`. El plan nuevo empieza cuando termina lo ya pago y reemplaza al anterior recién cuando Mercado Pago lo confirma.
 - **Cancelación:** desde `/suscripcion`; sigue entrando hasta la fecha ya paga. Borrar la cuenta o quitar el acceso desde `/admin` también corta el cobro.
 - **Acceso sin cargo:** administradores (`ADMIN_USER_IDS`), cuentas habilitadas en `/admin` y quien abre un enlace `/invitacion/...` entran gratis, sin vencimiento.
-- **Chequeo diario:** la tarea de GitHub que llama a `/cron/avisos` también sincroniza las suscripciones con Mercado Pago, actualiza montos y manda los avisos (prueba por terminar, cobro rechazado, acceso pausado). Necesita `CRON_TOKEN` y, para los emails, `SMTP_PASSWORD`.
+- **Chequeo diario:** la tarea de GitHub que llama a `/cron/avisos` también sincroniza las suscripciones con Mercado Pago, actualiza montos y manda los avisos (prueba por terminar, cobro rechazado, acceso pausado). Necesita `CRON_TOKEN` y, para los emails, `BREVO_API_KEY` y `MAIL_FROM` (Brevo envía por HTTPS, así que sirve en el plan gratis de Render, que bloquea el SMTP). Sin Brevo, usa `SMTP_PASSWORD` solo si el plan de Render permite SMTP.
 - Sin `MP_ACCESS_TOKEN`, la prueba funciona pero no se puede pagar (la página invita a escribir).
 - Para probar pagos sin dinero real, usar las credenciales y usuarios de prueba de Mercado Pago.
 

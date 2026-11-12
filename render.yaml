@@ -79,8 +79,15 @@ services:
       # Dirección de la portada estática (servicio "lumo-sitio"). Con esto, quien entra a la app sin sesión va a la portada.
       - key: SITE_URL
         sync: false
-      # Avisos por email desde lumoads.ml@gmail.com: contraseña de aplicación de Gmail y clave para el chequeo diario.
+      # Avisos por email: se envían por la API de Brevo (el SMTP está bloqueado en el plan gratis de Render).
+      # MAIL_FROM es el remitente verificado en Brevo (por ejemplo lumoads.ml@gmail.com).
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      # Alternativa sin Brevo (solo en planes de pago de Render): contraseña de aplicación de Gmail.
       - key: SMTP_PASSWORD
         sync: false
+      # Clave para el chequeo diario.
       - key: CRON_TOKEN
         sync: false

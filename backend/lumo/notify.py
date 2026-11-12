@@ -2,7 +2,8 @@
 
 Solo reciben avisos las cuentas que los activaron en la pestaña Alertas (m1, m2, m3). Un chequeo diario (ver
 `.github/workflows/avisos.yml`) llama a /cron/avisos. Cada aviso se registra en la tabla `notice` para no repetirlo.
-El envío usa SMTP (por defecto el de Gmail con una contraseña de aplicación) y queda apagado mientras falte SMTP_PASSWORD.
+El envío usa la API web de Brevo (BREVO_API_KEY): va por HTTPS, así que funciona en el plan gratuito de Render, que bloquea el SMTP.
+Si no hay clave de Brevo, usa SMTP (por defecto el de Gmail con una contraseña de aplicación, SMTP_PASSWORD). Sin ninguno de los dos, el envío queda apagado.
 """
 import logging
 import smtplib
@@ -10,6 +11,7 @@ from datetime import datetime, timedelta
 from email.message import EmailMessage
 from html import escape
 
+import requests
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -25,11 +27,44 @@ WEEKLY_DAYS = (0, 1, 2)   # lunes; si el chequeo falló ese día, se reintenta m
 KINDS = ("m1", "m2", "m3")
 
 
+BREVO_URL = "https://api.brevo.com/v3/smtp/email"
+
+
+class MailError(Exception):
+    """El proveedor de correo rechazó el envío. El mensaje trae el código y el motivo, nunca la clave."""
+
+
+def why(exc: Exception) -> str:
+    """Para el registro: el tipo de error y, si lo rechazó el proveedor de correo, el motivo que dio."""
+    return "%s %s" % (type(exc).__name__, exc) if isinstance(exc, MailError) else type(exc).__name__
+
+
+def _sender(cfg: dict) -> str:
+    return cfg.get("MAIL_FROM") or cfg.get("SMTP_USER") or ""
+
+
 def enabled(cfg: dict) -> bool:
+    if cfg.get("BREVO_API_KEY"):
+        return bool(_sender(cfg))
     return bool(cfg.get("SMTP_PASSWORD") and cfg.get("SMTP_USER"))
 
 
+def _send_brevo(cfg: dict, to: str, subject: str, text: str, html: str) -> None:
+    resp = requests.post(BREVO_URL, timeout=30, headers={"api-key": cfg["BREVO_API_KEY"], "accept": "application/json"},
+                         json={"sender": {"name": "Lumo", "email": _sender(cfg)}, "to": [{"email": to}],
+                               "subject": subject, "textContent": text, "htmlContent": html})
+    if resp.status_code >= 300:
+        try:
+            body = resp.json()
+        except ValueError:
+            body = {}
+        raise MailError("Brevo respondió %s (%s): %s" % (resp.status_code, body.get("code", "sin código"), str(body.get("message", ""))[:200]))
+
+
 def send_mail(cfg: dict, to: str, subject: str, text: str, html: str) -> None:
+    if cfg.get("BREVO_API_KEY"):
+        _send_brevo(cfg, to, subject, text, html)
+        return
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = "Lumo <%s>" % cfg["SMTP_USER"]
