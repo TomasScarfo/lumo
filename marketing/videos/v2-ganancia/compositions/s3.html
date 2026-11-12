@@ -1,0 +1,45 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    @font-face { font-family: "Figtree"; src: url("assets/fonts/Figtree.ttf"); font-weight: 300 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Figtree", sans-serif; color: #FFFFFF; }
+    #s3-flood { position: absolute; inset: 0; background: #2446D6; }
+    #s3-logo { position: absolute; left: 400px; top: 170px; width: 280px; height: 280px; }
+    #s3-name { position: absolute; left: 0; right: 0; top: 460px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 170px; letter-spacing: -0.03em; line-height: 1; }
+    #s3-name span { display: inline-block; }
+    #s3-tag { position: absolute; left: 80px; right: 80px; top: 650px; text-align: center; font-size: 48px; line-height: 1.2; font-weight: 700; }
+    #s3-url { position: absolute; left: 0; right: 0; top: 965px; text-align: center; font-size: 56px; font-weight: 900; letter-spacing: 0.01em; }
+    #s3-cta { position: absolute; left: 170px; right: 170px; top: 830px; height: 116px; border-radius: 22px; background: #FFFFFF; color: #2446D6; font-size: 50px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+    #s3-legal { position: absolute; left: 100px; right: 100px; top: 1050px; text-align: center; font-size: 28px; line-height: 1.25; font-weight: 500; color: rgba(255,255,255,.85); }
+  </style>
+  <div id="root" data-composition-id="s3" data-width="1080" data-height="1920">
+    <div id="s3-flood"></div>
+    <svg id="s3-logo" viewBox="0 0 1000 1000" aria-hidden="true">
+      <defs><clipPath id="s3-sky"><rect x="0" y="0" width="1000" height="690"/></clipPath></defs>
+      <g clip-path="url(#s3-sky)"><path id="s3-sun" d="M250 640a250 250 0 0 1 500 0z" fill="#fff"/></g>
+      <rect id="s3-line" x="158" y="688" width="684" height="64" rx="32" fill="#fff"/>
+    </svg>
+    <div id="s3-name"><span>L</span><span>u</span><span>m</span><span>o</span></div>
+    <div id="s3-tag">Tu asistente de publicidad en Mercado Libre, para gastar mejor y vender más</div>
+    <div id="s3-cta">Probalo gratis 14 días</div>
+    <div id="s3-url">lumoads.com.ar</div>
+    <div id="s3-legal">Cifras de ejemplo. Lumo es independiente: no es un producto de Mercado Libre.</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // el azul se abre desde el parche de Lumo
+    tl.fromTo("#s3-flood", { clipPath: "circle(0px at 540px 840px)" }, { clipPath: "circle(2300px at 540px 840px)", duration: 0.6, ease: "power2.inOut" }, 0);
+    // el amanecer: primero la línea, después sale el sol
+    tl.fromTo("#s3-line", { scaleX: 0, transformOrigin: "500px 720px" }, { scaleX: 1, duration: 0.45, ease: "expo.out" }, 0.164);
+    tl.fromTo("#s3-sun", { y: 300 }, { y: 0, duration: 0.8, ease: "expo.out" }, 0.292);
+    tl.fromTo("#s3-name span", { opacity: 0.25, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out", stagger: 0.08 }, 0.335);
+    tl.set("#s3-name, #s3-tag, #s3-cta", { opacity: 0 }, 0);
+    // botón y link: entran justo con "Probalo gratis" (sincronizar.py ajusta este momento a la voz)
+    tl.fromTo("#s3-url", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 5.624); // probalo+0.05
+    tl.fromTo("#s3-legal", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 5.974); // probalo+0.4
+    tl.set("#s3-name", { opacity: 1 }, 0.335);
+    tl.fromTo("#s3-tag", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.791);
+    tl.fromTo("#s3-cta", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 5.574); // probalo
+    window.__timelines["s3"] = tl;
+  </script>
+</template>

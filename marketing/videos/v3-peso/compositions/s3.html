@@ -1,0 +1,46 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    @font-face { font-family: "Figtree"; src: url("assets/fonts/Figtree.ttf"); font-weight: 300 900; }
+    #root { position: absolute; inset: 0; background: #FFFFFF; overflow: hidden; font-family: "Figtree", sans-serif; color: #13202C; }
+    #s3-badge { position: absolute; left: 0; right: 0; top: 190px; display: flex; align-items: center; justify-content: center; gap: 20px;
+                font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 64px; }
+    #s3-badge img { width: 110px; height: 110px; border-radius: 26px; }
+    #s3-badge { display: none !important; }  /* el logo fijo de arriba ya muestra la marca */
+    .rec { position: absolute; right: 100px; padding: 8px 18px; border-radius: 14px; color: #FFFFFF; font-size: 30px; font-weight: 800; }
+    .row .roas { top: 70px; }
+    .row .goal { display: none; }
+    #s3-sample { display: none; position: absolute; right: 70px; top: 1296px; font-size: 28px; font-weight: 600; color: #5A6B7C; }
+    .row { position: absolute; left: 70px; right: 70px; height: 200px; background: #FFFFFF; border: 4px solid #DAE2E9; border-radius: 34px;
+           box-shadow: 0 18px 40px rgba(19,32,44,.10); padding: 26px 34px; }
+    .row .name { font-size: 46px; font-weight: 900; }
+    .row .chip { position: absolute; left: 34px; bottom: 26px; padding: 6px 16px; border-radius: 12px; font-size: 30px; font-weight: 800; }
+    .row .roas { position: absolute; right: 34px; top: 26px; text-align: right; font-size: 28px; font-weight: 700; color: #5A6B7C; }
+    .row .roas b { display: block; font-size: 56px; font-weight: 900; color: #13202C; line-height: 1.05; }
+    .row .goal { position: absolute; right: 34px; bottom: 28px; font-size: 28px; font-weight: 600; color: #5A6B7C; }
+    .row-ring { position: absolute; inset: -4px; border-radius: 34px; border: 7px solid transparent; opacity: 0; }
+  </style>
+  <div id="root" data-composition-id="s3" data-width="1080" data-height="1920">
+    <div id="s3-badge"><img src="assets/logo.svg" alt="">Lumo</div>
+      <div id="s3-r1" class="row" style="top:330px"><div class="name">Organizadores</div><div class="chip" style="color:#146C43;background:#D9F1E3">Superando el objetivo</div><div class="roas">ROAS<b>$9,8</b></div><div class="goal">objetivo $8,0</div><div id="s3-r1-ring" class="row-ring" style="border-color:#146C43"></div></div>
+      <div id="s3-r2" class="row" style="top:560px"><div class="name">Mesas y sillas</div><div class="chip" style="color:#2446D6;background:#E3E9FC">Mejorando</div><div class="roas">ROAS<b>$4,3</b></div><div class="goal">objetivo $5,0</div><div id="s3-r2-ring" class="row-ring" style="border-color:#2446D6"></div></div>
+      <div id="s3-r3" class="row" style="top:790px"><div class="name">Cortinas blackout</div><div class="chip" style="color:#8F5200;background:#FBEACB">Con oportunidad</div><div class="roas">ROAS<b>$3,4</b></div><div class="goal">objetivo $4,0</div><div id="s3-r3-ring" class="row-ring" style="border-color:#8F5200"></div></div>
+    <div id="s3-r1-rec" class="rec" style="top:338px;background:#146C43">↑ Subí el presupuesto</div>
+    <div id="s3-r2-rec" class="rec" style="top:568px;background:#2446D6">= Mantené</div>
+    <div id="s3-r3-rec" class="rec" style="top:798px;background:#8F5200">↓ Bajá el presupuesto</div>
+    <div id="s3-sample">Datos de ejemplo</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#s3-r1, #s3-r2, #s3-r3", { clipPath: "inset(0% 100% 0% 0% round 34px)" }, { clipPath: "inset(0% 0% 0% 0% round 34px)", duration: 0.45, ease: "power3.out", stagger: 0.15 }, 0.198);
+    tl.fromTo("#s3-r1 .chip, #s3-r2 .chip, #s3-r3 .chip", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.4)", stagger: 0.15 }, 0.594);
+    // "subir, mantener o bajar": cada campaña recibe su recomendación
+    tl.fromTo("#s3-r1-rec", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.4)" }, 4.189);
+    tl.to("#s3-r1-ring", { opacity: 1, duration: 0.2 }, 4.189);
+    tl.fromTo("#s3-r2-rec", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.4)" }, 4.725);
+    tl.to("#s3-r2-ring", { opacity: 1, duration: 0.2 }, 4.725);
+    tl.fromTo("#s3-r3-rec", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.4)" }, 5.262);
+    tl.to("#s3-r3-ring", { opacity: 1, duration: 0.2 }, 5.262);
+    window.__timelines["s3"] = tl;
+  </script>
+</template>

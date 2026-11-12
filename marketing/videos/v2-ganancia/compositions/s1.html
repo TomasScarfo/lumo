@@ -1,0 +1,191 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    @font-face { font-family: "Figtree"; src: url("assets/fonts/Figtree.ttf"); font-weight: 300 900; }
+    #root { position: absolute; inset: 0; background: #FFFFFF; overflow: hidden; font-family: "Figtree", sans-serif; color: #13202C; }
+    #s1-hook { position: absolute; left: 60px; right: 60px; top: 272px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 66px; line-height: 1.02; letter-spacing: -0.02em; }
+    #s1-sample { display: none; position: absolute; right: 70px; top: 1296px; font-size: 28px; font-weight: 600; color: #5A6B7C; }
+    #s1-char { position: absolute; left: -40px; top: 520px; width: 700px; height: 1700px; }
+    #s1-chart { position: absolute; left: 610px; top: 560px; width: 400px; height: 540px; }
+    #s1-chart .label { font-size: 30px; font-weight: 700; color: #5A6B7C; text-align: center; }
+    #s1-chart .total { font-size: 54px; font-weight: 900; text-align: center; }
+    .bar { position: absolute; bottom: 0; width: 92px; border: 5px solid #13202C; border-bottom: none; border-radius: 18px 18px 0 0; background: #CFDBFF; }
+    #s1-base { position: absolute; left: -10px; right: -10px; bottom: -5px; height: 6px; border-radius: 3px; background: #13202C; }
+    .tile { position: absolute; width: 240px; height: 110px; background: #FFFFFF; border: 4px solid #13202C; border-radius: 18px; padding: 10px 18px;
+            box-shadow: 0 10px 0 rgba(19,32,44,.08); }
+    .tile span { display: block; font-size: 28px; font-weight: 700; color: #5A6B7C; }
+    .tile b { display: block; font-size: 40px; font-weight: 900; line-height: 1.05; }
+    #s1-q { position: absolute; left: 330px; top: 400px; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 170px; color: #2446D6; opacity: 0; }
+    #s1-badge { position: absolute; left: 0; right: 0; top: 168px; display: flex; align-items: center; justify-content: center; gap: 20px;
+                font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 64px; opacity: 0; }
+    #s1-badge img { width: 110px; height: 110px; border-radius: 26px; }
+    #s1-badge { display: none !important; }  /* el logo fijo de arriba ya muestra la marca */
+    #s1-first { position: absolute; left: 640px; top: 300px; padding: 10px 20px; border-radius: 14px; background: #2446D6; color: #FFFFFF; font-size: 30px; font-weight: 800; opacity: 0; }
+    .row { position: absolute; left: 70px; right: 70px; height: 200px; background: #FFFFFF; border: 4px solid #DAE2E9; border-radius: 34px;
+           box-shadow: 0 18px 40px rgba(19,32,44,.10); padding: 26px 34px; }
+    .row .name { font-size: 46px; font-weight: 900; }
+    .row .chip { position: absolute; left: 34px; bottom: 26px; padding: 6px 16px; border-radius: 12px; font-size: 30px; font-weight: 800; }
+    .row .roas { position: absolute; right: 34px; top: 26px; text-align: right; font-size: 28px; font-weight: 700; color: #5A6B7C; }
+    .row .roas b { display: block; font-size: 56px; font-weight: 900; color: #13202C; line-height: 1.05; }
+    .row .goal { position: absolute; right: 34px; bottom: 28px; font-size: 28px; font-weight: 600; color: #5A6B7C; }
+    .row-ring { position: absolute; inset: -4px; border-radius: 34px; border: 7px solid transparent; opacity: 0; }
+  </style>
+  <div id="root" data-composition-id="s1" data-width="1080" data-height="1920">
+    <div id="s1-hook">¿Tu publicidad te deja ganancia?</div>
+    <div id="s1-chart">
+      <div class="label">Inversión, últimos 7 días</div>
+      <div class="total">$209.852</div>
+      <div style="position:absolute;left:30px;right:30px;bottom:0;height:380px">
+        <div id="s1-bar1" class="bar" style="left:0;height:200px"></div>
+        <div id="s1-bar2" class="bar" style="left:124px;height:290px"></div>
+        <div id="s1-bar3" class="bar" style="left:248px;height:380px;background:#2446D6"></div>
+        <div id="s1-base"></div>
+      </div>
+    </div>
+    <svg id="s1-char" class="personaje hombre" viewBox="0 0 700 1700" style="overflow:visible" data-layout-allow-overflow aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <g id="s1-body">
+        
+        <path d="M118 1700 L122 1250 L518 1250 L522 1700 Z" fill="#3E5A8C" stroke="#13202C" stroke-width="5"/>
+        <path d="M320 1300 L320 1700" stroke="#13202C" stroke-width="5"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" fill="#D9F1E3"/>
+        <path d="M450 640 C520 680 545 760 545 900 L540 1270 C520 1274 500 1276 478 1278 Z" fill="#B9E1C9"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" stroke="#13202C" stroke-width="5"/>
+        <path d="M285 440 L285 572 C300 586 340 586 355 572 L355 440 Z" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+        <path d="M287 470 C305 505 335 505 353 470 L353 512 C335 530 305 530 287 512 Z" fill="#C08665"/>
+        <path d="M262 596 L300 664 L322 606 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5" stroke-linejoin="round"/><path d="M378 596 L340 664 L318 606 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5" stroke-linejoin="round"/><circle cx="320" cy="720" r="7" fill="#13202C"/><circle cx="320" cy="800" r="7" fill="#13202C"/>
+        
+        <g id="s1-arm-l">
+          <path d="M125 690 L80 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M125 690 L80 960" stroke="#D9F1E3" stroke-width="72" stroke-linecap="round"/>
+          <g id="s1-fore-l">
+            <path d="M80 960 L80 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M80 960 L80 1190" stroke="#D9A27E" stroke-width="54" stroke-linecap="round"/>
+            <path d="M46 964 L114 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M46 956 C46 920 114 920 114 956 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="s1-hand-l" cx="80" cy="1220" rx="36" ry="40" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        
+        <g id="s1-arm-r">
+          <path d="M515 690 L560 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M515 690 L560 960" stroke="#D9F1E3" stroke-width="72" stroke-linecap="round"/>
+          <g id="s1-fore-r">
+            <path d="M560 960 L560 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M560 960 L560 1190" stroke="#D9A27E" stroke-width="54" stroke-linecap="round"/>
+            <path d="M526 964 L594 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M526 956 C526 920 594 920 594 956 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="s1-hand-r" cx="560" cy="1220" rx="36" ry="40" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        <g id="s1-head">
+          <ellipse cx="200" cy="318" rx="22" ry="34" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          <ellipse cx="440" cy="318" rx="22" ry="34" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          <path d="M200 300 C200 200 255 150 320 150 C385 150 440 200 440 300 C440 390 395 462 320 468 C245 462 200 390 200 300 Z" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          <circle cx="252" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <circle cx="388" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <path d="M194 272 C184 158 250 110 326 110 C402 110 456 158 448 266 C432 232 410 212 380 202 C350 216 282 216 252 202 C228 216 210 238 194 272 Z" fill="#2B211C" stroke="#13202C" stroke-width="5"/><path d="M262 150 Q306 132 352 140" fill="none" stroke="#43352D" stroke-width="9" stroke-linecap="round"/><path d="M198 268 L214 268 L216 332 L201 332 Z" fill="#2B211C"/><path d="M442 268 L426 268 L424 332 L439 332 Z" fill="#2B211C"/><path d="M210 352 C226 440 276 470 320 470 C364 470 414 440 430 352 C414 418 372 446 320 448 C268 446 226 418 210 352 Z" fill="#2B211C" opacity=".22"/>
+          <path id="s1-brow-l" d="M246 250 Q272 236 300 246" stroke="#2B211C" stroke-width="13"/>
+          <path id="s1-brow-r" d="M340 246 Q368 236 394 250" stroke="#2B211C" stroke-width="13"/>
+          <g id="s1-eyes">
+            
+            <g id="s1-eye-l"><ellipse cx="275" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="s1-eye-r"><ellipse cx="365" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="s1-look">
+              <circle cx="275" cy="303" r="15" fill="#3D4F2E"/><circle cx="275" cy="303" r="8" fill="#13202C"/><circle cx="281" cy="296" r="5" fill="#FFFFFF"/>
+              <circle cx="365" cy="303" r="15" fill="#3D4F2E"/><circle cx="365" cy="303" r="8" fill="#13202C"/><circle cx="371" cy="296" r="5" fill="#FFFFFF"/>
+            </g>
+          </g>
+          <path d="M322 318 Q310 352 328 357" stroke="#13202C" stroke-width="5"/>
+          <path id="s1-m-smile" d="M290 398 Q320 424 350 398" stroke="#13202C" stroke-width="6"/>
+          <path id="s1-m-talk" d="M297 396 Q320 432 343 396 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <ellipse id="s1-m-o" cx="320" cy="410" rx="15" ry="20" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <g id="s1-m-grin" opacity="0"><path d="M282 392 Q320 448 358 392 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5"/><path d="M290 397 Q320 405 350 397 L347 406 Q320 412 293 406 Z" fill="#FFFFFF"/></g>
+          <path id="s1-m-worry" d="M292 414 Q306 400 320 410 Q334 420 348 406" stroke="#13202C" stroke-width="6" opacity="0"/>
+        </g>
+      </g>
+    </svg>
+      <div id="s1-t1" class="tile" data-layout-allow-overlap data-layout-allow-overflow style="left:40px;top:1010px"><span>ROAS</span><b>3,8</b></div>
+      <div id="s1-t2" class="tile" data-layout-allow-overlap data-layout-allow-overflow style="left:380px;top:1010px"><span>ACOS</span><b>26 %</b></div>
+      <div id="s1-t3" class="tile" data-layout-allow-overlap data-layout-allow-overflow style="left:170px;top:935px"><span>CTR</span><b>1,2 %</b></div>
+      <div id="s1-t4" class="tile" data-layout-allow-overlap data-layout-allow-overflow style="left:400px;top:905px"><span>CPC</span><b>$84</b></div>
+      <div id="s1-t5" class="tile" data-layout-allow-overlap data-layout-allow-overflow style="left:20px;top:885px"><span>CVR</span><b>3 %</b></div>
+      <div id="s1-t6" class="tile" data-layout-allow-overlap data-layout-allow-overflow style="left:250px;top:1000px"><span>Impresiones</span><b>48.210</b></div>
+      <div id="s1-t7" class="tile" data-layout-allow-overlap data-layout-allow-overflow style="left:420px;top:700px"><span>Clics</span><b>2.497</b></div>
+      <div id="s1-t8" class="tile" data-layout-allow-overlap data-layout-allow-overflow style="left:0px;top:720px"><span>Ventas</span><b>−26 %</b></div>
+    <div id="s1-q">?</div>
+    <div id="s1-badge"><img src="assets/logo.svg" alt="">Lumo</div>
+      <div id="s1-r1" class="row" style="top:330px"><div class="name">Organizadores</div><div class="chip" style="color:#146C43;background:#D9F1E3">Superando el objetivo</div><div class="roas">ROAS<b>$9,8</b></div><div class="goal">objetivo $8,0</div><div id="s1-r1-ring" class="row-ring" style="border-color:#146C43"></div></div>
+      <div id="s1-r2" class="row" style="top:560px"><div class="name">Mesas y sillas</div><div class="chip" style="color:#2446D6;background:#E3E9FC">Mejorando</div><div class="roas">ROAS<b>$4,3</b></div><div class="goal">objetivo $5,0</div><div id="s1-r2-ring" class="row-ring" style="border-color:#2446D6"></div></div>
+      <div id="s1-r3" class="row" style="top:790px"><div class="name">Cortinas blackout</div><div class="chip" style="color:#8F5200;background:#FBEACB">Con oportunidad</div><div class="roas">ROAS<b>$3,4</b></div><div class="goal">objetivo $4,0</div><div id="s1-r3-ring" class="row-ring" style="border-color:#8F5200"></div></div>
+    <div id="s1-first">1 · Hacelo primero</div>
+    <div id="s1-sample">Datos de ejemplo</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.set("#s1-head", { svgOrigin: "320 470" }, 0);
+    tl.to("#s1-body", { scaleY: 1.008, svgOrigin: "320 1700", duration: 1.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0);
+    // "Invertís en publicidad": crecen las barras
+    tl.fromTo("#s1-bar1, #s1-bar2, #s1-bar3", { scaleY: 0.35, transformOrigin: "50% 100%" }, { scaleY: 1, duration: 0.7, ease: "back.out(1.4)", stagger: 0.25 }, 0.4);
+    tl.to("#s1-head", { rotation: 4, y: -4, duration: 0.4, ease: "back.out(1.6)" }, 0.492);
+    // señala sus barras, orgullosa
+    tl.to("#s1-arm-r", { rotation: -55, svgOrigin: "515 690", duration: 0.45, ease: "back.out(1.6)" }, 0.584);
+    tl.to("#s1-fore-r", { rotation: -40, svgOrigin: "560 960", duration: 0.45, ease: "back.out(1.6)" }, 0.658);
+    tl.to("#s1-look", { x: 9, y: 2, duration: 0.25, ease: "power2.out" }, 0.492);
+    tl.to("#s1-eye-l, #s1-eye-r", { scaleY: 0.1, transformOrigin: "50% 50%", duration: 0.05, ease: "none" }, 1.781);
+    tl.to("#s1-eye-l, #s1-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 1.827);
+    // "pero entre ROAS, ACOS y CTR": el gráfico se va y le llueven siglas
+    tl.to("#s1-chart", { opacity: 0, y: 40, duration: 0.25, ease: "power2.in" }, 2.793);
+    tl.fromTo("#s1-t1", { y: -1500, rotation: -28 }, { y: 0, rotation: -8, duration: 0.7, ease: "bounce.out" }, 3.069);
+    tl.fromTo("#s1-t2", { y: -1500, rotation: -14 }, { y: 0, rotation: 6, duration: 0.7, ease: "bounce.out" }, 3.53);
+    tl.fromTo("#s1-t3", { y: -1500, rotation: -16 }, { y: 0, rotation: 4, duration: 0.7, ease: "bounce.out" }, 3.99);
+    tl.fromTo("#s1-t4", { y: -1500, rotation: -30 }, { y: 0, rotation: -10, duration: 0.7, ease: "bounce.out" }, 4.45);
+    tl.fromTo("#s1-t5", { y: -1500, rotation: -8 }, { y: 0, rotation: 12, duration: 0.7, ease: "bounce.out" }, 4.68);
+    tl.fromTo("#s1-t6", { y: -1500, rotation: -24 }, { y: 0, rotation: -4, duration: 0.7, ease: "bounce.out" }, 4.91);
+    tl.fromTo("#s1-t7", { y: -1500, rotation: -6 }, { y: 0, rotation: 14, duration: 0.7, ease: "bounce.out" }, 5.103);
+    tl.fromTo("#s1-t8", { y: -1500, rotation: -32 }, { y: 0, rotation: -12, duration: 0.7, ease: "bounce.out" }, 5.282);
+    tl.set("#s1-m-smile", { opacity: 0 }, 3.207);
+    tl.set("#s1-m-o", { opacity: 1 }, 3.207);
+    tl.to("#s1-look", { x: 3, y: -9, duration: 0.2, ease: "power2.out" }, 3.161);
+    // se cubre de la lluvia de siglas
+    tl.to("#s1-arm-r", { rotation: -150, svgOrigin: "515 690", duration: 0.35, ease: "back.out(1.8)" }, 2.977);
+    tl.to("#s1-fore-r", { rotation: -50, svgOrigin: "560 960", duration: 0.35, ease: "back.out(1.8)" }, 3.023);
+    tl.to("#s1-arm-l", { rotation: 150, svgOrigin: "125 690", duration: 0.35, ease: "back.out(1.8)" }, 3.069);
+    tl.to("#s1-fore-l", { rotation: 50, svgOrigin: "80 960", duration: 0.35, ease: "back.out(1.8)" }, 3.115);
+    tl.to("#s1-head", { rotation: -6, y: 12, duration: 0.3, ease: "back.out(2)" }, 3.207);
+    tl.to("#s1-brow-l", { y: -8, rotation: 12, svgOrigin: "300 246", duration: 0.25, ease: "back.out(2)" }, 3.714);
+    tl.to("#s1-brow-r", { y: -2, rotation: -6, svgOrigin: "340 246", duration: 0.25, ease: "back.out(2)" }, 3.76);
+    tl.to("#s1-head", { rotation: 5, duration: 0.25, ease: "power2.inOut" }, 4.266);
+    tl.to("#s1-head", { rotation: -5, duration: 0.25, ease: "power2.inOut" }, 4.496);
+    tl.to("#s1-head", { rotation: 0, duration: 0.3, ease: "power2.out" }, 4.726);
+    // "¿sabés si te deja ganancia?"
+    tl.fromTo("#s1-q", { opacity: 0, scale: 0.4, rotation: -20 }, { opacity: 1, scale: 1, rotation: 8, duration: 0.4, ease: "back.out(2.6)" }, 5.569);
+    tl.to("#s1-eye-l, #s1-eye-r", { scaleY: 0.1, duration: 0.05, ease: "none" }, 6.07);
+    tl.to("#s1-eye-l, #s1-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 6.106);
+    // "Lumo lee tus campañas": se enciende Lumo, las siglas se ordenan en campañas y la vendedora sale de cuadro aliviada
+    tl.to("#s1-hook", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 6.787);
+    tl.fromTo("#s1-badge", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2.2)" }, 6.93);
+    tl.to("#s1-q", { opacity: 0, scale: 0.6, duration: 0.2, ease: "power2.in" }, 6.973);
+    tl.set("#s1-m-o", { opacity: 0 }, 7.016);
+    tl.set("#s1-m-grin", { opacity: 1 }, 7.016);
+    tl.to("#s1-brow-l, #s1-brow-r", { rotation: 0, y: -10, duration: 0.25, ease: "power2.out" }, 7.016);
+    tl.to("#s1-arm-l, #s1-arm-r, #s1-fore-l, #s1-fore-r", { rotation: 0, duration: 0.3, ease: "power2.out" }, 7.016);
+    tl.to("#s1-t1", { x: 380, y: -635, rotation: 0, scale: 0.3, opacity: 0, duration: 0.45, ease: "power3.in" }, 7.274);
+    tl.to("#s1-t2", { x: 40, y: -405, rotation: 0, scale: 0.3, opacity: 0, duration: 0.45, ease: "power3.in" }, 7.309);
+    tl.to("#s1-t3", { x: 250, y: -560, rotation: 0, scale: 0.3, opacity: 0, duration: 0.45, ease: "power3.in" }, 7.343);
+    tl.to("#s1-t4", { x: 20, y: -300, rotation: 0, scale: 0.3, opacity: 0, duration: 0.45, ease: "power3.in" }, 7.378);
+    tl.to("#s1-t5", { x: 400, y: -50, rotation: 0, scale: 0.3, opacity: 0, duration: 0.45, ease: "power3.in" }, 7.412);
+    tl.to("#s1-t6", { x: 170, y: -165, rotation: 0, scale: 0.3, opacity: 0, duration: 0.45, ease: "power3.in" }, 7.447);
+    tl.to("#s1-t7", { x: 0, y: -95, rotation: 0, scale: 0.3, opacity: 0, duration: 0.45, ease: "power3.in" }, 7.481);
+    tl.to("#s1-t8", { x: 420, y: 115, rotation: 0, scale: 0.3, opacity: 0, duration: 0.45, ease: "power3.in" }, 7.515);
+    tl.to("#s1-char", { y: 1400, duration: 0.6, ease: "power3.in" }, 7.361);
+    tl.fromTo("#s1-r1, #s1-r2, #s1-r3", { clipPath: "inset(0% 100% 0% 0% round 34px)" }, { clipPath: "inset(0% 0% 0% 0% round 34px)", duration: 0.45, ease: "power3.out", stagger: 0.15 }, 7.619);
+    tl.fromTo("#s1-r1 .chip, #s1-r2 .chip, #s1-r3 .chip", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.4)", stagger: 0.15 }, 7.877);
+    // "qué funciona", "qué no", "qué hacer primero"
+    tl.to("#s1-r1-ring", { opacity: 1, duration: 0.2, ease: "power2.out" }, 9.341);
+    tl.fromTo("#s1-r1", { scale: 1 }, { scale: 1.035, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1 }, 9.341);
+    tl.to("#s1-r3-ring", { opacity: 1, duration: 0.2, ease: "power2.out" }, 9.944);
+    tl.fromTo("#s1-r3", { scale: 1 }, { scale: 1.035, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1 }, 9.944);
+    tl.fromTo("#s1-first", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.4)" }, 10.977);
+    window.__timelines["s1"] = tl;
+  </script>
+</template>

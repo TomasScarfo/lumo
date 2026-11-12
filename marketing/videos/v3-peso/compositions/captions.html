@@ -1,0 +1,175 @@
+<template>
+  <style>
+    @font-face { font-family: "Figtree"; src: url("assets/fonts/Figtree.ttf"); font-weight: 300 900; }
+    #root { position: absolute; inset: 0; pointer-events: none; }
+    .cap { position: absolute; left: 0; right: 0; top: 1150px; padding: 0 60px; text-align: center; font-family: "Figtree", sans-serif;
+           font-weight: 800; font-size: 60px; line-height: 1.2; overflow: visible; opacity: 0; visibility: hidden; }
+    .cap .box { display: inline-block; padding: 12px 26px 14px; border-radius: 20px; background: rgba(19, 32, 44, 0.9); color: #FFFFFF;
+                box-shadow: 0 8px 24px rgba(19, 32, 44, 0.25); }
+    .cap .box span.on { color: #FFD24D; }
+    .cap.blue .box { background: rgba(10, 20, 70, 0.55); }
+  </style>
+  <div id="root" data-composition-id="captions" data-width="1080" data-height="1920">
+      <div id="cap-g0" class="cap"><span class="box"><span id="cap-g0-w0">Por</span> <span id="cap-g0-w1">cada</span> <span id="cap-g0-w2">peso</span> <span id="cap-g0-w3">que</span></span></div>
+      <div id="cap-g1" class="cap"><span class="box"><span id="cap-g1-w0">ponés</span> <span id="cap-g1-w1">en</span> <span id="cap-g1-w2">publicidad</span> <span id="cap-g1-w3">en</span></span></div>
+      <div id="cap-g2" class="cap"><span class="box"><span id="cap-g2-w0">Mercado</span> <span id="cap-g2-w1">Libre…</span> <span id="cap-g2-w2">¿cuánto</span></span></div>
+      <div id="cap-g3" class="cap"><span class="box"><span id="cap-g3-w0">vuelve</span> <span id="cap-g3-w1">en</span> <span id="cap-g3-w2">ventas?</span></span></div>
+      <div id="cap-g4" class="cap"><span class="box"><span id="cap-g4-w0">Lumo</span> <span id="cap-g4-w1">te</span> <span id="cap-g4-w2">lo</span> <span id="cap-g4-w3">dice</span></span></div>
+      <div id="cap-g5" class="cap"><span class="box"><span id="cap-g5-w0">en</span> <span id="cap-g5-w1">una</span> <span id="cap-g5-w2">frase:</span></span></div>
+      <div id="cap-g6" class="cap"><span class="box"><span id="cap-g6-w0">por</span> <span id="cap-g6-w1">cada</span> <span id="cap-g6-w2">peso</span> <span id="cap-g6-w3">invertido,</span></span></div>
+      <div id="cap-g7" class="cap"><span class="box"><span id="cap-g7-w0">vendiste</span> <span id="cap-g7-w1">tres</span> <span id="cap-g7-w2">con</span> <span id="cap-g7-w3">ochenta.</span></span></div>
+      <div id="cap-g8" class="cap"><span class="box"><span id="cap-g8-w0">Y</span> <span id="cap-g8-w1">campaña</span> <span id="cap-g8-w2">por</span> <span id="cap-g8-w3">campaña</span></span></div>
+      <div id="cap-g9" class="cap"><span class="box"><span id="cap-g9-w0">te</span> <span id="cap-g9-w1">recomienda</span> <span id="cap-g9-w2">qué</span> <span id="cap-g9-w3">hacer:</span></span></div>
+      <div id="cap-g10" class="cap"><span class="box"><span id="cap-g10-w0">subir,</span></span></div>
+      <div id="cap-g11" class="cap"><span class="box"><span id="cap-g11-w0">mantener</span> <span id="cap-g11-w1">o</span> <span id="cap-g11-w2">bajar</span></span></div>
+      <div id="cap-g12" class="cap"><span class="box"><span id="cap-g12-w0">el</span> <span id="cap-g12-w1">presupuesto.</span></span></div>
+      <div id="cap-g13" class="cap blue"><span class="box"><span id="cap-g13-w0">Lumo:</span></span></div>
+      <div id="cap-g14" class="cap blue"><span class="box"><span id="cap-g14-w0">tu</span> <span id="cap-g14-w1">asistente</span> <span id="cap-g14-w2">de</span> <span id="cap-g14-w3">publicidad</span></span></div>
+      <div id="cap-g15" class="cap blue"><span class="box"><span id="cap-g15-w0">en</span> <span id="cap-g15-w1">Mercado</span> <span id="cap-g15-w2">Libre,</span></span></div>
+      <div id="cap-g16" class="cap blue"><span class="box"><span id="cap-g16-w0">para</span> <span id="cap-g16-w1">gastar</span> <span id="cap-g16-w2">mejor</span></span></div>
+      <div id="cap-g17" class="cap blue"><span class="box"><span id="cap-g17-w0">y</span> <span id="cap-g17-w1">vender</span> <span id="cap-g17-w2">más.</span></span></div>
+      <div id="cap-g18" class="cap blue"><span class="box"><span id="cap-g18-w0">Probalo</span> <span id="cap-g18-w1">gratis</span> <span id="cap-g18-w2">14</span> <span id="cap-g18-w3">días.</span></span></div>
+  </div>
+  <script>
+    // Generado por tools/captions.py: no editar a mano los tiempos, regenerar.
+    const tl = gsap.timeline({ paused: true });
+    tl.set("#cap-g0", { visibility: "visible" }, 0.440);
+    tl.fromTo("#cap-g0", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 0.440);
+    tl.set("#cap-g0-w0", { className: "on" }, 0.490);
+    tl.set("#cap-g0-w1", { className: "on" }, 0.540);
+    tl.set("#cap-g0-w2", { className: "on" }, 0.740);
+    tl.set("#cap-g0-w3", { className: "on" }, 1.030);
+    tl.to("#cap-g0", { opacity: 0, duration: 0.12, ease: "power2.in" }, 0.990);
+    tl.set("#cap-g0", { opacity: 0, visibility: "hidden" }, 1.110);
+    tl.set("#cap-g1", { visibility: "visible" }, 1.130);
+    tl.fromTo("#cap-g1", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 1.130);
+    tl.set("#cap-g1-w0", { className: "on" }, 1.180);
+    tl.set("#cap-g1-w1", { className: "on" }, 1.490);
+    tl.set("#cap-g1-w2", { className: "on" }, 1.610);
+    tl.set("#cap-g1-w3", { className: "on" }, 2.300);
+    tl.to("#cap-g1", { opacity: 0, duration: 0.12, ease: "power2.in" }, 2.270);
+    tl.set("#cap-g1", { opacity: 0, visibility: "hidden" }, 2.390);
+    tl.set("#cap-g2", { visibility: "visible" }, 2.410);
+    tl.fromTo("#cap-g2", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 2.410);
+    tl.set("#cap-g2-w0", { className: "on" }, 2.460);
+    tl.set("#cap-g2-w1", { className: "on" }, 2.845);
+    tl.set("#cap-g2-w2", { className: "on" }, 3.230);
+    tl.to("#cap-g2", { opacity: 0, duration: 0.12, ease: "power2.in" }, 3.645);
+    tl.set("#cap-g2", { opacity: 0, visibility: "hidden" }, 3.765);
+    tl.set("#cap-g3", { visibility: "visible" }, 3.950);
+    tl.fromTo("#cap-g3", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 3.950);
+    tl.set("#cap-g3-w0", { className: "on" }, 4.000);
+    tl.set("#cap-g3-w1", { className: "on" }, 4.400);
+    tl.set("#cap-g3-w2", { className: "on" }, 4.530);
+    tl.to("#cap-g3", { opacity: 0, duration: 0.12, ease: "power2.in" }, 5.160);
+    tl.set("#cap-g3", { opacity: 0, visibility: "hidden" }, 5.280);
+    tl.set("#cap-g4", { visibility: "visible" }, 5.370);
+    tl.fromTo("#cap-g4", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 5.370);
+    tl.set("#cap-g4-w0", { className: "on" }, 5.420);
+    tl.set("#cap-g4-w1", { className: "on" }, 5.620);
+    tl.set("#cap-g4-w2", { className: "on" }, 5.720);
+    tl.set("#cap-g4-w3", { className: "on" }, 5.910);
+    tl.to("#cap-g4", { opacity: 0, duration: 0.12, ease: "power2.in" }, 6.100);
+    tl.set("#cap-g4", { opacity: 0, visibility: "hidden" }, 6.220);
+    tl.set("#cap-g5", { visibility: "visible" }, 6.240);
+    tl.fromTo("#cap-g5", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 6.240);
+    tl.set("#cap-g5-w0", { className: "on" }, 6.290);
+    tl.set("#cap-g5-w1", { className: "on" }, 6.440);
+    tl.set("#cap-g5-w2", { className: "on" }, 6.710);
+    tl.to("#cap-g5", { opacity: 0, duration: 0.12, ease: "power2.in" }, 6.990);
+    tl.set("#cap-g5", { opacity: 0, visibility: "hidden" }, 7.110);
+    tl.set("#cap-g6", { visibility: "visible" }, 7.130);
+    tl.fromTo("#cap-g6", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 7.130);
+    tl.set("#cap-g6-w0", { className: "on" }, 7.180);
+    tl.set("#cap-g6-w1", { className: "on" }, 7.420);
+    tl.set("#cap-g6-w2", { className: "on" }, 7.650);
+    tl.set("#cap-g6-w3", { className: "on" }, 7.920);
+    tl.to("#cap-g6", { opacity: 0, duration: 0.12, ease: "power2.in" }, 8.490);
+    tl.set("#cap-g6", { opacity: 0, visibility: "hidden" }, 8.610);
+    tl.set("#cap-g7", { visibility: "visible" }, 8.630);
+    tl.fromTo("#cap-g7", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 8.630);
+    tl.set("#cap-g7-w0", { className: "on" }, 8.680);
+    tl.set("#cap-g7-w1", { className: "on" }, 9.200);
+    tl.set("#cap-g7-w2", { className: "on" }, 9.488);
+    tl.set("#cap-g7-w3", { className: "on" }, 9.777);
+    tl.to("#cap-g7", { opacity: 0, duration: 0.12, ease: "power2.in" }, 9.875);
+    tl.set("#cap-g7", { opacity: 0, visibility: "hidden" }, 9.995);
+    tl.set("#cap-g8", { visibility: "visible" }, 10.015);
+    tl.fromTo("#cap-g8", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 10.015);
+    tl.set("#cap-g8-w0", { className: "on" }, 10.065);
+    tl.set("#cap-g8-w1", { className: "on" }, 10.353);
+    tl.set("#cap-g8-w2", { className: "on" }, 10.930);
+    tl.set("#cap-g8-w3", { className: "on" }, 11.180);
+    tl.to("#cap-g8", { opacity: 0, duration: 0.12, ease: "power2.in" }, 11.630);
+    tl.set("#cap-g8", { opacity: 0, visibility: "hidden" }, 11.750);
+    tl.set("#cap-g9", { visibility: "visible" }, 11.770);
+    tl.fromTo("#cap-g9", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 11.770);
+    tl.set("#cap-g9-w0", { className: "on" }, 11.820);
+    tl.set("#cap-g9-w1", { className: "on" }, 11.980);
+    tl.set("#cap-g9-w2", { className: "on" }, 12.770);
+    tl.set("#cap-g9-w3", { className: "on" }, 13.000);
+    tl.to("#cap-g9", { opacity: 0, duration: 0.12, ease: "power2.in" }, 13.450);
+    tl.set("#cap-g9", { opacity: 0, visibility: "hidden" }, 13.570);
+    tl.set("#cap-g10", { visibility: "visible" }, 13.610);
+    tl.fromTo("#cap-g10", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 13.610);
+    tl.set("#cap-g10-w0", { className: "on" }, 13.660);
+    tl.to("#cap-g10", { opacity: 0, duration: 0.12, ease: "power2.in" }, 13.830);
+    tl.set("#cap-g10", { opacity: 0, visibility: "hidden" }, 13.950);
+    tl.set("#cap-g11", { visibility: "visible" }, 13.970);
+    tl.fromTo("#cap-g11", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 13.970);
+    tl.set("#cap-g11-w0", { className: "on" }, 14.020);
+    tl.set("#cap-g11-w1", { className: "on" }, 14.730);
+    tl.set("#cap-g11-w2", { className: "on" }, 14.810);
+    tl.to("#cap-g11", { opacity: 0, duration: 0.12, ease: "power2.in" }, 15.060);
+    tl.set("#cap-g11", { opacity: 0, visibility: "hidden" }, 15.180);
+    tl.set("#cap-g12", { visibility: "visible" }, 15.200);
+    tl.fromTo("#cap-g12", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 15.200);
+    tl.set("#cap-g12-w0", { className: "on" }, 15.250);
+    tl.set("#cap-g12-w1", { className: "on" }, 15.410);
+    tl.to("#cap-g12", { opacity: 0, duration: 0.12, ease: "power2.in" }, 16.750);
+    tl.set("#cap-g12", { opacity: 0, visibility: "hidden" }, 16.870);
+    tl.set("#cap-g13", { visibility: "visible" }, 16.910);
+    tl.fromTo("#cap-g13", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 16.910);
+    tl.set("#cap-g13-w0", { className: "on" }, 16.960);
+    tl.to("#cap-g13", { opacity: 0, duration: 0.12, ease: "power2.in" }, 17.380);
+    tl.set("#cap-g13", { opacity: 0, visibility: "hidden" }, 17.500);
+    tl.set("#cap-g14", { visibility: "visible" }, 17.520);
+    tl.fromTo("#cap-g14", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 17.520);
+    tl.set("#cap-g14-w0", { className: "on" }, 17.570);
+    tl.set("#cap-g14-w1", { className: "on" }, 17.700);
+    tl.set("#cap-g14-w2", { className: "on" }, 18.230);
+    tl.set("#cap-g14-w3", { className: "on" }, 18.360);
+    tl.to("#cap-g14", { opacity: 0, duration: 0.12, ease: "power2.in" }, 18.780);
+    tl.set("#cap-g14", { opacity: 0, visibility: "hidden" }, 18.900);
+    tl.set("#cap-g15", { visibility: "visible" }, 18.920);
+    tl.fromTo("#cap-g15", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 18.920);
+    tl.set("#cap-g15-w0", { className: "on" }, 18.970);
+    tl.set("#cap-g15-w1", { className: "on" }, 19.080);
+    tl.set("#cap-g15-w2", { className: "on" }, 19.327);
+    tl.to("#cap-g15", { opacity: 0, duration: 0.12, ease: "power2.in" }, 19.603);
+    tl.set("#cap-g15", { opacity: 0, visibility: "hidden" }, 19.723);
+    tl.set("#cap-g16", { visibility: "visible" }, 19.770);
+    tl.fromTo("#cap-g16", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 19.770);
+    tl.set("#cap-g16-w0", { className: "on" }, 19.820);
+    tl.set("#cap-g16-w1", { className: "on" }, 20.110);
+    tl.set("#cap-g16-w2", { className: "on" }, 20.470);
+    tl.to("#cap-g16", { opacity: 0, duration: 0.12, ease: "power2.in" }, 20.590);
+    tl.set("#cap-g16", { opacity: 0, visibility: "hidden" }, 20.710);
+    tl.set("#cap-g17", { visibility: "visible" }, 20.730);
+    tl.fromTo("#cap-g17", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 20.730);
+    tl.set("#cap-g17-w0", { className: "on" }, 20.780);
+    tl.set("#cap-g17-w1", { className: "on" }, 20.880);
+    tl.set("#cap-g17-w2", { className: "on" }, 21.380);
+    tl.to("#cap-g17", { opacity: 0, duration: 0.12, ease: "power2.in" }, 21.690);
+    tl.set("#cap-g17", { opacity: 0, visibility: "hidden" }, 21.810);
+    tl.set("#cap-g18", { visibility: "visible" }, 21.850);
+    tl.fromTo("#cap-g18", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.12, ease: "power2.out" }, 21.850);
+    tl.set("#cap-g18-w0", { className: "on" }, 21.900);
+    tl.set("#cap-g18-w1", { className: "on" }, 22.110);
+    tl.set("#cap-g18-w2", { className: "on" }, 22.500);
+    tl.set("#cap-g18-w3", { className: "on" }, 22.890);
+    tl.to("#cap-g18", { opacity: 0, duration: 0.12, ease: "power2.in" }, 23.190);
+    tl.set("#cap-g18", { opacity: 0, visibility: "hidden" }, 23.310);
+    window.__timelines["captions"] = tl;
+  </script>
+</template>

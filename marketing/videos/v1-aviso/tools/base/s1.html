@@ -1,0 +1,154 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    @font-face { font-family: "Figtree"; src: url("assets/fonts/Figtree.ttf"); font-weight: 300 900; }
+    #root { position: absolute; inset: 0; background: #FFFFFF; overflow: hidden; font-family: "Figtree", sans-serif; color: #13202C; }
+    #s1-cam { position: absolute; inset: 0; }
+    #s1-char { position: absolute; left: -40px; top: 330px; width: 700px; height: 1700px; }
+    #s1-phone { position: absolute; left: 560px; top: 330px; width: 400px; height: 800px; }
+    #s1-phone .body { position: absolute; inset: 0; border: 14px solid #13202C; border-radius: 64px; background: #E3E9FC; overflow: hidden; }
+    #s1-phone .notch { position: absolute; left: 50%; top: 18px; width: 110px; height: 30px; margin-left: -55px; border-radius: 16px; background: #13202C; }
+    #s1-phone .time { position: absolute; left: 0; right: 0; top: 74px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 700; font-size: 104px; letter-spacing: -0.03em; }
+    #s1-phone .date { position: absolute; left: 0; right: 0; top: 200px; text-align: center; font-size: 28px; font-weight: 600; color: #44566A; }
+    #s1-notif { position: absolute; left: 16px; right: 16px; top: 280px; background: #FFFFFF; border-radius: 30px; padding: 20px 22px 22px; box-shadow: 0 18px 40px rgba(19,32,44,.16); }
+    #s1-notif .head { display: flex; align-items: center; gap: 12px; font-size: 28px; font-weight: 700; }
+    #s1-notif .head img { width: 48px; height: 48px; border-radius: 12px; }
+    #s1-notif .head span { margin-left: auto; font-weight: 500; color: #5A6B7C; }
+    #s1-notif .title { margin-top: 14px; font-size: 31px; line-height: 1.15; font-weight: 800; }
+    #s1-notif .text { margin-top: 10px; font-size: 28px; line-height: 1.2; font-weight: 500; color: #44566A; }
+    #s1-buzz { position: absolute; left: 520px; top: 560px; width: 480px; height: 320px; }
+    #s1-buzz-l, #s1-buzz-r { opacity: 0; }
+    #s1-hook { position: absolute; left: 40px; right: 40px; top: 268px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 60px; line-height: 1; letter-spacing: -0.02em; }
+    #s1-cover { position: absolute; inset: 0; background: #F2F5F8; opacity: 0; }
+  </style>
+  <div id="root" data-composition-id="s1" data-width="1080" data-height="1920">
+    <div id="s1-cam">
+      <div id="s1-hook">¿Vendés en Mercado Libre?</div>
+      
+      <div id="s1-phone">
+        <div class="body">
+          <div class="notch"></div>
+          <div class="time">10:24</div>
+          <div class="date">jueves 12 de noviembre</div>
+          <div id="s1-notif">
+            <div class="head"><img src="assets/logo.svg" alt="">Lumo<span>ahora</span></div>
+            <div class="title">Publicaciones que venden bien sin publicidad</div>
+            <div class="text">Organizador de cajones: 24 unidades vendidas en 30 días</div>
+          </div>
+        </div>
+      </div>
+      <!--personaje--><svg id="s1-char" class="personaje mujer" viewBox="0 0 700 1700" style="overflow:visible" data-layout-allow-overflow aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <g id="s1-body">
+        <path d="M175 300 C160 160 240 102 320 102 C410 102 482 165 466 310 C470 420 492 520 502 622 C442 642 392 612 380 562 L260 562 C250 612 200 642 138 622 C150 520 170 420 175 300 Z" fill="#3B2A22" stroke="#13202C" stroke-width="5"/>
+        <path d="M118 1700 L122 1250 L518 1250 L522 1700 Z" fill="#2E3A4F" stroke="#13202C" stroke-width="5"/>
+        <path d="M320 1300 L320 1700" stroke="#13202C" stroke-width="5"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" fill="#CFDBFF"/>
+        <path d="M450 640 C520 680 545 760 545 900 L540 1270 C520 1274 500 1276 478 1278 Z" fill="#B3C4F4"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" stroke="#13202C" stroke-width="5"/>
+        <path d="M285 440 L285 572 C300 586 340 586 355 572 L355 440 Z" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+        <path d="M287 470 C305 505 335 505 353 470 L353 512 C335 530 305 530 287 512 Z" fill="#E2AC86"/>
+        <path d="M272 598 L320 676 L368 598 Z" fill="#F2C7A5" stroke="#13202C" stroke-width="5" stroke-linejoin="round"/>
+        
+        <g id="s1-arm-l">
+          <path d="M125 690 L80 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M125 690 L80 960" stroke="#CFDBFF" stroke-width="72" stroke-linecap="round"/>
+          <g id="s1-fore-l">
+            <path d="M80 960 L80 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M80 960 L80 1190" stroke="#F2C7A5" stroke-width="54" stroke-linecap="round"/>
+            <path d="M46 964 L114 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M46 956 C46 920 114 920 114 956 Z" fill="#CFDBFF" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="s1-hand-l" cx="80" cy="1220" rx="36" ry="40" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        
+        <g id="s1-arm-r">
+          <path d="M515 690 L560 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M515 690 L560 960" stroke="#CFDBFF" stroke-width="72" stroke-linecap="round"/>
+          <g id="s1-fore-r">
+            <path d="M560 960 L560 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M560 960 L560 1190" stroke="#F2C7A5" stroke-width="54" stroke-linecap="round"/>
+            <path d="M526 964 L594 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M526 956 C526 920 594 920 594 956 Z" fill="#CFDBFF" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="s1-hand-r" cx="560" cy="1220" rx="36" ry="40" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        <g id="s1-head">
+          <ellipse cx="200" cy="318" rx="22" ry="34" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          <ellipse cx="440" cy="318" rx="22" ry="34" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          <path d="M200 300 C200 200 255 150 320 150 C385 150 440 200 440 300 C440 390 395 462 320 468 C245 462 200 390 200 300 Z" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          <circle cx="252" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <circle cx="388" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <path d="M196 288 C198 176 268 126 340 130 C402 134 444 180 446 252 C412 222 372 202 332 198 C302 232 250 264 196 288 Z" fill="#3B2A22" stroke="#13202C" stroke-width="5"/><path d="M262 162 Q306 142 356 150" fill="none" stroke="#5A4034" stroke-width="9" stroke-linecap="round"/><circle cx="203" cy="358" r="8" fill="#F2C230" stroke="#13202C" stroke-width="4"/>
+          <path id="s1-brow-l" d="M246 250 Q272 236 300 246" stroke="#3B2A22" stroke-width="9"/>
+          <path id="s1-brow-r" d="M340 246 Q368 236 394 250" stroke="#3B2A22" stroke-width="9"/>
+          <g id="s1-eyes">
+            <path d="M248 280 l-12 -8 M392 280 l12 -8" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <g id="s1-eye-l"><ellipse cx="275" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="s1-eye-r"><ellipse cx="365" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="s1-look">
+              <circle cx="275" cy="303" r="15" fill="#5A3A26"/><circle cx="275" cy="303" r="8" fill="#13202C"/><circle cx="281" cy="296" r="5" fill="#FFFFFF"/>
+              <circle cx="365" cy="303" r="15" fill="#5A3A26"/><circle cx="365" cy="303" r="8" fill="#13202C"/><circle cx="371" cy="296" r="5" fill="#FFFFFF"/>
+            </g>
+          </g>
+          <path d="M322 318 Q310 352 328 357" stroke="#13202C" stroke-width="5"/>
+          <path id="s1-m-smile" d="M290 398 Q320 424 350 398" stroke="#13202C" stroke-width="6"/>
+          <path id="s1-m-talk" d="M297 396 Q320 432 343 396 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <ellipse id="s1-m-o" cx="320" cy="410" rx="15" ry="20" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <g id="s1-m-grin" opacity="0"><path d="M282 392 Q320 448 358 392 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5"/><path d="M290 397 Q320 405 350 397 L347 406 Q320 412 293 406 Z" fill="#FFFFFF"/></g>
+          <path id="s1-m-worry" d="M292 414 Q306 400 320 410 Q334 420 348 406" stroke="#13202C" stroke-width="6" opacity="0"/>
+        </g>
+      </g>
+    </svg><!--/personaje-->
+      <svg id="s1-buzz" viewBox="0 0 480 320" aria-hidden="true" fill="none" stroke="#2446D6" stroke-width="7" stroke-linecap="round">
+        <g id="s1-buzz-l"><path d="M40 110 Q22 160 40 210"/><path d="M14 90 Q-8 160 14 230"/></g>
+        <g id="s1-buzz-r"><path d="M440 110 Q458 160 440 210"/><path d="M466 90 Q488 160 466 230"/></g>
+      </svg>
+    </div>
+    <div id="s1-cover"></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // pose inicial (la miniatura): mira al frente, sonriendo, con el celular en la mano
+    tl.set("#s1-head", { rotation: 0, svgOrigin: "320 470" }, 0);
+    // sostiene el celular: el antebrazo derecho sube hasta el borde del teléfono
+    tl.set("#s1-fore-r", { rotation: -160, svgOrigin: "560 960" }, 0);
+    tl.set("#s1-arm-r", { rotation: -6, svgOrigin: "515 690" }, 0);
+    tl.to("#s1-body", { scaleY: 1.008, svgOrigin: "320 1700", duration: 1.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0);
+    // vibra: el celular tiembla 4 veces y aparecen las marquitas
+    tl.to("#s1-phone", { keyframes: [
+      { rotation: 3, duration: 0.05 }, { rotation: -3, duration: 0.05 }, { rotation: 3, duration: 0.05 },
+      { rotation: -3, duration: 0.05 }, { rotation: 2, duration: 0.05 }, { rotation: -2, duration: 0.05 }, { rotation: 0, duration: 0.06 },
+    ], transformOrigin: "50% 80%" }, 0.3);
+    tl.fromTo("#s1-buzz-l, #s1-buzz-r", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.12, ease: "power2.out", transformOrigin: "50% 50%" }, 0.3);
+    tl.to("#s1-buzz-l, #s1-buzz-r", { opacity: 0, duration: 0.18, ease: "power2.in" }, 0.75);
+    // toma de sorpresa: anticipación (baja un poco), la cabeza gira hacia el celular, cejas arriba, boca en "o"
+    tl.to("#s1-head", { rotation: -3, y: 6, duration: 0.12, ease: "power2.in" }, 0.55);
+    tl.to("#s1-head", { rotation: 9, y: -10, duration: 0.42, ease: "back.out(1.8)" }, 0.67);
+    tl.to("#s1-look", { x: 9, y: 2, duration: 0.2, ease: "power2.out" }, 0.62);
+    tl.to("#s1-brow-l", { y: -16, duration: 0.25, ease: "back.out(2)" }, 0.68);
+    tl.to("#s1-brow-r", { y: -20, duration: 0.25, ease: "back.out(2)" }, 0.72);
+    tl.set("#s1-m-smile", { opacity: 0 }, 0.7);
+    tl.set("#s1-m-o", { opacity: 1 }, 0.7);
+    tl.fromTo("#s1-m-o", { scale: 0.6, svgOrigin: "320 405" }, { scale: 1, duration: 0.3, ease: "back.out(2.4)" }, 0.7);
+    tl.to("#s1-arm-r", { rotation: -10, svgOrigin: "515 690", duration: 0.35, ease: "back.out(1.6)" }, 0.78);
+    tl.to("#s1-arm-l", { rotation: -6, svgOrigin: "125 690", duration: 0.4, ease: "back.out(1.6)" }, 0.8);
+    // parpadeo
+    tl.to("#s1-eye-l, #s1-eye-r", { scaleY: 0.1, transformOrigin: "50% 50%", duration: 0.05, ease: "none" }, 2.05);
+    tl.to("#s1-eye-l, #s1-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 2.1);
+    // "vende solo": se le ilumina la cara
+    tl.set("#s1-m-o", { opacity: 0 }, 2.5);
+    tl.set("#s1-m-grin", { opacity: 1 }, 2.5);
+    tl.fromTo("#s1-m-grin", { scale: 0.7, svgOrigin: "320 405" }, { scale: 1, duration: 0.32, ease: "back.out(2.2)" }, 2.5);
+    tl.to("#s1-brow-l, #s1-brow-r", { y: -8, duration: 0.3, ease: "power2.out" }, 2.5);
+    tl.to("#s1-head", { rotation: 6, y: -4, duration: 0.5, ease: "power2.inOut" }, 2.6);
+    // el brazo libre festeja con un puñito
+    tl.to("#s1-arm-l", { rotation: -25, svgOrigin: "125 690", duration: 0.35, ease: "back.out(2)" }, 2.7);
+    tl.to("#s1-fore-l", { rotation: -125, svgOrigin: "80 960", duration: 0.35, ease: "back.out(2)" }, 2.75);
+    tl.to("#s1-eye-l, #s1-eye-r", { scaleY: 0.1, transformOrigin: "50% 50%", duration: 0.05, ease: "none" }, 3.9);
+    tl.to("#s1-eye-l, #s1-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 3.95);
+    // la cámara se mete en la notificación: la pantalla pasa a ser el mundo siguiente
+    tl.to("#s1-cam", { scale: 3.4, transformOrigin: "760px 790px", duration: 0.8, ease: "power3.in" }, 4.8);
+    tl.to("#s1-cover", { opacity: 1, duration: 0.22, ease: "power2.in" }, 5.36);
+    window.__timelines["s1"] = tl;
+  </script>
+</template>

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #FFFFFF; }
+      #root { position: relative; width: 100%; height: 100%; }
+      .personaje { position: absolute; top: 380px; width: 560px; height: 1360px; }
+      #a-char { left: -30px; }
+      #b-char { left: 500px; }
+      h1 { position: absolute; left: 0; right: 0; top: 190px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 72px; color: #13202C; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="8.5" data-width="1080" data-height="1920">
+      <h1>Personajes de Lumo</h1>
+      <svg id="a-char" class="personaje mujer" viewBox="0 0 700 1700" style="overflow:visible" data-layout-allow-overflow aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <g id="a-body">
+        <path d="M175 300 C160 160 240 102 320 102 C410 102 482 165 466 310 C470 420 492 520 502 622 C442 642 392 612 380 562 L260 562 C250 612 200 642 138 622 C150 520 170 420 175 300 Z" fill="#3B2A22" stroke="#13202C" stroke-width="5"/>
+        <path d="M118 1700 L122 1250 L518 1250 L522 1700 Z" fill="#2E3A4F" stroke="#13202C" stroke-width="5"/>
+        <path d="M320 1300 L320 1700" stroke="#13202C" stroke-width="5"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" fill="#CFDBFF"/>
+        <path d="M450 640 C520 680 545 760 545 900 L540 1270 C520 1274 500 1276 478 1278 Z" fill="#B3C4F4"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" stroke="#13202C" stroke-width="5"/>
+        <path d="M285 440 L285 572 C300 586 340 586 355 572 L355 440 Z" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+        <path d="M287 470 C305 505 335 505 353 470 L353 512 C335 530 305 530 287 512 Z" fill="#E2AC86"/>
+        <path d="M272 598 L320 676 L368 598 Z" fill="#F2C7A5" stroke="#13202C" stroke-width="5" stroke-linejoin="round"/>
+        
+        <g id="a-arm-l">
+          <path d="M125 690 L80 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M125 690 L80 960" stroke="#CFDBFF" stroke-width="72" stroke-linecap="round"/>
+          <g id="a-fore-l">
+            <path d="M80 960 L80 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M80 960 L80 1190" stroke="#F2C7A5" stroke-width="54" stroke-linecap="round"/>
+            <path d="M46 964 L114 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M46 956 C46 920 114 920 114 956 Z" fill="#CFDBFF" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="a-hand-l" cx="80" cy="1220" rx="36" ry="40" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        
+        <g id="a-arm-r">
+          <path d="M515 690 L560 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M515 690 L560 960" stroke="#CFDBFF" stroke-width="72" stroke-linecap="round"/>
+          <g id="a-fore-r">
+            <path d="M560 960 L560 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M560 960 L560 1190" stroke="#F2C7A5" stroke-width="54" stroke-linecap="round"/>
+            <path d="M526 964 L594 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M526 956 C526 920 594 920 594 956 Z" fill="#CFDBFF" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="a-hand-r" cx="560" cy="1220" rx="36" ry="40" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        <g id="a-head">
+          <ellipse cx="200" cy="318" rx="22" ry="34" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          <ellipse cx="440" cy="318" rx="22" ry="34" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          <path d="M200 300 C200 200 255 150 320 150 C385 150 440 200 440 300 C440 390 395 462 320 468 C245 462 200 390 200 300 Z" fill="#F2C7A5" stroke="#13202C" stroke-width="5"/>
+          <circle cx="252" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <circle cx="388" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <path d="M196 288 C198 176 268 126 340 130 C402 134 444 180 446 252 C412 222 372 202 332 198 C302 232 250 264 196 288 Z" fill="#3B2A22" stroke="#13202C" stroke-width="5"/><path d="M262 162 Q306 142 356 150" fill="none" stroke="#5A4034" stroke-width="9" stroke-linecap="round"/><circle cx="203" cy="358" r="8" fill="#F2C230" stroke="#13202C" stroke-width="4"/>
+          <path id="a-brow-l" d="M246 250 Q272 236 300 246" stroke="#3B2A22" stroke-width="9"/>
+          <path id="a-brow-r" d="M340 246 Q368 236 394 250" stroke="#3B2A22" stroke-width="9"/>
+          <g id="a-eyes">
+            <path d="M248 280 l-12 -8 M392 280 l12 -8" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <g id="a-eye-l"><ellipse cx="275" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="a-eye-r"><ellipse cx="365" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="a-look">
+              <circle cx="275" cy="303" r="15" fill="#5A3A26"/><circle cx="275" cy="303" r="8" fill="#13202C"/><circle cx="281" cy="296" r="5" fill="#FFFFFF"/>
+              <circle cx="365" cy="303" r="15" fill="#5A3A26"/><circle cx="365" cy="303" r="8" fill="#13202C"/><circle cx="371" cy="296" r="5" fill="#FFFFFF"/>
+            </g>
+          </g>
+          <path d="M322 318 Q310 352 328 357" stroke="#13202C" stroke-width="5"/>
+          <path id="a-m-smile" d="M290 398 Q320 424 350 398" stroke="#13202C" stroke-width="6"/>
+          <path id="a-m-talk" d="M297 396 Q320 432 343 396 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <ellipse id="a-m-o" cx="320" cy="410" rx="15" ry="20" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <g id="a-m-grin" opacity="0"><path d="M282 392 Q320 448 358 392 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5"/><path d="M290 397 Q320 405 350 397 L347 406 Q320 412 293 406 Z" fill="#FFFFFF"/></g>
+          <path id="a-m-worry" d="M292 414 Q306 400 320 410 Q334 420 348 406" stroke="#13202C" stroke-width="6" opacity="0"/>
+        </g>
+      </g>
+    </svg>
+      <svg id="b-char" class="personaje hombre" viewBox="0 0 700 1700" style="overflow:visible" data-layout-allow-overflow aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <g id="b-body">
+        
+        <path d="M118 1700 L122 1250 L518 1250 L522 1700 Z" fill="#3E5A8C" stroke="#13202C" stroke-width="5"/>
+        <path d="M320 1300 L320 1700" stroke="#13202C" stroke-width="5"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" fill="#D9F1E3"/>
+        <path d="M450 640 C520 680 545 760 545 900 L540 1270 C520 1274 500 1276 478 1278 Z" fill="#B9E1C9"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" stroke="#13202C" stroke-width="5"/>
+        <path d="M285 440 L285 572 C300 586 340 586 355 572 L355 440 Z" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+        <path d="M287 470 C305 505 335 505 353 470 L353 512 C335 530 305 530 287 512 Z" fill="#C08665"/>
+        <path d="M262 596 L300 664 L322 606 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5" stroke-linejoin="round"/><path d="M378 596 L340 664 L318 606 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5" stroke-linejoin="round"/><circle cx="320" cy="720" r="7" fill="#13202C"/><circle cx="320" cy="800" r="7" fill="#13202C"/>
+        
+        <g id="b-arm-l">
+          <path d="M125 690 L80 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M125 690 L80 960" stroke="#D9F1E3" stroke-width="72" stroke-linecap="round"/>
+          <g id="b-fore-l">
+            <path d="M80 960 L80 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M80 960 L80 1190" stroke="#D9A27E" stroke-width="54" stroke-linecap="round"/>
+            <path d="M46 964 L114 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M46 956 C46 920 114 920 114 956 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="b-hand-l" cx="80" cy="1220" rx="36" ry="40" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        
+        <g id="b-arm-r">
+          <path d="M515 690 L560 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M515 690 L560 960" stroke="#D9F1E3" stroke-width="72" stroke-linecap="round"/>
+          <g id="b-fore-r">
+            <path d="M560 960 L560 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M560 960 L560 1190" stroke="#D9A27E" stroke-width="54" stroke-linecap="round"/>
+            <path d="M526 964 L594 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M526 956 C526 920 594 920 594 956 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="b-hand-r" cx="560" cy="1220" rx="36" ry="40" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        <g id="b-head">
+          <ellipse cx="200" cy="318" rx="22" ry="34" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          <ellipse cx="440" cy="318" rx="22" ry="34" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          <path d="M200 300 C200 200 255 150 320 150 C385 150 440 200 440 300 C440 390 395 462 320 468 C245 462 200 390 200 300 Z" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          <circle cx="252" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <circle cx="388" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <path d="M194 272 C184 158 250 110 326 110 C402 110 456 158 448 266 C432 232 410 212 380 202 C350 216 282 216 252 202 C228 216 210 238 194 272 Z" fill="#2B211C" stroke="#13202C" stroke-width="5"/><path d="M262 150 Q306 132 352 140" fill="none" stroke="#43352D" stroke-width="9" stroke-linecap="round"/><path d="M198 268 L214 268 L216 332 L201 332 Z" fill="#2B211C"/><path d="M442 268 L426 268 L424 332 L439 332 Z" fill="#2B211C"/><path d="M210 352 C226 440 276 470 320 470 C364 470 414 440 430 352 C414 418 372 446 320 448 C268 446 226 418 210 352 Z" fill="#2B211C" opacity=".22"/>
+          <path id="b-brow-l" d="M246 250 Q272 236 300 246" stroke="#2B211C" stroke-width="13"/>
+          <path id="b-brow-r" d="M340 246 Q368 236 394 250" stroke="#2B211C" stroke-width="13"/>
+          <g id="b-eyes">
+            
+            <g id="b-eye-l"><ellipse cx="275" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="b-eye-r"><ellipse cx="365" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="b-look">
+              <circle cx="275" cy="303" r="15" fill="#3D4F2E"/><circle cx="275" cy="303" r="8" fill="#13202C"/><circle cx="281" cy="296" r="5" fill="#FFFFFF"/>
+              <circle cx="365" cy="303" r="15" fill="#3D4F2E"/><circle cx="365" cy="303" r="8" fill="#13202C"/><circle cx="371" cy="296" r="5" fill="#FFFFFF"/>
+            </g>
+          </g>
+          <path d="M322 318 Q310 352 328 357" stroke="#13202C" stroke-width="5"/>
+          <path id="b-m-smile" d="M290 398 Q320 424 350 398" stroke="#13202C" stroke-width="6"/>
+          <path id="b-m-talk" d="M297 396 Q320 432 343 396 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <ellipse id="b-m-o" cx="320" cy="410" rx="15" ry="20" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <g id="b-m-grin" opacity="0"><path d="M282 392 Q320 448 358 392 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5"/><path d="M290 397 Q320 405 350 397 L347 406 Q320 412 293 406 Z" fill="#FFFFFF"/></g>
+          <path id="b-m-worry" d="M292 414 Q306 400 320 410 Q334 420 348 406" stroke="#13202C" stroke-width="6" opacity="0"/>
+        </g>
+      </g>
+    </svg>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+    tl.to("#a-body", { scaleY: 1.012, svgOrigin: "320 1700", duration: 1.6, ease: "sine.inOut", yoyo: true, repeat: 4 }, 0);
+    tl.to("#a-eyes", { scaleY: 0.1, svgOrigin: "320 300", duration: 0.05, ease: "none" }, 1.20);
+    tl.to("#a-eyes", { scaleY: 1, duration: 0.07, ease: "none" }, 1.26);
+    tl.to("#a-eyes", { scaleY: 0.1, svgOrigin: "320 300", duration: 0.05, ease: "none" }, 4.60);
+    tl.to("#a-eyes", { scaleY: 1, duration: 0.07, ease: "none" }, 4.66);
+    tl.to("#a-eyes", { scaleY: 0.1, svgOrigin: "320 300", duration: 0.05, ease: "none" }, 7.10);
+    tl.to("#a-eyes", { scaleY: 1, duration: 0.07, ease: "none" }, 7.16);
+    tl.to("#a-look", { x: 9, y: 3, duration: 0.2, ease: "power2.out" }, 0.60);
+    tl.to("#a-head", { rotation: -3, y: 6, duration: 0.12, ease: "power2.in", svgOrigin: "320 470" }, 1.60);
+    tl.to("#a-head", { rotation: 6, y: -10, duration: 0.45, ease: "back.out(1.8)" }, 1.72);
+    tl.to("#a-brow-l, #a-brow-r", { y: -16, duration: 0.25, ease: "back.out(2)", stagger: 0.04 }, 1.72);
+    tl.set("#a-m-smile", { opacity: 0 }, 1.75);
+    tl.set("#a-m-talk", { opacity: 0 }, 1.75);
+    tl.set("#a-m-o", { opacity: 1 }, 1.75);
+    tl.set("#a-m-grin", { opacity: 0 }, 1.75);
+    tl.set("#a-m-worry", { opacity: 0 }, 1.75);
+    tl.fromTo("#a-m-o", { scale: 0.75 }, { scale: 1, duration: 0.28, ease: "back.out(2.4)", svgOrigin: "320 405" }, 1.75);
+    tl.to("#a-brow-l", { y: -4, rotation: 12, svgOrigin: "300 246", duration: 0.3, ease: "back.out(2)" }, 3.00);
+    tl.to("#a-brow-r", { y: -4, rotation: -12, svgOrigin: "340 246", duration: 0.3, ease: "back.out(2)" }, 3.04);
+    tl.to("#a-head", { rotation: -4, y: 8, duration: 0.4, ease: "power2.inOut" }, 3.00);
+    tl.to("#a-look", { x: -6, y: 10, duration: 0.25, ease: "power2.out" }, 3.00);
+    tl.set("#a-m-smile", { opacity: 0 }, 3.05);
+    tl.set("#a-m-talk", { opacity: 0 }, 3.05);
+    tl.set("#a-m-o", { opacity: 0 }, 3.05);
+    tl.set("#a-m-grin", { opacity: 0 }, 3.05);
+    tl.set("#a-m-worry", { opacity: 1 }, 3.05);
+    tl.fromTo("#a-m-worry", { scale: 0.75 }, { scale: 1, duration: 0.28, ease: "back.out(2.4)", svgOrigin: "320 405" }, 3.05);
+    tl.to("#a-brow-l, #a-brow-r", { y: -8, rotation: 0, duration: 0.3, ease: "power2.out" }, 4.80);
+    tl.to("#a-head", { rotation: 3, y: -6, duration: 0.45, ease: "back.out(1.8)" }, 4.80);
+    tl.to("#a-look", { x: 0, y: 0, duration: 0.25, ease: "power2.out" }, 4.80);
+    tl.set("#a-m-smile", { opacity: 0 }, 4.85);
+    tl.set("#a-m-talk", { opacity: 0 }, 4.85);
+    tl.set("#a-m-o", { opacity: 0 }, 4.85);
+    tl.set("#a-m-grin", { opacity: 1 }, 4.85);
+    tl.set("#a-m-worry", { opacity: 0 }, 4.85);
+    tl.fromTo("#a-m-grin", { scale: 0.75 }, { scale: 1, duration: 0.28, ease: "back.out(2.4)", svgOrigin: "320 405" }, 4.85);
+    tl.to("#a-arm-r", { rotation: -150, svgOrigin: "515 690", duration: 0.5, ease: "back.out(1.4)" }, 5.20);
+    tl.to("#a-fore-r", { keyframes: [{ rotation: 25, duration: 0.22 }, { rotation: -15, duration: 0.22 }, { rotation: 25, duration: 0.22 }, { rotation: 0, duration: 0.25 }], ease: "sine.inOut", svgOrigin: "560 960" }, 5.60);
+    tl.set("#a-m-smile", { opacity: 1 }, 7.00);
+    tl.set("#a-m-talk", { opacity: 0 }, 7.00);
+    tl.set("#a-m-o", { opacity: 0 }, 7.00);
+    tl.set("#a-m-grin", { opacity: 0 }, 7.00);
+    tl.set("#a-m-worry", { opacity: 0 }, 7.00);
+    tl.fromTo("#a-m-smile", { scale: 0.75 }, { scale: 1, duration: 0.28, ease: "back.out(2.4)", svgOrigin: "320 405" }, 7.00);
+    tl.to("#b-body", { scaleY: 1.012, svgOrigin: "320 1700", duration: 1.6, ease: "sine.inOut", yoyo: true, repeat: 4 }, 0);
+    tl.to("#b-eyes", { scaleY: 0.1, svgOrigin: "320 300", duration: 0.05, ease: "none" }, 1.35);
+    tl.to("#b-eyes", { scaleY: 1, duration: 0.07, ease: "none" }, 1.41);
+    tl.to("#b-eyes", { scaleY: 0.1, svgOrigin: "320 300", duration: 0.05, ease: "none" }, 4.75);
+    tl.to("#b-eyes", { scaleY: 1, duration: 0.07, ease: "none" }, 4.81);
+    tl.to("#b-eyes", { scaleY: 0.1, svgOrigin: "320 300", duration: 0.05, ease: "none" }, 7.25);
+    tl.to("#b-eyes", { scaleY: 1, duration: 0.07, ease: "none" }, 7.31);
+    tl.to("#b-look", { x: 9, y: 3, duration: 0.2, ease: "power2.out" }, 0.75);
+    tl.to("#b-head", { rotation: -3, y: 6, duration: 0.12, ease: "power2.in", svgOrigin: "320 470" }, 1.75);
+    tl.to("#b-head", { rotation: 6, y: -10, duration: 0.45, ease: "back.out(1.8)" }, 1.87);
+    tl.to("#b-brow-l, #b-brow-r", { y: -16, duration: 0.25, ease: "back.out(2)", stagger: 0.04 }, 1.87);
+    tl.set("#b-m-smile", { opacity: 0 }, 1.90);
+    tl.set("#b-m-talk", { opacity: 0 }, 1.90);
+    tl.set("#b-m-o", { opacity: 1 }, 1.90);
+    tl.set("#b-m-grin", { opacity: 0 }, 1.90);
+    tl.set("#b-m-worry", { opacity: 0 }, 1.90);
+    tl.fromTo("#b-m-o", { scale: 0.75 }, { scale: 1, duration: 0.28, ease: "back.out(2.4)", svgOrigin: "320 405" }, 1.90);
+    tl.to("#b-brow-l", { y: -4, rotation: 12, svgOrigin: "300 246", duration: 0.3, ease: "back.out(2)" }, 3.15);
+    tl.to("#b-brow-r", { y: -4, rotation: -12, svgOrigin: "340 246", duration: 0.3, ease: "back.out(2)" }, 3.19);
+    tl.to("#b-head", { rotation: -4, y: 8, duration: 0.4, ease: "power2.inOut" }, 3.15);
+    tl.to("#b-look", { x: -6, y: 10, duration: 0.25, ease: "power2.out" }, 3.15);
+    tl.set("#b-m-smile", { opacity: 0 }, 3.20);
+    tl.set("#b-m-talk", { opacity: 0 }, 3.20);
+    tl.set("#b-m-o", { opacity: 0 }, 3.20);
+    tl.set("#b-m-grin", { opacity: 0 }, 3.20);
+    tl.set("#b-m-worry", { opacity: 1 }, 3.20);
+    tl.fromTo("#b-m-worry", { scale: 0.75 }, { scale: 1, duration: 0.28, ease: "back.out(2.4)", svgOrigin: "320 405" }, 3.20);
+    tl.to("#b-brow-l, #b-brow-r", { y: -8, rotation: 0, duration: 0.3, ease: "power2.out" }, 4.95);
+    tl.to("#b-head", { rotation: 3, y: -6, duration: 0.45, ease: "back.out(1.8)" }, 4.95);
+    tl.to("#b-look", { x: 0, y: 0, duration: 0.25, ease: "power2.out" }, 4.95);
+    tl.set("#b-m-smile", { opacity: 0 }, 5.00);
+    tl.set("#b-m-talk", { opacity: 0 }, 5.00);
+    tl.set("#b-m-o", { opacity: 0 }, 5.00);
+    tl.set("#b-m-grin", { opacity: 1 }, 5.00);
+    tl.set("#b-m-worry", { opacity: 0 }, 5.00);
+    tl.fromTo("#b-m-grin", { scale: 0.75 }, { scale: 1, duration: 0.28, ease: "back.out(2.4)", svgOrigin: "320 405" }, 5.00);
+    tl.to("#b-arm-r", { rotation: -150, svgOrigin: "515 690", duration: 0.5, ease: "back.out(1.4)" }, 5.35);
+    tl.to("#b-fore-r", { keyframes: [{ rotation: 25, duration: 0.22 }, { rotation: -15, duration: 0.22 }, { rotation: 25, duration: 0.22 }, { rotation: 0, duration: 0.25 }], ease: "sine.inOut", svgOrigin: "560 960" }, 5.75);
+    tl.set("#b-m-smile", { opacity: 1 }, 7.15);
+    tl.set("#b-m-talk", { opacity: 0 }, 7.15);
+    tl.set("#b-m-o", { opacity: 0 }, 7.15);
+    tl.set("#b-m-grin", { opacity: 0 }, 7.15);
+    tl.set("#b-m-worry", { opacity: 0 }, 7.15);
+    tl.fromTo("#b-m-smile", { scale: 0.75 }, { scale: 1, duration: 0.28, ease: "back.out(2.4)", svgOrigin: "320 405" }, 7.15);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

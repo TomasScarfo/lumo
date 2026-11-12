@@ -1,0 +1,398 @@
+[
+  {
+    "text": "Tu",
+    "start": 0,
+    "end": 0.15,
+    "id": "w0"
+  },
+  {
+    "text": "organizador",
+    "start": 0.38,
+    "end": 0.96,
+    "id": "w1"
+  },
+  {
+    "text": "de",
+    "start": 0.96,
+    "end": 1.11,
+    "id": "w2"
+  },
+  {
+    "text": "cajones",
+    "start": 1.11,
+    "end": 1.62,
+    "id": "w3"
+  },
+  {
+    "text": "vende",
+    "start": 1.62,
+    "end": 1.98,
+    "id": "w4"
+  },
+  {
+    "text": "sólo",
+    "start": 1.98,
+    "end": 2.28,
+    "id": "w5"
+  },
+  {
+    "text": "en",
+    "start": 2.28,
+    "end": 2.43,
+    "id": "w6"
+  },
+  {
+    "text": "Mercado",
+    "start": 2.43,
+    "end": 2.95,
+    "id": "w7"
+  },
+  {
+    "text": "Libre,",
+    "start": 2.95,
+    "end": 3.48,
+    "id": "w8"
+  },
+  {
+    "text": "sin",
+    "start": 3.57,
+    "end": 3.71,
+    "id": "w9"
+  },
+  {
+    "text": "un",
+    "start": 3.76,
+    "end": 3.89,
+    "id": "w10"
+  },
+  {
+    "text": "peso",
+    "start": 3.89,
+    "end": 4.22,
+    "id": "w11"
+  },
+  {
+    "text": "de",
+    "start": 4.22,
+    "end": 4.38,
+    "id": "w12"
+  },
+  {
+    "text": "publicidad.",
+    "start": 4.38,
+    "end": 5.49,
+    "id": "w13"
+  },
+  {
+    "text": "Lumo",
+    "start": 5.53,
+    "end": 5.86,
+    "id": "w14"
+  },
+  {
+    "text": "lo",
+    "start": 5.9,
+    "end": 6.03,
+    "id": "w15"
+  },
+  {
+    "text": "detectó",
+    "start": 6.03,
+    "end": 6.63,
+    "id": "w16"
+  },
+  {
+    "text": "y",
+    "start": 6.63,
+    "end": 6.71,
+    "id": "w17"
+  },
+  {
+    "text": "te",
+    "start": 6.71,
+    "end": 6.88,
+    "id": "w18"
+  },
+  {
+    "text": "dice",
+    "start": 6.88,
+    "end": 7.18,
+    "id": "w19"
+  },
+  {
+    "text": "qué",
+    "start": 7.29,
+    "end": 7.49,
+    "id": "w20"
+  },
+  {
+    "text": "hacer.",
+    "start": 7.49,
+    "end": 8.22,
+    "id": "w21"
+  },
+  {
+    "text": "Súmalo",
+    "start": 8.24,
+    "end": 8.68,
+    "id": "w22"
+  },
+  {
+    "text": "a",
+    "start": 8.68,
+    "end": 8.75,
+    "id": "w23"
+  },
+  {
+    "text": "tu",
+    "start": 8.75,
+    "end": 8.9,
+    "id": "w24"
+  },
+  {
+    "text": "campaña",
+    "start": 8.9,
+    "end": 9.44,
+    "id": "w25"
+  },
+  {
+    "text": "de",
+    "start": 9.44,
+    "end": 9.59,
+    "id": "w26"
+  },
+  {
+    "text": "organizadores,",
+    "start": 9.59,
+    "end": 10.73,
+    "id": "w27"
+  },
+  {
+    "text": "que",
+    "start": 10.75,
+    "end": 10.94,
+    "id": "w28"
+  },
+  {
+    "text": "es",
+    "start": 10.98,
+    "end": 11.13,
+    "id": "w29"
+  },
+  {
+    "text": "la",
+    "start": 11.13,
+    "end": 11.28,
+    "id": "w30"
+  },
+  {
+    "text": "que",
+    "start": 11.28,
+    "end": 11.5,
+    "id": "w31"
+  },
+  {
+    "text": "mejor",
+    "start": 11.51,
+    "end": 11.9,
+    "id": "w32"
+  },
+  {
+    "text": "rinde.",
+    "start": 11.9,
+    "end": 12.64,
+    "id": "w33"
+  },
+  {
+    "text": "Ysi",
+    "start": 12.64,
+    "end": 12.86,
+    "id": "w34"
+  },
+  {
+    "text": "una",
+    "start": 13.02,
+    "end": 13.12,
+    "id": "w35"
+  },
+  {
+    "text": "publicación",
+    "start": 13.12,
+    "end": 13.98,
+    "id": "w36"
+  },
+  {
+    "text": "gasta",
+    "start": 13.98,
+    "end": 14.3,
+    "id": "w37"
+  },
+  {
+    "text": "y",
+    "start": 14.41,
+    "end": 14.45,
+    "id": "w38"
+  },
+  {
+    "text": "no",
+    "start": 14.45,
+    "end": 14.61,
+    "id": "w39"
+  },
+  {
+    "text": "vende,",
+    "start": 14.61,
+    "end": 15.13,
+    "id": "w40"
+  },
+  {
+    "text": "también",
+    "start": 15.15,
+    "end": 15.7,
+    "id": "w41"
+  },
+  {
+    "text": "te",
+    "start": 15.7,
+    "end": 15.86,
+    "id": "w42"
+  },
+  {
+    "text": "avisa",
+    "start": 15.86,
+    "end": 16.25,
+    "id": "w43"
+  },
+  {
+    "text": "antes",
+    "start": 16.25,
+    "end": 16.63,
+    "id": "w44"
+  },
+  {
+    "text": "de",
+    "start": 16.76,
+    "end": 16.8,
+    "id": "w45"
+  },
+  {
+    "text": "que",
+    "start": 16.8,
+    "end": 17.04,
+    "id": "w46"
+  },
+  {
+    "text": "se",
+    "start": 17.04,
+    "end": 17.12,
+    "id": "w47"
+  },
+  {
+    "text": "te",
+    "start": 17.22,
+    "end": 17.36,
+    "id": "w48"
+  },
+  {
+    "text": "vaya",
+    "start": 17.36,
+    "end": 17.67,
+    "id": "w49"
+  },
+  {
+    "text": "la",
+    "start": 17.67,
+    "end": 17.74,
+    "id": "w50"
+  },
+  {
+    "text": "plata.",
+    "start": 18.22,
+    "end": 18.56,
+    "id": "w51"
+  },
+  {
+    "text": "Lumo,",
+    "start": 18.57,
+    "end": 18.95,
+    "id": "w52"
+  },
+  {
+    "text": "avisos",
+    "start": 18.95,
+    "end": 19.35,
+    "id": "w53"
+  },
+  {
+    "text": "y",
+    "start": 19.35,
+    "end": 19.39,
+    "id": "w54"
+  },
+  {
+    "text": "recomendaciones",
+    "start": 19.46,
+    "end": 20.45,
+    "id": "w55"
+  },
+  {
+    "text": "para",
+    "start": 20.45,
+    "end": 20.57,
+    "id": "w56"
+  },
+  {
+    "text": "tu",
+    "start": 20.77,
+    "end": 20.85,
+    "id": "w57"
+  },
+  {
+    "text": "publicidad",
+    "start": 20.85,
+    "end": 21.53,
+    "id": "w58"
+  },
+  {
+    "text": "en",
+    "start": 21.53,
+    "end": 21.66,
+    "id": "w59"
+  },
+  {
+    "text": "Mercado",
+    "start": 21.66,
+    "end": 22.11,
+    "id": "w60"
+  },
+  {
+    "text": "Libre.",
+    "start": 22.13,
+    "end": 22.8,
+    "id": "w61"
+  },
+  {
+    "text": "Probálo",
+    "start": 23.07,
+    "end": 23.26,
+    "id": "w62"
+  },
+  {
+    "text": "gratis",
+    "start": 23.26,
+    "end": 23.63,
+    "id": "w63"
+  },
+  {
+    "text": "14",
+    "start": 23.7,
+    "end": 24.02,
+    "id": "w64"
+  },
+  {
+    "text": "días.",
+    "start": 24.09,
+    "end": 24.4,
+    "id": "w65"
+  }
+]

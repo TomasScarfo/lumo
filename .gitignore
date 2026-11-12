@@ -10,3 +10,6 @@ hub/
 logo/
 pulso.html
 pulso_orig.html
+
+# Caché de vistas previas y capturas de HyperFrames
+marketing/videos/*/.hyperframes/

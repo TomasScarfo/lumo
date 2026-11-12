@@ -1,0 +1,45 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    @font-face { font-family: "Figtree"; src: url("assets/fonts/Figtree.ttf"); font-weight: 300 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Figtree", sans-serif; color: #FFFFFF; }
+    #s4-flood { position: absolute; inset: 0; background: #2446D6; }
+    #s4-logo { position: absolute; left: 400px; top: 170px; width: 280px; height: 280px; }
+    #s4-name { position: absolute; left: 0; right: 0; top: 460px; text-align: center; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 170px; letter-spacing: -0.03em; line-height: 1; }
+    #s4-name span { display: inline-block; }
+    #s4-tag { position: absolute; left: 80px; right: 80px; top: 650px; text-align: center; font-size: 48px; line-height: 1.2; font-weight: 700; }
+    #s4-url { position: absolute; left: 0; right: 0; top: 965px; text-align: center; font-size: 56px; font-weight: 900; letter-spacing: 0.01em; }
+    #s4-cta { position: absolute; left: 170px; right: 170px; top: 830px; height: 116px; border-radius: 22px; background: #FFFFFF; color: #2446D6; font-size: 50px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+    #s4-legal { position: absolute; left: 100px; right: 100px; top: 1050px; text-align: center; font-size: 28px; line-height: 1.25; font-weight: 500; color: rgba(255,255,255,.85); }
+  </style>
+  <div id="root" data-composition-id="s4" data-width="1080" data-height="1920">
+    <div id="s4-flood"></div>
+    <svg id="s4-logo" viewBox="0 0 1000 1000" aria-hidden="true">
+      <defs><clipPath id="s4-sky"><rect x="0" y="0" width="1000" height="690"/></clipPath></defs>
+      <g clip-path="url(#s4-sky)"><path id="s4-sun" d="M250 640a250 250 0 0 1 500 0z" fill="#fff"/></g>
+      <rect id="s4-line" x="158" y="688" width="684" height="64" rx="32" fill="#fff"/>
+    </svg>
+    <div id="s4-name"><span>L</span><span>u</span><span>m</span><span>o</span></div>
+    <div id="s4-tag">Tu asistente de publicidad en Mercado Libre, para gastar mejor y vender más</div>
+    <div id="s4-cta">Probalo gratis 14 días</div>
+    <div id="s4-url">lumoads.com.ar</div>
+    <div id="s4-legal">Cifras de ejemplo. Lumo es independiente: no es un producto de Mercado Libre.</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // el azul se abre desde el parche de Lumo
+    tl.fromTo("#s4-flood", { clipPath: "circle(0px at 922px 1122px)" }, { clipPath: "circle(2300px at 922px 1122px)", duration: 0.6, ease: "power2.inOut" }, 0);
+    // el amanecer: primero la línea, después sale el sol
+    tl.fromTo("#s4-line", { scaleX: 0, transformOrigin: "500px 720px" }, { scaleX: 1, duration: 0.45, ease: "expo.out" }, 0.161);
+    tl.fromTo("#s4-sun", { y: 300 }, { y: 0, duration: 0.8, ease: "expo.out" }, 0.231);
+    tl.fromTo("#s4-name span", { opacity: 0.25, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out", stagger: 0.08 }, 0.24);
+    tl.set("#s4-name, #s4-tag, #s4-cta", { opacity: 0 }, 0);
+    // botón y link: entran justo con "Probalo gratis" (sincronizar.py ajusta este momento a la voz)
+    tl.fromTo("#s4-url", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 5.057); // probalo+0.05
+    tl.fromTo("#s4-legal", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 5.407); // probalo+0.4
+    tl.set("#s4-name", { opacity: 1 }, 0.24);
+    tl.fromTo("#s4-tag", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.293);
+    tl.fromTo("#s4-cta", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 5.007); // probalo
+    window.__timelines["s4"] = tl;
+  </script>
+</template>

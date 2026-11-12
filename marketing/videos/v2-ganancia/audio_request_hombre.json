@@ -1,0 +1,16 @@
+{
+ "provider": "gemini",
+ "tts_model": "gemini-3.8-flash-tts",
+ "voice": "Charon",
+ "lang": "es",
+ "style": "Locución de anuncio en español rioplatense de Argentina, con voseo y acento porteño natural. Tono cálido, cercano y con energía, ritmo ágil pero claro. Leé las siglas así: ROAS como 'ró-as', ACOS como 'á-cos', CTR como 'ce-te-erre'. Pausa breve entre oraciones.",
+ "lines": [
+  {
+   "id": "voz-hombre",
+   "text": "Invertís en publicidad en Mercado Libre, pero entre ROAS, ACOS y CTR… ¿sabés si te deja ganancia? Lumo lee tus campañas y te dice qué funciona, qué no y qué hacer primero. Y te recomienda, con tus números, cuánto subir o bajar cada presupuesto. Lumo: tu asistente de publicidad en Mercado Libre, para gastar mejor y vender más. Probalo gratis 14 días."
+  }
+ ],
+ "bgm": {
+  "mode": "none"
+ }
+}

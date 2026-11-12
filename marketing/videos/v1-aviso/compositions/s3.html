@@ -1,0 +1,178 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    @font-face { font-family: "Figtree"; src: url("assets/fonts/Figtree.ttf"); font-weight: 300 900; }
+    #root { position: absolute; inset: 0; background: #FFFFFF; overflow: hidden; font-family: "Figtree", sans-serif; color: #13202C; }
+    #s3-stage { position: absolute; inset: 0; }
+    #s3-char { position: absolute; left: -40px; top: 550px; width: 700px; height: 1700px; }
+    #s3-jar { position: absolute; left: 600px; top: 640px; width: 400px; height: 560px; }
+    #s3-sample { display: none; position: absolute; right: 70px; top: 176px; font-size: 28px; font-weight: 600; color: #5A6B7C; }
+    #s3-alert { position: absolute; left: 50px; right: 50px; top: 280px; background: #FFFFFF; border-radius: 34px; padding: 24px 28px 28px 44px; box-shadow: 0 18px 40px rgba(19,32,44,.16); border: 4px solid #F3C6C0; overflow: hidden; }
+    #s3-alert .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 16px; background: #B42318; }
+    #s3-alert .head { display: flex; align-items: center; gap: 14px; font-size: 30px; font-weight: 800; }
+    #s3-alert .head img { width: 52px; height: 52px; border-radius: 13px; }
+    #s3-alert .head span { margin-left: auto; font-weight: 500; color: #5A6B7C; }
+    #s3-alert .title { margin-top: 14px; font-size: 44px; line-height: 1.1; font-weight: 900; color: #B42318; }
+    #s3-alert .text { margin-top: 10px; font-size: 34px; line-height: 1.25; font-weight: 600; color: #44566A; }
+    #s3-alert .text b { color: #13202C; }
+    #s3-phone { position: absolute; left: 560px; top: 550px; width: 400px; height: 800px; border: 14px solid #13202C; border-radius: 64px; background: #F2F5F8; display: flex; align-items: center; justify-content: center; }
+    #s3-phone img { width: 120px; height: 120px; border-radius: 30px; }
+    #s3-patch { position: absolute; left: 862px; top: 1080px; width: 120px; height: 84px; opacity: 0; }
+  </style>
+  <div id="root" data-composition-id="s3" data-width="1080" data-height="1920">
+    <div id="s3-stage">
+      
+      <svg id="s3-jar" viewBox="0 0 400 560" aria-hidden="true" fill="none" stroke="#13202C" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="90" y="40" width="220" height="56" rx="14" fill="#DAE2E9"/>
+        <path d="M110 96 C40 130 40 200 40 260 V440 C40 480 70 500 110 500 H290 C330 500 360 480 360 440 V260 C360 200 360 130 290 96 Z" fill="#F2F5F8"/>
+        <g id="s3-coins" stroke-width="5">
+          <ellipse cx="130" cy="455" rx="52" ry="20" fill="#F2C230"/>
+          <ellipse cx="240" cy="458" rx="52" ry="20" fill="#F2C230"/>
+          <ellipse cx="190" cy="425" rx="52" ry="20" fill="#F2C230"/>
+          <ellipse id="s3-coin-top1" cx="140" cy="395" rx="52" ry="20" fill="#F2C230"/>
+          <ellipse id="s3-coin-top2" cx="260" cy="398" rx="52" ry="20" fill="#F2C230"/>
+          <ellipse id="s3-coin-top3" cx="200" cy="365" rx="52" ry="20" fill="#F2C230"/>
+        </g>
+        <path d="M330 440 l18 6 l-6 14 l14 10" stroke-width="5"/>
+        <text x="200" y="250" text-anchor="middle" font-family="Figtree" font-weight="800" font-size="56" fill="#13202C" stroke="none">$</text>
+      </svg>
+      <svg id="s3-drops" viewBox="0 0 1080 1920" style="position:absolute;inset:0" aria-hidden="true" stroke="#13202C" stroke-width="5">
+        <ellipse id="s3-d1" cx="955" cy="1110" rx="22" ry="9" fill="#F2C230" opacity="0"/>
+        <ellipse id="s3-d2" cx="955" cy="1110" rx="22" ry="9" fill="#F2C230" opacity="0"/>
+        <ellipse id="s3-d3" cx="955" cy="1110" rx="22" ry="9" fill="#F2C230" opacity="0"/>
+      </svg>
+      <div id="s3-phone"><img src="assets/logo.svg" alt=""></div>
+      <!--personaje--><svg id="s3-char" class="personaje hombre" viewBox="0 0 700 1700" style="overflow:visible" data-layout-allow-overflow aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <g id="s3-body">
+        
+        <path d="M118 1700 L122 1250 L518 1250 L522 1700 Z" fill="#3E5A8C" stroke="#13202C" stroke-width="5"/>
+        <path d="M320 1300 L320 1700" stroke="#13202C" stroke-width="5"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" fill="#D9F1E3"/>
+        <path d="M450 640 C520 680 545 760 545 900 L540 1270 C520 1274 500 1276 478 1278 Z" fill="#B9E1C9"/>
+        <path d="M100 1270 L95 790 C100 660 190 600 320 596 C450 600 540 660 545 790 L540 1270 C420 1290 220 1290 100 1270 Z" stroke="#13202C" stroke-width="5"/>
+        <path d="M285 440 L285 572 C300 586 340 586 355 572 L355 440 Z" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+        <path d="M287 470 C305 505 335 505 353 470 L353 512 C335 530 305 530 287 512 Z" fill="#C08665"/>
+        <path d="M262 596 L300 664 L322 606 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5" stroke-linejoin="round"/><path d="M378 596 L340 664 L318 606 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5" stroke-linejoin="round"/><circle cx="320" cy="720" r="7" fill="#13202C"/><circle cx="320" cy="800" r="7" fill="#13202C"/>
+        
+        <g id="s3-arm-l">
+          <path d="M125 690 L80 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M125 690 L80 960" stroke="#D9F1E3" stroke-width="72" stroke-linecap="round"/>
+          <g id="s3-fore-l">
+            <path d="M80 960 L80 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M80 960 L80 1190" stroke="#D9A27E" stroke-width="54" stroke-linecap="round"/>
+            <path d="M46 964 L114 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M46 956 C46 920 114 920 114 956 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="s3-hand-l" cx="80" cy="1220" rx="36" ry="40" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        
+        <g id="s3-arm-r">
+          <path d="M515 690 L560 960" stroke="#13202C" stroke-width="84" stroke-linecap="round"/>
+          <path d="M515 690 L560 960" stroke="#D9F1E3" stroke-width="72" stroke-linecap="round"/>
+          <g id="s3-fore-r">
+            <path d="M560 960 L560 1190" stroke="#13202C" stroke-width="66" stroke-linecap="round"/>
+            <path d="M560 960 L560 1190" stroke="#D9A27E" stroke-width="54" stroke-linecap="round"/>
+            <path d="M526 964 L594 964" stroke="#13202C" stroke-width="5" stroke-linecap="round"/>
+            <path d="M526 956 C526 920 594 920 594 956 Z" fill="#D9F1E3" stroke="#13202C" stroke-width="5"/>
+            <ellipse id="s3-hand-r" cx="560" cy="1220" rx="36" ry="40" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          </g>
+        </g>
+        <g id="s3-head">
+          <ellipse cx="200" cy="318" rx="22" ry="34" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          <ellipse cx="440" cy="318" rx="22" ry="34" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          <path d="M200 300 C200 200 255 150 320 150 C385 150 440 200 440 300 C440 390 395 462 320 468 C245 462 200 390 200 300 Z" fill="#D9A27E" stroke="#13202C" stroke-width="5"/>
+          <circle cx="252" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <circle cx="388" cy="372" r="22" fill="#F4A9A0" opacity=".5"/>
+          <path d="M194 272 C184 158 250 110 326 110 C402 110 456 158 448 266 C432 232 410 212 380 202 C350 216 282 216 252 202 C228 216 210 238 194 272 Z" fill="#2B211C" stroke="#13202C" stroke-width="5"/><path d="M262 150 Q306 132 352 140" fill="none" stroke="#43352D" stroke-width="9" stroke-linecap="round"/><path d="M198 268 L214 268 L216 332 L201 332 Z" fill="#2B211C"/><path d="M442 268 L426 268 L424 332 L439 332 Z" fill="#2B211C"/><path d="M210 352 C226 440 276 470 320 470 C364 470 414 440 430 352 C414 418 372 446 320 448 C268 446 226 418 210 352 Z" fill="#2B211C" opacity=".22"/>
+          <path id="s3-brow-l" d="M246 250 Q272 236 300 246" stroke="#2B211C" stroke-width="13"/>
+          <path id="s3-brow-r" d="M340 246 Q368 236 394 250" stroke="#2B211C" stroke-width="13"/>
+          <g id="s3-eyes">
+            
+            <g id="s3-eye-l"><ellipse cx="275" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="s3-eye-r"><ellipse cx="365" cy="300" rx="25" ry="29" fill="#FFFFFF" stroke="#13202C" stroke-width="5"/></g>
+            <g id="s3-look">
+              <circle cx="275" cy="303" r="15" fill="#3D4F2E"/><circle cx="275" cy="303" r="8" fill="#13202C"/><circle cx="281" cy="296" r="5" fill="#FFFFFF"/>
+              <circle cx="365" cy="303" r="15" fill="#3D4F2E"/><circle cx="365" cy="303" r="8" fill="#13202C"/><circle cx="371" cy="296" r="5" fill="#FFFFFF"/>
+            </g>
+          </g>
+          <path d="M322 318 Q310 352 328 357" stroke="#13202C" stroke-width="5"/>
+          <path id="s3-m-smile" d="M290 398 Q320 424 350 398" stroke="#13202C" stroke-width="6"/>
+          <path id="s3-m-talk" d="M297 396 Q320 432 343 396 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <ellipse id="s3-m-o" cx="320" cy="410" rx="15" ry="20" fill="#7A2E2E" stroke="#13202C" stroke-width="5" opacity="0"/>
+          <g id="s3-m-grin" opacity="0"><path d="M282 392 Q320 448 358 392 Z" fill="#7A2E2E" stroke="#13202C" stroke-width="5"/><path d="M290 397 Q320 405 350 397 L347 406 Q320 412 293 406 Z" fill="#FFFFFF"/></g>
+          <path id="s3-m-worry" d="M292 414 Q306 400 320 410 Q334 420 348 406" stroke="#13202C" stroke-width="6" opacity="0"/>
+        </g>
+      </g>
+    </svg><!--/personaje-->
+      <svg id="s3-patch" viewBox="0 0 120 84" aria-hidden="true">
+        <rect x="6" y="6" width="108" height="72" rx="16" fill="#2446D6" stroke="#13202C" stroke-width="5"/>
+        <path d="M34 50 a26 26 0 0 1 52 0 z" fill="#fff"/><rect x="26" y="54" width="68" height="7" rx="3.5" fill="#fff"/>
+      </svg>
+      <div id="s3-sample">Datos de ejemplo</div>
+      <div id="s3-alert">
+        <div class="bar"></div>
+        <div class="head"><img src="assets/logo.svg" alt="">Lumo<span>ahora</span></div>
+        <div class="title">Publicaciones que gastan y no venden</div>
+        <div class="text"><b>Mesa plegable:</b> invirtió $18.400 y no vendió nada</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.set("#s3-head", { svgOrigin: "320 470" }, 0);
+    tl.set("#s3-m-smile", { opacity: 1 }, 0);
+    tl.set("#s3-look", { x: 9, y: 2 }, 0);
+    tl.set("#s3-head", { rotation: 6, svgOrigin: "320 470" }, 0);
+    tl.set("#s3-fore-r", { rotation: -160, svgOrigin: "560 960" }, 0);
+    tl.set("#s3-arm-r", { rotation: -6, svgOrigin: "515 690" }, 0);
+    // guarda el celular (mano, brazo y celular bajan juntos) y aparece el frasco
+    tl.to("#s3-phone", { y: 1500, duration: 0.5, ease: "power3.in" }, 0.445);
+    // guarda el celular: el brazo baja al costado
+    tl.to("#s3-fore-r", { rotation: 0, svgOrigin: "560 960", duration: 0.5, ease: "power2.inOut" }, 0.485);
+    tl.to("#s3-arm-r", { rotation: 0, svgOrigin: "515 690", duration: 0.5, ease: "power2.inOut" }, 0.485);
+    tl.to("#s3-body", { scaleY: 1.008, svgOrigin: "320 1700", duration: 1.6, ease: "sine.inOut", yoyo: true, repeat: 3 }, 0);
+    tl.fromTo("#s3-jar", { opacity: 0, scale: 0.6, transformOrigin: "50% 100%" }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" }, 0.686);
+    // el frasco pierde monedas: tres monedas caen en ronda hasta que llega el parche (13.6 s en el video)
+    const drops = ["#s3-d1", "#s3-d2", "#s3-d3"];
+    for (let i = 0; i < 10; i++) {
+      const d = drops[i % 3], t0 = 1.15 + i * 0.36;
+      tl.fromTo(d, { y: 0, x: 0, opacity: 1, rotation: 0 }, { y: 120, x: 26, rotation: 40, opacity: 0, duration: 0.5, ease: "power2.in", transformOrigin: "50% 50%", immediateRender: false }, t0);
+    }
+    tl.to("#s3-coin-top3", { y: 30, duration: 0.6, ease: "power1.inOut" }, 0.887);
+    tl.to("#s3-coin-top2", { y: 26, duration: 0.6, ease: "power1.inOut" }, 1.529);
+    // la mira con cara de preocupación
+    tl.set("#s3-m-smile", { opacity: 0 }, 0.767);
+    tl.set("#s3-m-o", { opacity: 1 }, 0.767);
+    tl.to("#s3-look", { x: 9, y: 9, duration: 0.25, ease: "power2.out" }, 0.767);
+    tl.to("#s3-brow-l", { y: -6, rotation: 10, svgOrigin: "300 246", duration: 0.25, ease: "back.out(2)" }, 0.799);
+    tl.to("#s3-brow-r", { y: -6, rotation: -10, svgOrigin: "340 246", duration: 0.25, ease: "back.out(2)" }, 0.831);
+    tl.to("#s3-head", { rotation: 7, y: 6, duration: 0.4, ease: "back.out(1.6)" }, 0.783);
+    // llega el aviso rojo desde arriba
+    tl.fromTo("#s3-alert", { y: -620, opacity: 1 }, { y: 0, duration: 0.55, ease: "back.out(1.3)" }, 0.807);
+    tl.to("#s3-sample", { opacity: 0, duration: 0.15 }, 0.807);
+    tl.to("#s3-head", { rotation: -4, y: -6, duration: 0.35, ease: "back.out(1.8)" }, 1.128);
+    tl.to("#s3-look", { x: 4, y: -9, duration: 0.25, ease: "power2.out" }, 1.007);
+    // parpadeo
+    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 0.1, transformOrigin: "50% 50%", duration: 0.05, ease: "none" }, 1.931);
+    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 1.971);
+    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 0.1, duration: 0.05, ease: "none" }, 3.135);
+    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 3.175);
+    // el aviso se encoge y tapa el agujero: el frasco deja de perder
+    tl.to("#s3-alert", { x: 360, y: 800, scale: 0.12, rotation: -8, duration: 0.5, ease: "power3.inOut", transformOrigin: "50% 50%" }, 3.456);
+    tl.to("#s3-alert", { opacity: 0, duration: 0.08 }, 3.793);
+    tl.set("#s3-patch", { opacity: 1 }, 3.817);
+    tl.fromTo("#s3-patch", { scale: 1.5, rotation: -8 }, { scale: 1, rotation: -8, duration: 0.3, ease: "back.out(2.6)", transformOrigin: "50% 50%" }, 3.817);
+    tl.to("#s3-sample", { opacity: 1, duration: 0.2 }, 3.817);
+    // alivio
+    tl.set("#s3-m-o", { opacity: 0 }, 3.937);
+    tl.set("#s3-m-grin", { opacity: 1 }, 3.937);
+    tl.fromTo("#s3-m-grin", { scale: 0.7, svgOrigin: "320 405" }, { scale: 1, duration: 0.3, ease: "back.out(2.2)" }, 3.937);
+    tl.to("#s3-brow-l, #s3-brow-r", { rotation: 0, y: -10, duration: 0.3, ease: "power2.out" }, 3.937);
+    tl.to("#s3-look", { x: 0, y: 0, duration: 0.3, ease: "power2.out" }, 3.977);
+    tl.to("#s3-head", { rotation: 0, y: 0, duration: 0.45, ease: "back.out(1.6)" }, 3.977);
+    // alivio: levanta el puño, contenta
+    tl.to("#s3-arm-l", { rotation: -25, svgOrigin: "125 690", duration: 0.35, ease: "back.out(2)" }, 4.098);
+    tl.to("#s3-fore-l", { rotation: -125, svgOrigin: "80 960", duration: 0.35, ease: "back.out(2)" }, 4.138);
+    window.__timelines["s3"] = tl;
+  </script>
+</template>
