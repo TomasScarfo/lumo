@@ -16,7 +16,7 @@ from sqlalchemy.pool import StaticPool
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import access, ads, audit, billing, cuenta, history, ml, notify, privacy, security
+from . import access, ads, audit, billing, cuenta, exportar, history, ml, notify, privacy, security
 from .models import Access, Account, AuditLog, Base, Invite, Notice, PanelState, Snapshot, Subscription, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
@@ -467,6 +467,23 @@ def create_app(overrides=None) -> Flask:
             p = access.plan(s, cfg, uid)
             data["plan"] = {"kind": p["kind"], "days": p.get("days"), "pastDue": bool(p.get("past_due"))}
         return _json(data)
+
+    @app.get("/api/exportar")
+    def api_exportar():
+        """Excel con las tablas del panel (campañas, publicaciones y días) del período que se está viendo."""
+        uid = _current_user()
+        if not uid:
+            return _json({"error": "plan"}, 402) if _session_uid() else _json({"error": "login"}, 401)
+        with Session(engine) as s:
+            snap = s.get(Snapshot, uid)
+            if not snap:
+                return _json({"error": "sin_datos"}, 404)
+            data = history.extend(s, uid, json.loads(snap.data))
+        days, off = request.args.get("days", 30, type=int), request.args.get("off", 0, type=int)
+        resp = Response(exportar.excel(data, days, off), mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        resp.headers["Content-Disposition"] = 'attachment; filename="%s"' % exportar.nombre_archivo(data, days, off)
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
 
     @app.post("/api/estado")
     def api_estado():

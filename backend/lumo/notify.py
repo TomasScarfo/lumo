@@ -5,16 +5,19 @@ Solo reciben avisos las cuentas que los activaron en la pestaña Alertas (m1, m2
 El envío usa la API web de Brevo (BREVO_API_KEY): va por HTTPS, así que funciona en el plan gratuito de Render, que bloquea el SMTP.
 Si no hay clave de Brevo, usa SMTP (por defecto el de Gmail con una contraseña de aplicación, SMTP_PASSWORD). Sin ninguno de los dos, el envío queda apagado.
 """
+import base64
 import logging
 import smtplib
 from datetime import datetime, timedelta
 from email.message import EmailMessage
 from html import escape
+from urllib.parse import urlsplit
 
 import requests
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from . import exportar
 from .ads import DEFAULT_ROAS_TARGET
 from .models import Notice, utcnow
 
@@ -49,10 +52,11 @@ def enabled(cfg: dict) -> bool:
     return bool(cfg.get("SMTP_PASSWORD") and cfg.get("SMTP_USER"))
 
 
-def _send_brevo(cfg: dict, to: str, subject: str, text: str, html: str) -> None:
-    resp = requests.post(BREVO_URL, timeout=30, headers={"api-key": cfg["BREVO_API_KEY"], "accept": "application/json"},
-                         json={"sender": {"name": "Lumo", "email": _sender(cfg)}, "to": [{"email": to}],
-                               "subject": subject, "textContent": text, "htmlContent": html})
+def _send_brevo(cfg: dict, to: str, subject: str, text: str, html: str, attachments=None) -> None:
+    body = {"sender": {"name": "Lumo", "email": _sender(cfg)}, "to": [{"email": to}], "subject": subject, "textContent": text, "htmlContent": html}
+    if attachments:
+        body["attachment"] = [{"name": name, "content": base64.b64encode(content).decode("ascii")} for name, content in attachments]
+    resp = requests.post(BREVO_URL, timeout=30, headers={"api-key": cfg["BREVO_API_KEY"], "accept": "application/json"}, json=body)
     if resp.status_code >= 300:
         try:
             body = resp.json()
@@ -61,9 +65,13 @@ def _send_brevo(cfg: dict, to: str, subject: str, text: str, html: str) -> None:
         raise MailError("Brevo respondió %s (%s): %s" % (resp.status_code, body.get("code", "sin código"), str(body.get("message", ""))[:200]))
 
 
-def send_mail(cfg: dict, to: str, subject: str, text: str, html: str) -> None:
+XLSX = ("application", "vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+def send_mail(cfg: dict, to: str, subject: str, text: str, html: str, attachments=None) -> None:
+    """attachments: lista de (nombre, bytes) con archivos .xlsx."""
     if cfg.get("BREVO_API_KEY"):
-        _send_brevo(cfg, to, subject, text, html)
+        _send_brevo(cfg, to, subject, text, html, attachments)
         return
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -71,6 +79,8 @@ def send_mail(cfg: dict, to: str, subject: str, text: str, html: str) -> None:
     msg["To"] = to
     msg.set_content(text)
     msg.add_alternative(html, subtype="html")
+    for name, content in attachments or []:
+        msg.add_attachment(content, maintype=XLSX[0], subtype=XLSX[1], filename=name)
     with smtplib.SMTP(cfg["SMTP_HOST"], int(cfg["SMTP_PORT"]), timeout=30) as smtp:
         smtp.starttls()
         smtp.login(cfg["SMTP_USER"], cfg["SMTP_PASSWORD"])
@@ -139,28 +149,95 @@ def organic(data: dict) -> list:
     return sorted(out, key=lambda x: -x[2])
 
 
+def _logo(link: str) -> str:
+    """El logo (el amanecer) como imagen: los mails no pueden usar SVG, así que se pide el PNG que sirve la app."""
+    u = urlsplit(link)
+    if u.scheme not in ("http", "https") or not u.netloc:
+        return ""
+    src = "%s://%s/static/logo.png" % (u.scheme, u.netloc)
+    return "<img src='%s' width='44' height='44' alt='Lumo' style='display:block;border:0;border-radius:11px'>" % escape(src, quote=True)
+
+
 def _layout(title: str, blocks_html: str, blocks_text: str, link: str, why: str, button: str = "Abrir mi panel"):
     html = ("<div style='font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#13202C'>"
-            "<h2 style='margin:0 0 4px;color:#2446D6'>Lumo</h2><h1 style='font-size:20px;margin:0 0 16px'>%s</h1>%s"
+            "<table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 0 14px'><tr>"
+            "<td style='padding-right:10px;vertical-align:middle'>%s</td>"
+            "<td style='vertical-align:middle'><span style='font-size:24px;font-weight:bold;color:#2446D6'>Lumo</span></td></tr></table>"
+            "<h1 style='font-size:20px;margin:0 0 16px'>%s</h1>%s"
             "<p style='margin:20px 0'><a href='%s' style='background:#2446D6;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none'>%s</a></p>"
-            "<p style='font-size:12px;color:#5A6B7C'>%s</p></div>") % (escape(title), blocks_html, escape(link, quote=True), escape(button), escape(why))
+            "<p style='font-size:12px;color:#5A6B7C'>%s</p></div>") % (_logo(link), escape(title), blocks_html, escape(link, quote=True), escape(button), escape(why))
     text = "%s\n\n%s\n%s: %s\n\n%s\n" % (title, blocks_text, button, link, why)
     return text, html
 
 
+DIAS = ("lun", "mar", "mié", "jue", "vie", "sáb", "dom")
+
+
+def _roas(n: float) -> str:
+    return "$" + format(n, ".1f").replace(".", ",")
+
+
+def _evolucion(per: dict):
+    """Inversión día por día del período, con una barra por día (hecha con tablas: los mails no admiten gráficos ni scripts)."""
+    daily = per["daily"]
+    top = max((d["spend"] for d in daily), default=0)
+    if top <= 0:
+        return "<p style='color:#5A6B7C'>No hubo inversión en estos días.</p>", "No hubo inversión en estos días.\n"
+    rows, text = "", ""
+    for d in daily:
+        label = "%s %d" % (DIAS[d["date"].weekday()], d["date"].day)
+        w = max(1, round(d["spend"] / top * 100)) if d["spend"] > 0 else 0
+        bar = "<div style='background:#2446D6;height:12px;border-radius:3px;width:%d%%'></div>" % w if w else ""
+        rows += ("<tr><td style='width:58px;padding:3px 8px 3px 0;font-size:13px;color:#44566A;white-space:nowrap'>%s</td>"
+                 "<td style='padding:3px 0'>%s</td><td style='width:84px;padding:3px 0 3px 8px;font-size:13px;text-align:right;white-space:nowrap'>%s</td></tr>") % (label, bar, money(d["spend"]))
+        text += "  %s: %s\n" % (label, money(d["spend"]))
+    return "<table role='presentation' cellpadding='0' cellspacing='0' width='100%%'>%s</table>" % rows, text
+
+
+def _top(per: dict):
+    """Las 5 publicaciones que más ventas por publicidad aportaron. Las cifras por publicación son una estimación (se reparten según su peso en la campaña)."""
+    top = exportar.top_publicaciones(per, 5)
+    if not top:
+        return "<p style='color:#5A6B7C'>Todavía no hay publicaciones con ventas por publicidad en este período.</p>", "Todavía no hay publicaciones con ventas por publicidad en este período.\n"
+    total = per["tot"]["sales"]
+    h, t = "<ol style='padding-left:20px;margin:6px 0'>", ""
+    for o in top:
+        pct = round(o["sales"] / total * 100) if total else 0
+        name = o["name"] if len(o["name"]) <= 70 else o["name"][:67] + "…"
+        detail = "vendió %s con publicidad (%d%% del total), invirtió %s, ROAS %s" % (money(o["sales"]), pct, money(o["spend"]), _roas(o["roas"]))
+        h += "<li style='margin:7px 0'><b>%s</b><br><span style='font-size:13px;color:#44566A'>%s</span></li>" % (escape(name), escape(detail))
+        t += "  %d. %s: %s\n" % (top.index(o) + 1, name, detail)
+    return h + "</ol>", t
+
+
 def weekly_mail(data: dict, link: str, why: str):
     w = weekly(data)
-    rows = [("Invertiste", money(w["spend"]), w["dspend"]), ("Vendiste con publicidad", money(w["sales"]), w["dsales"]), ("ROAS", "$%s" % format(w["roas"], ".1f").replace(".", ","), None)]
+    per = exportar.periodo(data, 7)
+    rows = [("Invertiste", money(w["spend"]), w["dspend"]), ("Vendiste con publicidad", money(w["sales"]), w["dsales"]), ("ROAS", _roas(w["roas"]), None)]
     h = "".join("<p style='margin:6px 0'><b>%s:</b> %s%s</p>" % (escape(a), escape(b), (" <span style='color:#5A6B7C'>(%s)</span>" % escape(c)) if c else "") for a, b, c in rows)
     t = "".join("%s: %s%s\n" % (a, b, " (%s)" % c if c else "") for a, b, c in rows)
+    evo_h, evo_t = _evolucion(per)
+    h += "<h3 style='font-size:16px;margin:22px 0 6px'>Cómo evolucionó tu inversión</h3>" + evo_h
+    t += "\nCómo evolucionó tu inversión:\n" + evo_t
+    top_h, top_t = _top(per)
+    h += "<h3 style='font-size:16px;margin:22px 0 2px'>Las 5 publicaciones que más aportaron</h3>" + top_h
+    h += "<p style='font-size:12px;color:#5A6B7C;margin:2px 0 0'>Las cifras por publicación son estimadas: se reparten según lo que cada una aportó a su campaña.</p>"
+    t += "\nLas 5 publicaciones que más aportaron (cifras estimadas):\n" + top_t
     if w["below"]:
-        h += "<p style='margin:14px 0 4px'><b>Campañas con oportunidad de mejora (por debajo de su ROAS objetivo)</b></p><ul>" + "".join(
-            "<li>%s: ROAS $%s (objetivo $%s)</li>" % (escape(n), format(r, ".1f").replace(".", ","), format(tg, ".1f").replace(".", ",")) for n, r, tg in w["below"]) + "</ul>"
-        t += "\nCampañas con oportunidad de mejora (por debajo de su ROAS objetivo):\n" + "".join("- %s: ROAS $%s (objetivo $%s)\n" % (n, format(r, ".1f").replace(".", ","), format(tg, ".1f").replace(".", ",")) for n, r, tg in w["below"])
+        h += "<h3 style='font-size:16px;margin:22px 0 4px'>Campañas con oportunidad de mejora</h3><p style='margin:0;color:#5A6B7C;font-size:13px'>Están por debajo de su ROAS objetivo.</p><ul>" + "".join(
+            "<li>%s: ROAS %s (objetivo %s)</li>" % (escape(n), _roas(r), _roas(tg)) for n, r, tg in w["below"]) + "</ul>"
+        t += "\nCampañas con oportunidad de mejora (por debajo de su ROAS objetivo):\n" + "".join("- %s: ROAS %s (objetivo %s)\n" % (n, _roas(r), _roas(tg)) for n, r, tg in w["below"])
     else:
         h += "<p>Todas tus campañas con inversión están en su ROAS objetivo o por encima.</p>"
         t += "\nTodas tus campañas con inversión están en su ROAS objetivo o por encima.\n"
+    h += "<p style='font-size:13px;color:#44566A;margin:16px 0 0'>Te adjuntamos un Excel con las mismas tablas que ves en el panel: campañas, publicaciones y días.</p>"
+    t += "\nTe adjuntamos un Excel con las mismas tablas que ves en el panel: campañas, publicaciones y días.\n"
     return ("Tu resumen semanal de Lumo",) + _layout("Cómo te fue en los últimos 7 días", h, t, link, why)
+
+
+def weekly_excel(data: dict):
+    """El Excel que acompaña al resumen semanal: las mismas tablas del panel, de los últimos 7 días."""
+    return exportar.nombre_archivo(data, 7), exportar.excel(data, 7)
 
 
 def list_mail(subject: str, title: str, intro: str, lines: list, link: str, why: str):
@@ -210,7 +287,12 @@ def run_for(s: Session, cfg: dict, uid: int, email: str, prefs: dict, data: dict
     if prefs.get("m1") and local.weekday() in WEEKLY_DAYS:
         wk = "%d-W%02d" % local.isocalendar()[:2]
         if _due(s, uid, "m1", wk, timedelta(days=1000), now):
-            send(cfg, email, *weekly_mail(data, link, why))
+            try:
+                attachments = [weekly_excel(data)]
+            except Exception as exc:  # sin el Excel igual se manda el resumen
+                log.warning("el Excel del resumen semanal falló: %s", type(exc).__name__)
+                attachments = []
+            send(cfg, email, *weekly_mail(data, link, why), **({"attachments": attachments} if attachments else {}))
             _mark(s, uid, "m1", wk, now)
             sent.append("m1")
     if prefs.get("m2"):

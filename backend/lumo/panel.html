@@ -164,6 +164,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .tag .ic { width: 1em; height: 1em; stroke-width: 2.6; }
 .btn { border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 9px 16px; border-radius: 10px; min-height: 40px; font-size: .92rem; }
 .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.xl-btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; min-height: 36px; padding: 6px 12px; font-size: .88rem; }
+.xl-btn .ic { width: 16px; height: 16px; }
 .link { border: 0; background: none; padding: 6px 0; color: var(--accent); font-weight: 700; font-size: .92rem; display: inline-flex; align-items: center; gap: 6px; text-align: left; }
 .link .ic { transition: transform .15s; }
 .link[aria-expanded="true"] .ic { transform: rotate(180deg); }
@@ -461,6 +463,7 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
   <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></symbol>
 </svg>
 
 <main class="page">
@@ -1072,7 +1075,8 @@ function campsHTML() {
     var open = !!S.open[x.c.id] || (!!q && !x.nm);
     return campRow(x.c, open, x.its.length) + (open ? sortBy(x.its, ival).map(itemRow).join('') : '');
   }).join('') || '<tr><td colspan="' + COLS.length + '" style="text-align:center;white-space:normal"><p class="sub" style="padding:14px 0">Ninguna campaña coincide con lo que filtraste. <button class="link" data-act="clearF">Quitar filtros</button></p></td></tr>';
-  return '<section aria-labelledby="h-camps"><div class="sec-head"><h2 id="h-camps">Tus campañas</h2><span class="sub">Tocá el título de una columna para ordenar</span></div>' +
+  return '<section aria-labelledby="h-camps"><div class="sec-head"><h2 id="h-camps">Tus campañas</h2><span class="sub">Tocá el título de una columna para ordenar</span>' +
+    '<a class="btn ghost xl-btn" href="/api/exportar?days=' + S.days + '&off=' + S.off + '" download title="Baja a Excel las campañas, las publicaciones y los días del período que estás viendo"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>Descargar Excel</a></div>' +
     '<div class="cfilters"><div class="row"><input type="search" class="search" id="cq" data-act="cq" placeholder="Buscar una campaña o publicación" value="' + S.cq.replace(/"/g, '&quot;') + '" aria-label="Buscar una campaña o publicación"></div>' +
     '<div class="row" role="group" aria-label="Filtrar por estado">' + chips + '<button class="link" data-act="toggleAll" style="margin-left:auto">' + (allOpen ? 'Ocultar todas las publicaciones' : 'Ver todas las publicaciones') + '</button></div></div>' +
     '<div class="ctw"><table class="ct"><thead><tr>' + COLS.map(th).join('') + '</tr></thead><tbody>' + body + '</tbody></table></div>' +

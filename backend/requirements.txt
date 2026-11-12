@@ -6,6 +6,7 @@ psycopg2-binary==2.9.9
 requests==2.33.0
 cryptography==50.0.0
 gunicorn==23.0.0
+XlsxWriter==3.3.1
 
 # Indirectas
 blinker==1.9.0

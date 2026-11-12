@@ -57,7 +57,7 @@ class Envio(unittest.TestCase):
         self.app = create_app(CFG)
         self.engine = self.app.extensions["lumo_engine"]
         self.sent = []
-        self.send = lambda cfg, to, subject, text, html: self.sent.append((to, subject))
+        self.send = lambda cfg, to, subject, text, html, attachments=None: self.sent.append((to, subject))
 
     def run_for(self, prefs, now):
         with Session(self.engine) as s:

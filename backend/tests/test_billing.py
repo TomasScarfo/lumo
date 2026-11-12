@@ -68,7 +68,7 @@ class Base(unittest.TestCase):
         self.mp = FakeMP()
         self.mails = []
         for target, value in (("lumo.billing.requests.request", self.mp),
-                              ("lumo.notify.send_mail", lambda cfg, to, subject, text, html: self.mails.append((to, subject, text)))):
+                              ("lumo.notify.send_mail", lambda cfg, to, subject, text, html, attachments=None: self.mails.append((to, subject, text)))):
             patcher = mock.patch(target, value)
             patcher.start()
             self.addCleanup(patcher.stop)
