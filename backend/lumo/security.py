@@ -23,6 +23,17 @@ CSP = "; ".join([
     "frame-ancestors 'none'",
 ])
 
+# El Píxel de Meta carga su script de connect.facebook.net y manda los eventos a www.facebook.com. Solo en la portada.
+META_SCRIPT = "https://connect.facebook.net"
+META_EVENTS = "https://www.facebook.com"
+
+
+def with_meta_pixel(csp: str) -> str:
+    return (csp.replace("script-src 'self' 'unsafe-inline'", "script-src 'self' 'unsafe-inline' " + META_SCRIPT)
+               .replace("img-src 'self' data:", "img-src 'self' data: " + META_EVENTS)
+               .replace("connect-src 'self'", "connect-src 'self' " + META_EVENTS))
+
+
 HEADERS = {
     "Content-Security-Policy": CSP,
     "X-Content-Type-Options": "nosniff",

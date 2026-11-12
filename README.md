@@ -42,6 +42,16 @@ python -m unittest discover -s tests
 - Sin `MP_ACCESS_TOKEN`, la prueba funciona pero no se puede pagar (la página invita a escribir).
 - Para probar pagos sin dinero real, usar las credenciales y usuarios de prueba de Mercado Pago.
 
+## Anuncios de Meta (Facebook e Instagram)
+
+Lumo mide sus anuncios con el Píxel de Meta (solo en la portada) y la API de Conversiones (desde el servidor, `backend/lumo/meta.py`). Sin las variables no se mide nada.
+
+1. En el Administrador de eventos de Meta, crear un conjunto de datos (Píxel) y copiar su identificador. Cargarlo como `META_PIXEL_ID` en los dos servicios de Render (`lumo` y `lumo-sitio`).
+2. En la configuración de ese Píxel, generar un token de acceso de la API de Conversiones y cargarlo en `lumo` como `META_CAPI_TOKEN`.
+3. Para probar, cargar `META_TEST_EVENT_CODE` con el código de "Probar eventos"; borrarlo cuando todo llegue bien.
+
+Eventos: `PageView` e `InitiateCheckout` (navegador, en la portada); `Lead` (primera conexión con Mercado Libre), `StartTrial` (Mercado Pago confirma el medio de pago) y `Subscribe` (primer cobro aprobado), cada uno una sola vez por cuenta, con el email y el id cifrados. La IP no se guarda. Dentro de la app no hay scripts de Meta.
+
 ## Portada estática
 
 En el plan gratuito, Render apaga la app cuando nadie la usa y al volver muestra su pantalla de espera. Por eso la portada se publica aparte, como sitio estático (servicio `lumo-sitio`), que nunca se apaga:

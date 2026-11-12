@@ -16,6 +16,32 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="/static/site.css">
+{% if pixel %}
+<script>
+/* Píxel de Meta: mide las visitas que llegan desde los anuncios. Solo en la portada; dentro de Lumo no hay scripts de Meta.
+   Al tocar un botón que va a la app, le pasa las cookies del Píxel para que el servidor atribuya el registro al anuncio. */
+(function () {
+  var PIXEL = '{{ pixel }}';
+  if (!/^\d+$/.test(PIXEL)) return;
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+  s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/es_LA/fbevents.js');
+  fbq('init', PIXEL);
+  fbq('track', 'PageView');
+  function cookie(name) { var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; }
+  var fbclid = new URLSearchParams(location.search).get('fbclid') || '';
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[data-app]');
+    if (!a || a.pathname.slice(-8) !== '/connect') return;
+    var u = new URL(a.href, location.href), fbc = cookie('_fbc'), fbp = cookie('_fbp');
+    if (fbc) u.searchParams.set('fbc', fbc); else if (fbclid) u.searchParams.set('fbclid', fbclid);
+    if (fbp) u.searchParams.set('fbp', fbp);
+    a.href = u.toString();
+    fbq('track', 'InitiateCheckout', { content_name: u.searchParams.get('plan') || 'invitacion' });
+  }, true);
+})();
+</script>
+{% endif %}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">

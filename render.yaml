@@ -4,7 +4,8 @@ services:
   - type: web
     name: lumo-sitio
     runtime: static
-    buildCommand: test -n "$APP_URL" && sed -i "s#__APP_URL__#${APP_URL%/}#g" site/index.html
+    # También reemplaza __META_PIXEL_ID__ por META_PIXEL_ID (solo dígitos; si queda vacío, el Píxel de Meta no carga).
+    buildCommand: test -n "$APP_URL" && sed -i "s#__APP_URL__#${APP_URL%/}#g" site/index.html && sed -i "s#__META_PIXEL_ID__#$(printf %s "$META_PIXEL_ID" | tr -cd 0-9)#g" site/index.html
     staticPublishPath: ./site
     # Encabezados de seguridad de la portada (la app los manda por su cuenta, en lumo/security.py).
     headers:
@@ -25,9 +26,12 @@ services:
         value: camera=(), microphone=(), geolocation=(), payment=(), usb=()
       - path: /*
         name: Content-Security-Policy
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'none'"
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://www.facebook.com; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'none'"
     envVars:
       - key: APP_URL
+        sync: false
+      # Identificador del Píxel de Meta (Administrador de eventos). El mismo valor que META_PIXEL_ID del servicio "lumo".
+      - key: META_PIXEL_ID
         sync: false
   - type: web
     name: lumo
@@ -87,6 +91,14 @@ services:
         sync: false
       # Alternativa sin Brevo (solo en planes de pago de Render): contraseña de aplicación de Gmail.
       - key: SMTP_PASSWORD
+        sync: false
+      # Anuncios de Meta: Píxel (META_PIXEL_ID) y token de la API de Conversiones (META_CAPI_TOKEN, del Administrador de eventos).
+      # META_TEST_EVENT_CODE solo mientras se prueba: los eventos aparecen en "Probar eventos". Sin estas variables no se mide nada.
+      - key: META_PIXEL_ID
+        sync: false
+      - key: META_CAPI_TOKEN
+        sync: false
+      - key: META_TEST_EVENT_CODE
         sync: false
       # Clave para el chequeo diario.
       - key: CRON_TOKEN

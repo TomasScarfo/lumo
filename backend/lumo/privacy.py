@@ -9,14 +9,14 @@ from datetime import timedelta
 from sqlalchemy import delete, select, update
 
 from .history import KEEP_DAYS as HISTORY_DAYS
-from .models import Access, Account, AuditLog, CampaignDay, Invite, Notice, PanelState, Snapshot, Subscription, utcnow
+from .models import Access, Account, AdClick, AuditLog, CampaignDay, Invite, Notice, PanelState, Snapshot, Subscription, utcnow
 
 # Plazos de conservación, en días.
 AUDIT_DAYS = 400      # un año de auditoría más margen para el cierre del período
 NOTICE_DAYS = 400     # el registro de avisos solo evita repetirlos; después no hace falta
 INVITE_DAYS = 90      # invitaciones, desde que vencieron (usadas, revocadas o sin usar)
 
-PER_USER = (Access, Account, Snapshot, PanelState, CampaignDay, Notice)
+PER_USER = (Access, Account, Snapshot, PanelState, CampaignDay, Notice, AdClick)
 # De la suscripción no se borra la fila: queda el id de cuenta y la fecha de la prueba gratis, para que la prueba sea una sola
 # por cuenta. Quien borra la cuenta se ocupa antes de cancelar el cobro y vaciar el email de pago (billing.end).
 KEPT_MINIMAL = (Subscription,)
@@ -35,7 +35,7 @@ def export_user(db, uid: int) -> dict:
     """Todo lo que Lumo guarda de una cuenta, en un formato que se puede leer y llevar a otro lado. Sin tokens."""
     uid = int(uid)
     acc, snap, st, acs = db.get(Account, uid), db.get(Snapshot, uid), db.get(PanelState, uid), db.get(Access, uid)
-    sub = db.get(Subscription, uid)
+    sub, ad = db.get(Subscription, uid), db.get(AdClick, uid)
     iso = lambda d: d.isoformat() + "Z" if d else None
     days = db.execute(select(CampaignDay).where(CampaignDay.user_id == uid).order_by(CampaignDay.campaign_id, CampaignDay.day)).scalars().all()
     notices = db.execute(select(Notice).where(Notice.user_id == uid).order_by(Notice.sent_at)).scalars().all()
@@ -51,6 +51,8 @@ def export_user(db, uid: int) -> dict:
                                    "unidades": d.units, "ventas": d.sales} for d in days],
         "suscripcion": {"estado": sub.status, "plan": sub.plan, "email_de_pago": sub.payer_email, "prueba_hasta": iso(sub.trial_ends_at),
                         "pago_hasta": iso(sub.paid_until)} if sub else None,
+        "anuncios_de_meta": {"clic_en_anuncio": ad.fbc, "navegador": ad.fbp, "eventos_enviados": [e for e in (ad.sent or "").split(",") if e],
+                             "desde": iso(ad.created_at)} if ad else None,
         "avisos_enviados": [{"tipo": n.kind, "referencia": n.ref, "enviado": iso(n.sent_at)} for n in notices],
         "registro_de_actividad": [{"evento": e.event, "fecha": iso(e.at)} for e in events],
         "nota": "Los tokens de acceso a Mercado Libre se guardan cifrados y no se incluyen en esta descarga.",

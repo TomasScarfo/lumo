@@ -9,14 +9,14 @@ from pathlib import Path
 from urllib.parse import quote
 
 import requests
-from flask import Flask, Response, abort, jsonify, redirect, render_template, render_template_string, request, session
+from flask import Flask, Response, abort, has_request_context, jsonify, redirect, render_template, render_template_string, request, session
 from sqlalchemy import create_engine, func, inspect, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import access, ads, audit, billing, cuenta, exportar, history, ml, notify, privacy, security
+from . import access, ads, audit, billing, cuenta, exportar, history, meta, ml, notify, privacy, security
 from .models import Access, Account, AuditLog, Base, Invite, Notice, PanelState, Snapshot, Subscription, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
@@ -104,6 +104,11 @@ def load_config(overrides=None) -> dict:
         "GRACE_DAYS": os.environ.get("GRACE_DAYS", "7"),  # días que sigue entrando una cuenta con un cobro rechazado
         # Dirección de la portada publicada aparte (servicio estático de Render). Vacía: la app sirve la portada.
         "SITE_URL": os.environ.get("SITE_URL", "").rstrip("/"),
+        # Anuncios de Meta: Píxel en la portada y API de Conversiones desde el servidor (lumo/meta.py). Vacíos: no se mide nada.
+        "META_PIXEL_ID": os.environ.get("META_PIXEL_ID", ""),
+        "META_CAPI_TOKEN": os.environ.get("META_CAPI_TOKEN", ""),
+        "META_TEST_EVENT_CODE": os.environ.get("META_TEST_EVENT_CODE", ""),
+        "META_API_VERSION": os.environ.get("META_API_VERSION", "v23.0"),
     }
     cfg.update(overrides or {})
     return cfg
@@ -265,7 +270,11 @@ def create_app(overrides=None) -> Flask:
             return redirect("/suscripcion")
         if cfg.get("SITE_URL", "").startswith("https://"):
             return redirect(cfg["SITE_URL"])  # la portada vive aparte y carga al instante
-        return render_template("landing.html", invited=False, label=None, **_offer())
+        pixel = meta.pixel_id(cfg)
+        resp = Response(render_template("landing.html", invited=False, label=None, pixel=pixel, **_offer()), mimetype="text/html")
+        if pixel:
+            resp.headers["Content-Security-Policy"] = security.with_meta_pixel(security.CSP)  # solo la portada carga el Píxel
+        return resp
 
     @app.get("/invitacion/<token>")
     def invitacion(token):
@@ -291,6 +300,13 @@ def create_app(overrides=None) -> Flask:
             return redirect("/")
         if request.args.get("plan") in billing.PLANS:
             session["plan"] = request.args["plan"]  # el plan que eligió en la portada: queda marcado al volver de Mercado Libre
+        # De qué anuncio de Meta vino: la portada estática pasa sus cookies del Píxel en la dirección; servida por la app, se leen acá.
+        fbc = meta.clean_fbc(request.args.get("fbc") or request.cookies.get("_fbc")) or meta.fbc_from_click(request.args.get("fbclid"))
+        fbp = meta.clean_fbp(request.args.get("fbp") or request.cookies.get("_fbp"))
+        if fbc:
+            session["fbc"] = fbc
+        if fbp:
+            session["fbp"] = fbp
         verifier, challenge = ml.new_pkce()
         state = secrets.token_urlsafe(24)
         session["oauth_state"] = state
@@ -314,6 +330,7 @@ def create_app(overrides=None) -> Flask:
         user_id = int(tok["user_id"])
         invite_token = session.get("invite")
         with Session(engine) as s:
+            is_new = s.get(Account, user_id) is None
             allowed = access.has_access(s, cfg, user_id)
             if not allowed and invite_token and access.valid_invite(s, invite_token):
                 if access.consume_invite(s, invite_token, user_id):
@@ -323,6 +340,10 @@ def create_app(overrides=None) -> Flask:
             acc = save_tokens(s, cfg, user_id, tok)
             acc.email = _read_email(tok["access_token"]) or acc.email
             audit.record(s, "login_ok", actor=user_id)
+            if meta.enabled(cfg) and not access.is_admin(cfg, user_id):
+                meta.remember(s, user_id, session.get("fbc"), session.get("fbp"), request.headers.get("User-Agent"))
+                if is_new:
+                    _meta_track(s, "Lead", user_id, live=True)
             s.commit()
         chosen = session.get("plan")
         session.clear()
@@ -938,11 +959,23 @@ def create_app(overrides=None) -> Flask:
                 s.commit()
         return redirect("/suscripcion")
 
+    def _meta_track(s, name, uid, value=None, live=None):
+        """Evento de conversión para Meta. La IP solo se manda si el pedido es de la misma persona, en este momento; no se guarda."""
+        if not meta.enabled(cfg):
+            return
+        acc, sub = s.get(Account, uid), s.get(Subscription, uid)
+        email = (acc.email if acc else None) or (sub.payer_email if sub else None)
+        if live is None:
+            live = has_request_context() and session.get("uid") == uid
+        ip = request.remote_addr if live else None
+        meta.track(cfg, s, name, uid, email=email, value=value, ip=ip, source_url=cfg.get("SITE_URL") or _base_url())
+
     def _apply_preapproval(s, sub, pre):
         before, had_trial = (sub.status, sub.plan), sub.trial_started_at
         billing.apply(cfg, sub, pre)
         if sub.trial_started_at and not had_trial:
             audit.record(s, "trial_start", target=sub.user_id, detail=sub.plan)
+            _meta_track(s, "StartTrial", sub.user_id, billing.price_usd(cfg, sub.plan or "monthly"))
         if (sub.status, sub.plan) != before:
             audit.record(s, "sub_" + sub.status, target=sub.user_id, detail=sub.plan)
 
@@ -1031,6 +1064,8 @@ def create_app(overrides=None) -> Flask:
                         result = billing.apply_payment(sub, pay)
                         if result:
                             audit.record(s, "sub_pago_" + ("ok" if result == "ok" else "rechazado"), target=sub.user_id)
+                            if result == "ok":
+                                _meta_track(s, "Subscribe", sub.user_id, billing.price_usd(cfg, sub.plan or "monthly"))
                             _apply_preapproval(s, sub, billing.fetch(cfg, pid))
                             _billing_notices(s, sub)
                         s.commit()

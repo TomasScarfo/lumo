@@ -135,3 +135,18 @@ class Subscription(Base):
     next_amount_ars = Column(Float, nullable=True)
     created_at = Column(DateTime, nullable=False, default=utcnow)
     updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+
+class AdClick(Base):
+    """De qué anuncio de Meta vino una cuenta (identificadores _fbc/_fbp del Píxel) y qué eventos de conversión ya se mandaron.
+    No guarda la IP. Se borra con la cuenta."""
+
+    __tablename__ = "ad_click"
+
+    user_id = Column(BigInteger, primary_key=True, autoincrement=False)
+    fbc = Column(String(600), nullable=True)  # clic en un anuncio (fbclid)
+    fbp = Column(String(64), nullable=True)  # navegador, según el Píxel
+    user_agent = Column(String(400), nullable=True)
+    sent = Column(String(80), nullable=False, default="")  # eventos ya enviados, separados por coma
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+    updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)

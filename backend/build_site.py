@@ -18,6 +18,7 @@ OUT = ROOT / "site"
 STATIC = Path(__file__).resolve().parent / "lumo" / "static"
 ASSETS = ("site.css", "logo.svg", "logo.png")
 APP_PLACEHOLDER = "__APP_URL__"
+PIXEL_PLACEHOLDER = "__META_PIXEL_ID__"  # Render lo reemplaza por META_PIXEL_ID; vacío, el Píxel no carga
 
 
 def render() -> str:
@@ -25,7 +26,7 @@ def render() -> str:
     # salen de load_config: de las variables de entorno si están, o de sus valores por defecto.
     app = create_app({"DATABASE_URL": "sqlite://", "SECRET_KEY": "build", "ML_CLIENT_ID": "build"})
     with app.test_request_context("/"):
-        return render_template("landing.html", invited=False, label=None, app=APP_PLACEHOLDER, **app.extensions["lumo_offer"]())
+        return render_template("landing.html", invited=False, label=None, app=APP_PLACEHOLDER, pixel=PIXEL_PLACEHOLDER, **app.extensions["lumo_offer"]())
 
 
 def render_404() -> str:
