@@ -70,9 +70,11 @@ def periodo(data: dict, days: int = 30, off: int = 0) -> dict:
         if not c:
             continue
         spend, sales = c["cur"]["spend"] * it["sp"], c["cur"]["sales"] * it["sa"]
+        clicks, prints = c["cur"]["clicks"] * it.get("kc", it["sp"]), c["cur"]["prints"] * it.get("kp", it["sp"])
         roas = _div(sales, spend)
         o = {"id": it["id"], "name": it["name"], "camp": c["name"], "spend": spend, "sales": sales, "roas": roas, "target": c["target"],
-             "status": estado(roas, spend, sales, c["target"], None), "shareSpend": it["sp"], "shareSales": it["sa"]}
+             "status": estado(roas, spend, sales, c["target"], None), "shareSpend": it["sp"], "shareSales": it["sa"],
+             "clicks": clicks, "ctr": _div(clicks, prints), "cpc": _div(spend, clicks)}
         c["items"].append(o)
         items.append(o)
     daily = []
@@ -140,7 +142,7 @@ def excel(data: dict, days: int = 30, off: int = 0) -> bytes:
     for i, (k, v, f) in enumerate(resumen, start=4):
         ws.write(i, 0, k, fmt["bold"])
         ws.write(i, 1, v, fmt[f])
-    ws.merge_range(11, 0, 14, 1, "Las ventas por publicidad suman las ventas directas y las asistidas. La inversión y las ventas de cada publicación son una "
+    ws.merge_range(11, 0, 14, 1, "Las ventas por publicidad suman las ventas directas y las asistidas. La inversión, las ventas y los clics de cada publicación son una "
                                  "estimación: se reparten según lo que cada una aportó a su campaña en los últimos 30 días. Lumo solo lee tus datos.", fmt["note"])
 
     ws = wb.add_worksheet("Campañas")
@@ -154,10 +156,11 @@ def excel(data: dict, days: int = 30, off: int = 0) -> bytes:
 
     ws = wb.add_worksheet("Publicaciones")
     heads = [("Publicación", "txt"), ("Campaña", "txt"), ("Estado", "txt"), ("ROAS", "roas"), ("ROAS objetivo", "roas"), ("Inversión (estimada)", "money"),
-             ("Ventas por publicidad (estimadas)", "money"), ("Parte de la inversión de su campaña", "pct"), ("Parte de las ventas de su campaña", "pct")]
-    rows = [[o["name"], o["camp"], ESTADOS[o["status"]], o["roas"], o["target"], o["spend"], o["sales"], o["shareSpend"], o["shareSales"]]
+             ("Ventas por publicidad (estimadas)", "money"), ("Clics (estimados)", "int"), ("CTR", "pct"), ("CPC", "money"),
+             ("Parte de la inversión de su campaña", "pct"), ("Parte de las ventas de su campaña", "pct")]
+    rows = [[o["name"], o["camp"], ESTADOS[o["status"]], o["roas"], o["target"], o["spend"], o["sales"], o["clicks"], o["ctr"], o["cpc"], o["shareSpend"], o["shareSales"]]
             for o in sorted(per["items"], key=lambda o: -o["sales"])]
-    _tabla(ws, fmt, heads, rows, [48, 30, 22, 9, 12, 16, 20, 20, 20])
+    _tabla(ws, fmt, heads, rows, [48, 30, 22, 9, 12, 16, 20, 14, 9, 10, 20, 20])
 
     ws = wb.add_worksheet("Por día")
     heads = [("Día", "date"), ("Ventas", "int"), ("Ingresos", "money"), ("Inversión", "money"), ("Clics", "int"), ("Impresiones", "int")]

@@ -227,20 +227,24 @@ def build_dataset(get, advertiser: dict, now: datetime = None) -> dict:
         cid = in_campaign(g)
         if cid is not None:
             m = g.get("metrics") or {}
-            t = totals.setdefault(cid, {"n": 0, "cost": 0.0, "sales": 0.0})
+            t = totals.setdefault(cid, {"n": 0, "cost": 0.0, "sales": 0.0, "clicks": 0.0, "prints": 0.0})
             t["n"] += 1
             t["cost"] += _n(m.get("cost"))
             t["sales"] += _sales(m)
+            t["clicks"] += _n(m.get("clicks"))
+            t["prints"] += _n(m.get("prints"))
 
     items = []
     for gid, g in rows.items():
         m, pm = g.get("metrics") or {}, prev_by_id.get(gid, {})
         cid = in_campaign(g)
-        sp = sa = 0.0
+        sp = sa = kc = kp = 0.0
         if cid is not None:
             t = totals[cid]
             sp = _n(m.get("cost")) / t["cost"] if t["cost"] else 1.0 / t["n"]
             sa = _sales(m) / t["sales"] if t["sales"] else 1.0 / t["n"]
+            kc = _n(m.get("clicks")) / t["clicks"] if t["clicks"] else 1.0 / t["n"]   # parte de los clics y de las impresiones de su campaña
+            kp = _n(m.get("prints")) / t["prints"] if t["prints"] else 1.0 / t["n"]
         iid = single_item(g)
         d = details.get(iid, {}) if iid else {}
         units = _n(m.get("organic_units_quantity"))
@@ -248,7 +252,7 @@ def build_dataset(get, advertiser: dict, now: datetime = None) -> dict:
         cat = cats.get(d.get("category_id")) or _humanize(g.get("domain_id"))
         items.append({"id": str(gid), "name": g.get("title") or str(gid), "cat": cat,
                       "brand": _brand(d) or g.get("brand_value_name") or "Sin marca",
-                      "camp": cid, "sp": sp, "sa": sa, "price": _n(g.get("price")), "units": units,
+                      "camp": cid, "sp": sp, "sa": sa, "kc": kc, "kp": kp, "price": _n(g.get("price")), "units": units,
                       "prevUnits": _n(pm.get("organic_units_quantity")), "orgAmt": _n(m.get("organic_units_amount")),
                       "prevOrgAmt": _n(pm.get("organic_units_amount")), "visits": vis,
                       "conv": (units / vis) if vis else None, "stock": d.get("available_quantity"), "link": g.get("permalink")})

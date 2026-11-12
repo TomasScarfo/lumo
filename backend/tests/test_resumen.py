@@ -123,6 +123,43 @@ class ExcelDelPanel(unittest.TestCase):
         self.assertEqual(hojas(exportar.excel(data, 7)), HOJAS)
 
 
+class ClicsPorPublicacion(unittest.TestCase):
+    def test_los_clics_de_cada_publicacion_son_su_parte_real_de_los_de_su_campana(self):
+        import fake_ml
+        from datetime import datetime
+        from lumo import ads
+
+        def get(path, params=None, version="2"):
+            res = fake_ml.api_get(CFG, "AT", path, params, version)
+            if path.endswith("/ad_groups/search"):
+                rows = [r for r in res["results"] if r["campaign_id"] == 102 and r["status"] == "ACTIVE"]
+                rows[0]["metrics"]["clicks"] = 30
+                rows[1]["metrics"]["clicks"] = 10
+            return res
+        data = ads.build_dataset(get, fake_ml.ADVERTISER, datetime(2026, 10, 28, 15, 0).astimezone())
+        mismos = [it for it in data["items"] if it["camp"] == 102]
+        self.assertGreaterEqual(len(mismos), 2)
+        self.assertAlmostEqual(sum(it["kc"] for it in mismos), 1.0)
+        self.assertAlmostEqual(sum(it["kp"] for it in mismos), 1.0)
+        self.assertEqual([round(x, 3) for x in sorted(it["kc"] for it in mismos)], [0.125, 0.375, 0.5])   # 10, 30 y 40 clics de 80
+        self.assertTrue(all(it["kc"] == 0.0 for it in data["items"] if it["camp"] is None))   # sin campaña no hay parte que repartir
+
+    def test_el_panel_ya_no_inventa_variaciones_en_los_clics(self):
+        fuente = open("lumo/panel.html", encoding="utf-8").read()
+        self.assertNotIn("0.12", fuente)
+        self.assertNotIn("0.15", fuente)
+        self.assertIn("o.clicks = c.cur.clicks * o.kc", fuente)
+
+    def test_el_excel_trae_clics_ctr_y_cpc_por_publicacion(self):
+        per = exportar.periodo(dataset(), 30)
+        for o in per["items"]:
+            self.assertGreaterEqual(o["clicks"], 0)
+            self.assertAlmostEqual(o["cpc"], o["spend"] / o["clicks"] if o["clicks"] else 0)
+        c = per["camps"][0]
+        if c["items"]:
+            self.assertAlmostEqual(sum(o["clicks"] for o in c["items"]), c["cur"]["clicks"], places=4)
+
+
 class RutaExportar(unittest.TestCase):
     def setUp(self):
         self.app = create_app(CFG)

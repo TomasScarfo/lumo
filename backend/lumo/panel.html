@@ -666,16 +666,18 @@ function compute() {
     if (it.camp) {
       var c = byId[it.camp];
       o.spend = c.cur.spend * it.sp; o.sales = c.cur.sales * it.sa; o.roas = o.spend ? o.sales / o.spend : 0;
-      o.target = c.target; o.sp = it.sp; o.status = statusOf(o.roas, o.spend, o.sales, c.target, null); o.campName = c.name; o.campTrend = c.trend;
+      o.target = c.target; o.sp = it.sp; o.kc = it.kc != null ? it.kc : it.sp; o.kp = it.kp != null ? it.kp : it.sp; o.status = statusOf(o.roas, o.spend, o.sales, c.target, null); o.campName = c.name; o.campTrend = c.trend;
       o.ad30 = c.cur30.sales * it.sa; o.prevAd30 = c.prev30.sales * it.sa;
       c.items.push(o);
     }
     return o;
   });
+  /* Clics e impresiones de cada publicación: su parte real (en los últimos 30 días) de los de su campaña, aplicada al período elegido. */
   camps.forEach(function (c) {
-    var sc = 0, sp = 0;
-    c.items.forEach(function (o, i) { o.kc = o.sp * (1 + ((i % 3) - 1) * 0.12); o.kp = o.sp * (1 + (((i + 1) % 3) - 1) * 0.15); sc += o.kc; sp += o.kp; });
-    c.items.forEach(function (o) { o.clicks = c.cur.clicks * o.kc / sc; o.prints = c.cur.prints * o.kp / sp; o.cpc = o.clicks ? o.spend / o.clicks : 0; o.ctr = o.prints ? o.clicks / o.prints : 0; });
+    c.items.forEach(function (o) {
+      o.clicks = c.cur.clicks * o.kc; o.prints = c.cur.prints * o.kp;
+      o.cpc = o.clicks ? o.spend / o.clicks : 0; o.ctr = o.prints ? o.clicks / o.prints : 0;
+    });
   });
   var lowItems = items.filter(function (o) { return o.active && (o.status === 'oportunidad' || o.status === 'revisar'); }).map(function (o) {
     o.shortfall = o.spend * o.target - o.sales;
