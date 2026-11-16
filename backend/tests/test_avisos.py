@@ -36,6 +36,32 @@ class Contenido(unittest.TestCase):
         self.assertIn("Invertiste", text)
         self.assertIn("https://lumo.test/panel#alertas", html)
 
+    def test_el_resumen_usa_los_mismos_estados_que_el_panel(self):
+        data = dataset()
+        for c in data["camps"]:
+            if c["id"] == 101:      # ventas en cero esta semana: Revisar
+                for d in c["daily"][-7:]:
+                    d["sales"] = 0
+            if c["id"] == 102:      # ROAS alto y visibilidad en caída
+                for d in c["daily"][-7:]:
+                    d["sales"] *= 5
+                    d["prints"] *= 0.4
+        w = notify.weekly(data)
+        self.assertIn("Mesas y sillas", [x["name"] for x in w["opp"]])
+        self.assertTrue(any(x["kind"] == "baja" for x in w["vis"]))
+        subject, text, html = notify.weekly_mail(data, "https://lumo.test/panel#alertas", "porque sí")
+        self.assertIn("oportunidad de mejora", text)
+        self.assertIn("Visibilidad y ROAS objetivo", text)
+        self.assertIn("bajar", text.lower())
+
+    def test_resumen_sin_hallazgos_dice_que_estan_en_objetivo(self):
+        data = dataset()
+        for c in data["camps"]:
+            for d in c["daily"]:
+                d["spend"], d["sales"], d["clicks"], d["prints"], d["units"] = 0, 0, 0, 0, 0
+        _, text, _ = notify.weekly_mail(data, "https://lumo.test/panel", "porque sí")
+        self.assertIn("están en su ROAS objetivo", text)
+
     def test_publicaciones_que_gastan_y_no_venden(self):
         data = dataset()
         self.assertEqual(notify.wasteful(data), [])   # con ventas, ninguna cumple

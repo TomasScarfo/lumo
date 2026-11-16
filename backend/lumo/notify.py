@@ -108,18 +108,40 @@ def _target(c) -> float:
     return c.get("target") or DEFAULT_ROAS_TARGET
 
 
+VIS_DOWN = -0.10   # impresiones: caída que se considera pérdida de visibilidad (igual que el panel)
+VIS_UP = 0.10
+ROAS_DOWN = -0.05
+
+
+def _prints(c, a, b) -> float:
+    return sum(d["prints"] for d in c["daily"][a:b])
+
+
 def weekly(data: dict) -> dict:
+    """Resumen de los últimos 7 días contra los 7 anteriores, con el mismo criterio de estados y de visibilidad que el panel."""
     camps = data["camps"]
     spend, sales = _sum(camps, -7, None, "spend"), _sum(camps, -7, None, "sales")
     pspend, psales = _sum(camps, -14, -7, "spend"), _sum(camps, -14, -7, "sales")
-    below = []
-    for c in camps:
-        sp, sa = sum(d["spend"] for d in c["daily"][-7:]), sum(d["sales"] for d in c["daily"][-7:])
-        if sp > 0 and sa / sp < _target(c):
-            below.append((sp * _target(c) - sa, c["name"], sa / sp, _target(c)))
-    below.sort(reverse=True)
+    raw = {c["id"]: c for c in camps}
+    opp, up, vis = [], [], []
+    for r in exportar.periodo(data, 7)["camps"]:
+        c = raw[r["id"]]
+        cur_p, prev_p = _prints(c, -7, None), _prints(c, -14, -7)
+        v = cur_p / prev_p - 1 if prev_p else None
+        row = {"name": r["name"], "roas": r["roas"], "target": r["target"], "trend": r["trend"], "vis": v, "spend": r["cur"]["spend"]}
+        if r["status"] in ("oportunidad", "revisar"):
+            opp.append((r["target"] * r["cur"]["spend"] - r["cur"]["sales"], row))
+        elif r["status"] == "mejorando":
+            up.append((r["cur"]["spend"], row))
+        if r["cur"]["sales"] > 0 and v is not None and v <= VIS_DOWN:
+            vis.append((r["cur"]["spend"], dict(row, kind="baja")))
+        elif v is not None and v >= VIS_UP and r["trend"] is not None and r["trend"] <= ROAS_DOWN:
+            vis.append((r["cur"]["spend"], dict(row, kind="sube")))
+        elif r["status"] == "supera":
+            vis.append((r["cur"]["spend"], dict(row, kind="margen")))
+    top = lambda lst: [row for _, row in sorted(lst, key=lambda x: -x[0])[:3]]
     return {"spend": spend, "sales": sales, "roas": sales / spend if spend else 0, "dsales": _pct(sales, psales), "dspend": _pct(spend, pspend),
-            "below": [(n, r, t) for _, n, r, t in below[:3]]}
+            "opp": top(opp), "up": top(up), "vis": top(vis)}
 
 
 def wasteful(data: dict) -> list:
@@ -223,13 +245,35 @@ def weekly_mail(data: dict, link: str, why: str):
     h += "<h3 style='font-size:16px;margin:22px 0 2px'>Las 5 publicaciones que más aportaron</h3>" + top_h
     h += "<p style='font-size:12px;color:#5A6B7C;margin:2px 0 0'>Las cifras por publicación son estimadas: se reparten según lo que cada una aportó a su campaña.</p>"
     t += "\nLas 5 publicaciones que más aportaron (cifras estimadas):\n" + top_t
-    if w["below"]:
-        h += "<h3 style='font-size:16px;margin:22px 0 4px'>Campañas con oportunidad de mejora</h3><p style='margin:0;color:#5A6B7C;font-size:13px'>Están por debajo de su ROAS objetivo.</p><ul>" + "".join(
-            "<li>%s: ROAS %s (objetivo %s)</li>" % (escape(n), _roas(r), _roas(tg)) for n, r, tg in w["below"]) + "</ul>"
-        t += "\nCampañas con oportunidad de mejora (por debajo de su ROAS objetivo):\n" + "".join("- %s: ROAS %s (objetivo %s)\n" % (n, _roas(r), _roas(tg)) for n, r, tg in w["below"])
-    else:
-        h += "<p>Todas tus campañas con inversión están en su ROAS objetivo o por encima.</p>"
-        t += "\nTodas tus campañas con inversión están en su ROAS objetivo o por encima.\n"
+    def seccion(titulo, nota, items, linea):
+        nonlocal h, t
+        if not items:
+            return
+        h += "<h3 style='font-size:16px;margin:22px 0 4px'>%s</h3><p style='margin:0;color:#5A6B7C;font-size:13px'>%s</p><ul>%s</ul>" % (
+            escape(titulo), escape(nota), "".join("<li>%s</li>" % escape(linea(x)) for x in items))
+        t += "\n%s (%s):\n%s" % (titulo, nota, "".join("- %s\n" % linea(x) for x in items))
+
+    def vs(x):
+        return "ROAS %s (objetivo %s)" % (_roas(x["roas"]), _roas(x["target"]))
+
+    def cambio(x, k, que):
+        return " Sus %s %s %d%% contra la semana anterior." % (que, "subieron" if x[k] > 0 else "bajaron", round(abs(x[k]) * 100))
+
+    seccion("Campañas con oportunidad de mejora", "Están por debajo de su ROAS objetivo: no es que estén mal, hay margen para mejorarlas.", w["opp"], lambda x: "%s: %s." % (x["name"], vs(x)))
+    seccion("Campañas que vienen mejorando", "Siguen por debajo de su objetivo, pero su ROAS sube y se acerca.", w["up"],
+            lambda x: "%s: %s." % (x["name"], vs(x)) + (" Su ROAS subió %d%% contra la semana anterior." % round(x["trend"] * 100) if x["trend"] else ""))
+
+    def linea_vis(x):
+        if x["kind"] == "baja":
+            return "%s perdió visibilidad.%s Bajar un poco el ROAS objetivo ayuda a recuperarla, a cambio de algo de rentabilidad." % (x["name"], cambio(x, "vis", "impresiones"))
+        if x["kind"] == "sube":
+            return "%s gana visibilidad pero cae su ROAS.%s Subir un poco el ROAS objetivo recupera rentabilidad." % (x["name"], cambio(x, "vis", "impresiones"))
+        return "%s rinde por encima de su objetivo (%s). Tiene margen para ganar visibilidad bajando el ROAS objetivo." % (x["name"], vs(x))
+
+    seccion("Visibilidad y ROAS objetivo", "Un ROAS objetivo más bajo hace que te muestres más, con menos rentabilidad. Uno más alto, al revés.", w["vis"], linea_vis)
+    if not (w["opp"] or w["up"] or w["vis"]):
+        h += "<p>Todas tus campañas con inversión están en su ROAS objetivo.</p>"
+        t += "\nTodas tus campañas con inversión están en su ROAS objetivo.\n"
     h += "<p style='font-size:13px;color:#44566A;margin:16px 0 0'>Te adjuntamos un Excel con las mismas tablas que ves en el panel: campañas, publicaciones y días.</p>"
     t += "\nTe adjuntamos un Excel con las mismas tablas que ves en el panel: campañas, publicaciones y días.\n"
     return ("Tu resumen semanal de Lumo",) + _layout("Cómo te fue en los últimos 7 días", h, t, link, why)
