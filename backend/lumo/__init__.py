@@ -93,9 +93,9 @@ def load_config(overrides=None) -> dict:
         "MP_ACCESS_TOKEN": os.environ.get("MP_ACCESS_TOKEN", ""),
         "MP_WEBHOOK_SECRET": os.environ.get("MP_WEBHOOK_SECRET", ""),
         "MP_API_BASE": os.environ.get("MP_API_BASE", "https://api.mercadopago.com"),
-        # Precios en dólares. Se cobran en pesos a la cotización del día (USD_RATE_URL, campo "venta"; USD_ARS_RATE la fija a mano).
-        "PLAN_PRICE_USD": os.environ.get("PLAN_PRICE_USD", "5.99"),
-        "PLAN_PRICE_ANNUAL_USD": os.environ.get("PLAN_PRICE_ANNUAL_USD", "59.99"),
+        # Precios en dólares. Se muestran y se cobran en pesos a la cotización del día (USD_RATE_URL, campo "venta"; USD_ARS_RATE la fija a mano).
+        "PLAN_PRICE_USD": os.environ.get("PLAN_PRICE_USD", "10"),
+        "PLAN_PRICE_ANNUAL_USD": os.environ.get("PLAN_PRICE_ANNUAL_USD", "100"),
         "USD_RATE_URL": os.environ.get("USD_RATE_URL", "https://dolarapi.com/v1/dolares/oficial"),
         "USD_ARS_RATE": os.environ.get("USD_ARS_RATE", ""),
         # Dominios donde Mercado Pago muestra el pago. La página de suscripción solo deja salir hacia ellos.
@@ -196,6 +196,15 @@ def create_app(overrides=None) -> Flask:
             abort(404)
         expires = (utcnow() + timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%SZ")
         return Response("Contact: mailto:%s\nExpires: %s\nPreferred-Languages: es, en\n" % (contact, expires), mimetype="text/plain")
+
+    @app.get("/api/precios")
+    def api_precios():
+        """Precios en pesos para la portada publicada aparte, que no puede calcularlos sola."""
+        o = billing.offer(cfg)
+        resp = jsonify({k: o[k] for k in ("currency", "monthly", "annual", "saving", "saving_pct")})
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Cache-Control"] = "public, max-age=600"
+        return resp
 
     @app.get("/healthz")
     def healthz():
@@ -836,13 +845,7 @@ def create_app(overrides=None) -> Flask:
             email = (sub.payer_email if sub else None) or (acc.email if acc else None) or ""
             can_cancel = bool(sub and sub.mp_preapproval_id and sub.status in billing.LIVE)
             trial_offer = billing.trial_available(sub)
-        pesos = {}
-        if billing.enabled(cfg):
-            try:
-                pesos = {k: notify.money(billing.ars_amount(cfg, k)) for k in billing.available_plans(cfg)}
-            except billing.RateError:
-                log.warning("no se pudo obtener la cotización del dólar")
-        html = render_template("suscripcion.html", plan=p, email=email, csrf=_csrf(), error=error, detail=detail, can_cancel=can_cancel, pesos=pesos, home=_home(), trial_offer=trial_offer,
+        html = render_template("suscripcion.html", plan=p, email=email, csrf=_csrf(), error=error, detail=detail, can_cancel=can_cancel, home=_home(), trial_offer=trial_offer,
                                chosen=request.form.get("plan") or session.get("plan"),
                                names=billing.NAMES, estado=request.args.get("estado"), billing_on=billing.enabled(cfg), **_offer())
         resp = Response(html, status, mimetype="text/html")
@@ -998,9 +1001,9 @@ def create_app(overrides=None) -> Flask:
             else:
                 kind = "baja"
         elif p["kind"] == "trial" and p["days"] <= 3:  # se viene el primer cobro: que no sea una sorpresa
-            price = billing.price_usd(cfg, sub.plan or "monthly")
+            price = billing.offer(cfg).get("annual" if sub.plan == "annual" else "monthly")
             kind, ref, args = "prueba", sub.trial_ends_at.strftime("%Y-%m-%d"), {"days": p["days"], "until": sub.trial_ends_at,
-                                                                               "price": billing.usd_label(price) if price else None, "plan": billing.NAMES.get(sub.plan)}
+                                                                               "price": price, "plan": billing.NAMES.get(sub.plan)}
         if not kind or s.get(Notice, (sub.user_id, kind, ref)):
             return 0
         subject, text, html = notify.billing_mail(kind, _base_url() + "/suscripcion", **args)

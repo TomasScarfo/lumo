@@ -66,7 +66,7 @@
               <span class="plan-body">
                 <b>Anual{% if price.saving_pct %} <span class="save">Ahorrás {{ price.saving_pct }}%</span>{% endif %}</b>
                 <span class="plan-price">{{ price.annual }} <small>por año</small></span>
-                <small>{% if price.saving_usd %}{{ price.saving_usd }} menos que pagando mes a mes. {% endif %}{% if pesos.annual %}Hoy son {{ pesos.annual }}.{% endif %}</small>
+                <small>{% if price.saving %}{{ price.saving }} menos que pagando mes a mes.{% endif %}</small>
               </span>
             </label>
             {% endif %}
@@ -76,7 +76,7 @@
               <span class="plan-body">
                 <b>Mensual</b>
                 <span class="plan-price">{{ price.monthly }} <small>por mes</small></span>
-                <small>{% if pesos.monthly %}Hoy son {{ pesos.monthly }}.{% endif %}</small>
+                <small>Cancelás cuando quieras.</small>
               </span>
             </label>
             {% endif %}
@@ -89,7 +89,7 @@
         <ul class="fine">
           {% if trial_offer %}<li>La prueba empieza cuando Mercado Pago confirma tu medio de pago. No se cobra nada hasta que termina.</li>{% endif %}
           <li>Usá el mismo email con el que entrás a Mercado Pago.</li>
-          <li>El precio está en dólares y se cobra en pesos, al tipo de cambio oficial del día de cada cobro.</li>
+          <li>El precio en pesos sigue al dólar oficial: el monto puede cambiar de un cobro a otro.</li>
           {% if active and not plan.past_due %}<li>El plan nuevo empieza cuando termina el período que ya pagaste: no se cobra dos veces.</li>{% endif %}
           <li>Se renueva solo. Cancelás cuando quieras desde esta página y seguís entrando hasta la fecha ya paga.</li>
           <li>Si un cobro falla, tenés {{ grace_days }} días para regularizarlo antes de que el acceso se pause.</li>

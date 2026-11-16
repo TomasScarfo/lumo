@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import requests
 import unittest
 from datetime import timedelta
 from unittest import mock
@@ -128,7 +129,15 @@ class Base(unittest.TestCase):
 class Precios(unittest.TestCase):
     def test_etiquetas_y_ahorro_del_plan_anual(self):
         cfg = {"PLAN_PRICE_USD": "5.99", "PLAN_PRICE_ANNUAL_USD": "59,99"}
-        self.assertEqual(billing.offer(cfg), {"monthly": "US$5,99", "annual": "US$59,99", "saving_pct": 17, "saving_usd": "US$11,89"})
+        o = billing.offer(dict(cfg, USD_ARS_RATE="1000"))
+        self.assertEqual({k: o[k] for k in ("currency", "monthly", "annual", "saving", "saving_pct", "usd_monthly", "usd_annual")},
+                         {"currency": "ARS", "monthly": "$5.990", "annual": "$59.990", "saving": "$11.890", "saving_pct": 17,
+                          "usd_monthly": "US$5,99", "usd_annual": "US$59,99"})
+        with mock.patch("lumo.billing.requests.get", side_effect=requests.ConnectionError):  # sin cotización: muestra dólares
+            billing._rate_cache.clear()
+            o = billing.offer(dict(cfg, USD_RATE_URL="https://dolar.test/caido"))
+        self.assertEqual((o["currency"], o["monthly"], o["saving"]), ("USD", "US$5,99", "US$11,89"))
+        self.assertEqual(billing.ars_label(1234567.4), "$1.234.567")
         self.assertEqual(billing.saving({"PLAN_PRICE_USD": "6", "PLAN_PRICE_ANNUAL_USD": "60"}), (12.0, 17))
         self.assertEqual(billing.usd_label(6), "US$6")
         self.assertIsNone(billing.saving({"PLAN_PRICE_USD": "6", "PLAN_PRICE_ANNUAL_USD": "72"}))  # sin descuento no se anuncia ahorro
@@ -145,18 +154,18 @@ class Precios(unittest.TestCase):
     def test_los_precios_por_defecto_son_los_de_venta(self):
         from lumo import load_config
         cfg = load_config()
-        self.assertEqual((cfg["PLAN_PRICE_USD"], cfg["PLAN_PRICE_ANNUAL_USD"], cfg["TRIAL_DAYS"], cfg["GRACE_DAYS"]), ("5.99", "59.99", "14", "7"))
+        self.assertEqual((cfg["PLAN_PRICE_USD"], cfg["PLAN_PRICE_ANNUAL_USD"], cfg["TRIAL_DAYS"], cfg["GRACE_DAYS"]), ("10", "100", "14", "7"))
 
 
 class Cotizacion(unittest.TestCase):
     def setUp(self):
         billing._rate_cache.clear()
-        self.cfg = {"PLAN_PRICE_USD": "5.99", "PLAN_PRICE_ANNUAL_USD": "59.99", "USD_RATE_URL": "https://dolar.test/oficial"}
+        self.cfg = {"PLAN_PRICE_USD": "10", "PLAN_PRICE_ANNUAL_USD": "100", "USD_RATE_URL": "https://dolar.test/oficial"}
 
     def test_convierte_con_la_cotizacion_de_venta(self):
         with mock.patch("lumo.billing.requests.get", return_value=Resp(200, {"compra": 1400, "venta": 1450.5})) as get:
-            self.assertEqual(billing.ars_amount(self.cfg, "monthly"), 8688.5)   # 5,99 × 1.450,50, redondeado a centavos
-            self.assertEqual(billing.ars_amount(self.cfg, "annual"), 87015.5)
+            self.assertEqual(billing.ars_amount(self.cfg, "monthly"), 14505.0)   # 10 × 1.450,50, en pesos enteros
+            self.assertEqual(billing.ars_amount(self.cfg, "annual"), 145050.0)
             self.assertEqual(get.call_count, 1)  # la segunda vez usa la cotización guardada
 
     def test_si_el_servicio_falla_usa_la_ultima_cotizacion(self):
@@ -177,7 +186,7 @@ class Cotizacion(unittest.TestCase):
 class Prueba(Base):
     def test_portada_muestra_los_dos_planes_y_el_ahorro(self):
         html = self.client.get("/").get_data(as_text=True)
-        for texto in ("US$5,99", "US$59,99", "Ahorrás 17%", "no se cobra nada hasta el día 15", "al tipo de cambio oficial del día",
+        for texto in ("$10.000", "$100.000", "Ahorrás 17%", "$20.000", "no se cobra nada hasta el día 15", "Precios en pesos argentinos",
                       'href="/terminos"', 'href="/arrepentimiento"', "Botón de arrepentimiento"):
             self.assertIn(texto, html)
         self.assertNotIn("10 meses", html)
@@ -192,8 +201,13 @@ class Prueba(Base):
         self.assertEqual((r.status_code, r.get_json()["error"]), (402, "plan"))
         html = self.client.get("/suscripcion").get_data(as_text=True)
         for texto in ("Empezá tu prueba gratis de 14 días", "No se cobra nada durante 14 días", "el día 15", "Empezar mi prueba gratis",
-                      "US$5,99", "US$59,99", "Ahorrás 17%", "Hoy son $5.990.", "Hoy son $59.990.", "tenés 7 días", 'href="/terminos"'):
+                      "$10.000", "$100.000", "Ahorrás 17%", "$20.000 menos", "tenés 7 días", 'href="/terminos"'):
             self.assertIn(texto, html)
+
+    def test_la_portada_fija_pide_los_precios_en_pesos(self):
+        r = self.client.get("/api/precios")
+        self.assertEqual(r.headers["Access-Control-Allow-Origin"], "*")
+        self.assertEqual(r.get_json(), {"currency": "ARS", "monthly": "$10.000", "annual": "$100.000", "saving": "$20.000", "saving_pct": 17})
 
     def test_el_plan_elegido_en_la_portada_queda_marcado_al_conectarse(self):
         html = self.client.get("/").get_data(as_text=True)
@@ -282,15 +296,15 @@ class Pago(Base):
         self.assertEqual(body["external_reference"], "810")
         self.assertEqual(body["payer_email"], "vende@dor.test")
         self.assertEqual(body["back_url"], "https://lumo.test/suscripcion/listo")
-        self.assertEqual(body["auto_recurring"], dict(body["auto_recurring"], frequency=1, frequency_type="months", transaction_amount=5990.0, currency_id="ARS"))
+        self.assertEqual(body["auto_recurring"], dict(body["auto_recurring"], frequency=1, frequency_type="months", transaction_amount=10000.0, currency_id="ARS"))
         sub = self.sub(810)
-        self.assertEqual((sub.status, sub.mp_preapproval_id, sub.plan, sub.amount_ars), ("pending", "pre-1", "monthly", 5990.0))
+        self.assertEqual((sub.status, sub.mp_preapproval_id, sub.plan, sub.amount_ars), ("pending", "pre-1", "monthly", 10000.0))
 
     def test_anual_cobra_una_vez_por_ano(self):
         connect_as(self.client, 811)
         self.subscribe("annual")
         recurring = self.mp.calls[-1][2]["auto_recurring"]
-        self.assertEqual((recurring["frequency"], recurring["frequency_type"], recurring["transaction_amount"]), (12, "months", 59990.0))
+        self.assertEqual((recurring["frequency"], recurring["frequency_type"], recurring["transaction_amount"]), (12, "months", 100000.0))
         self.assertEqual(self.sub(811).plan, "annual")
 
     def test_terminada_la_prueba_el_plan_queda_activo(self):
@@ -390,7 +404,7 @@ class CambioDePlan(Base):
         r = self.subscribe("annual")
         self.assertEqual(r.headers["Location"], "https://mp.test/checkout/pre-2")
         nuevo = self.mp.store["pre-2"]["auto_recurring"]
-        self.assertEqual((nuevo["frequency"], nuevo["transaction_amount"]), (12, 59990.0))
+        self.assertEqual((nuevo["frequency"], nuevo["transaction_amount"]), (12, 100000.0))
         self.assertTrue(nuevo["start_date"].startswith(self.sub(860).paid_until.strftime("%Y-%m-%d")))
         # mientras no pague el nuevo, sigue con el mensual
         sub = self.sub(860)
@@ -400,7 +414,7 @@ class CambioDePlan(Base):
         r = self.client.get("/suscripcion/listo?preapproval_id=pre-2")
         self.assertTrue(r.headers["Location"].endswith("/suscripcion?estado=cambio"))
         sub = self.sub(860)
-        self.assertEqual((sub.plan, sub.mp_preapproval_id, sub.next_plan, sub.amount_ars), ("annual", "pre-2", None, 59990.0))
+        self.assertEqual((sub.plan, sub.mp_preapproval_id, sub.next_plan, sub.amount_ars), ("annual", "pre-2", None, 100000.0))
         self.assertEqual(self.mp.store["pre-1"]["status"], "cancelled")  # no se cobra dos veces
         self.assertIn("Tu plan ahora es el anual", self.client.get(r.headers["Location"]).get_data(as_text=True))
 
@@ -486,8 +500,8 @@ class ChequeoDiario(Base):
         self.assertEqual(self.cron()["montos"], 0)  # misma cotización: no toca nada
         self.app.extensions["lumo_cfg"]["USD_ARS_RATE"] = "1100"
         self.assertEqual(self.cron()["montos"], 1)
-        self.assertEqual(self.mp.store[pid]["auto_recurring"]["transaction_amount"], 6589.0)
-        self.assertEqual(self.sub(880).amount_ars, 6589.0)
+        self.assertEqual(self.mp.store[pid]["auto_recurring"]["transaction_amount"], 11000.0)
+        self.assertEqual(self.sub(880).amount_ars, 11000.0)
         self.app.extensions["lumo_cfg"]["USD_ARS_RATE"] = "1105"  # menos de 1 %: no vale un cambio
         self.assertEqual(self.cron()["montos"], 0)
 
@@ -505,7 +519,7 @@ class ChequeoDiario(Base):
         self.assertEqual(self.cron()["avisos"], 0)
         to, subject, text = self.mails[0]
         self.assertEqual((to, subject), ("vende@dor.test", "Tu prueba gratis de Lumo termina en 3 días"))
-        for texto in ("primer cobro de tu plan anual (US$59,99)", "cancelá antes de esa fecha", "https://lumo.test/suscripcion"):
+        for texto in ("primer cobro de tu plan anual ($100.000)", "cancelá antes de esa fecha", "https://lumo.test/suscripcion"):
             self.assertIn(texto, text)
 
     def test_avisa_la_suspension(self):
@@ -581,7 +595,7 @@ class Administracion(Base):
         self.client = self.app.test_client()
         Base.trialing(self, 852)  # en prueba
         html = self.admin()[0].get("/admin").get_data(as_text=True)
-        for texto in ("Pagando", "vende@dor.test", "Mensual", "Anual", "En prueba", "US$10,99"):  # 5,99 + 59,99 / 12
+        for texto in ("Pagando", "vende@dor.test", "Mensual", "Anual", "En prueba", "US$18,33"):  # 10 + 100 / 12
             self.assertIn(texto, html)
 
     def test_quitar_acceso_cancela_en_mercado_pago_y_no_da_otra_prueba(self):
@@ -635,7 +649,7 @@ class Legales(Base):
         r = self.client.get("/terminos")
         html = r.get_data(as_text=True)
         self.assertEqual(r.status_code, 200)
-        for texto in ("US$5,99 por mes", "US$59,99 por año", "14 días de prueba gratis", "tipo de cambio oficial", "se renueva sola",
+        for texto in ("$10.000 por mes", "$100.000 por año", "(equivale a US$10)", "14 días de prueba gratis", "tipo de cambio oficial", "se renueva sola",
                       "10 días corridos", "7 días", 'href="/arrepentimiento"', 'href="/privacidad"'):
             self.assertIn(texto, html)
 

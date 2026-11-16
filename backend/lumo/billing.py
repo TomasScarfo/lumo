@@ -21,6 +21,7 @@ PLANS = ("monthly", "annual")
 MONTHS = {"monthly": 1, "annual": 12}
 NAMES = {"monthly": "mensual", "annual": "anual"}
 RATE_TTL = 3600           # segundos que se reutiliza la cotización
+RATE_TIMEOUT = 5          # segundos de espera a la cotización: la portada no puede quedar colgada
 RATE_TOLERANCE = 0.01     # no se toca el monto en Mercado Pago por diferencias menores al 1 %
 LIVE = ("pending", "authorized", "paused")  # estados en los que la suscripción sigue existiendo en Mercado Pago
 
@@ -78,11 +79,26 @@ def saving(cfg: dict):
     return round(full - annual, 2), int(round((1 - annual / full) * 100))
 
 
+def ars_label(value: float) -> str:
+    return "$" + format(int(round(value)), ",").replace(",", ".")
+
+
 def offer(cfg: dict) -> dict:
-    """Lo que muestran la portada y la página de suscripción."""
+    """Lo que muestran la portada, la página de suscripción y los términos.
+
+    Los precios se muestran en pesos, convertidos con la cotización del día. Si la cotización no está disponible,
+    se muestran en dólares, para no dejar la página sin precio. usd_* queda siempre, para los términos y la portada fija."""
     monthly, annual, save = price_usd(cfg, "monthly"), price_usd(cfg, "annual"), saving(cfg)
-    return {"monthly": usd_label(monthly) if monthly else None, "annual": usd_label(annual) if annual else None,
-            "saving_pct": save[1] if save else None, "saving_usd": usd_label(save[0]) if save else None}
+    out = {"usd_monthly": usd_label(monthly) if monthly else None, "usd_annual": usd_label(annual) if annual else None,
+           "usd_monthly_value": monthly, "usd_annual_value": annual, "saving_pct": save[1] if save else None}
+    try:
+        fx = rate(cfg)
+    except RateError:
+        fx = None
+    label = (lambda v: ars_label(round(v * fx))) if fx else usd_label
+    out.update(currency="ARS" if fx else "USD", monthly=label(monthly) if monthly else None, annual=label(annual) if annual else None,
+               saving=label(save[0]) if save else None)
+    return out
 
 
 def enabled(cfg: dict) -> bool:
@@ -105,7 +121,7 @@ def rate(cfg: dict) -> float:
     if hit and time.time() - hit[1] < RATE_TTL:
         return hit[0]
     try:
-        resp = requests.get(url, timeout=TIMEOUT)
+        resp = requests.get(url, timeout=RATE_TIMEOUT)
         value = _num(resp.json().get("venta")) if resp.status_code == 200 else None
     except (requests.RequestException, ValueError, AttributeError):
         value = None
@@ -118,7 +134,8 @@ def rate(cfg: dict) -> float:
 
 
 def ars_amount(cfg: dict, plan: str) -> float:
-    return round(price_usd(cfg, plan) * rate(cfg), 2)
+    """El monto en pesos que cobra Mercado Pago, redondeado a pesos enteros: el mismo que se muestra."""
+    return float(round(price_usd(cfg, plan) * rate(cfg)))
 
 
 # ---------- Prueba gratis ----------

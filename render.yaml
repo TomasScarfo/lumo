@@ -72,9 +72,9 @@ services:
         sync: false
       # Precios en dólares (se cobran en pesos a la cotización oficial del día).
       - key: PLAN_PRICE_USD
-        value: "5.99"
+        value: "10"
       - key: PLAN_PRICE_ANNUAL_USD
-        value: "59.99"
+        value: "100"
       - key: TRIAL_DAYS
         value: "14"
       # Días que sigue entrando una cuenta con un cobro rechazado, antes de suspenderse.

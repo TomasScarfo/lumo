@@ -59,7 +59,7 @@ class ConMeta(Base):
         self.client.get("/suscripcion/listo?preapproval_id=" + pid)
         self.assertEqual(self.names(), ["Lead", "StartTrial"])
         trial = self.sent[1]
-        self.assertEqual(trial["custom_data"], {"currency": "USD", "value": 5.99})
+        self.assertEqual(trial["custom_data"], {"currency": "USD", "value": 10.0})
         self.assertEqual(trial["user_data"]["fbc"], FBC)
         self.assertEqual(trial["user_data"]["em"], [sha("vende@dor.test")])
         # el primer cobro aprobado llega por el aviso de Mercado Pago, sin la persona: no hay IP
