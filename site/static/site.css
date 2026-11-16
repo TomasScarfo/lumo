@@ -311,3 +311,41 @@ footer .legal .regret { font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .err-sol::before { animation: none; } }
 @media (max-width: 420px) { .err-box { padding: 28px 18px; } .err-code { font-size: 2.8rem; } .err-actions .btn { width: 100%; } }
 .adm .pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; color: var(--ink-2); font-size: .92rem; }
+
+/* Landing más compacta: los cuadros (tarjetas, pasos, pestañas, preguntas y el formulario de consulta) ocupan menos espacio.
+   Va acotada a la portada (section.block y el cierre) para no cambiar las demás pantallas. */
+section.block { padding: 52px 0; }
+section.block .head { margin-bottom: 28px; }
+section.block .grid { gap: 14px; }
+section.block .card { padding: 18px; border-radius: 14px; }
+section.block .card .ico { width: 36px; height: 36px; border-radius: 10px; margin-bottom: 10px; }
+section.block .card .ico svg { width: 20px; height: 20px; }
+section.block .card h3 { font-size: 1.05rem; margin-bottom: 4px; }
+section.block .card p { font-size: .92rem; line-height: 1.5; }
+section.block .price-grid .card { padding: 22px 20px; }
+.steps { gap: 14px; }
+.steps li { padding: 18px; border-radius: 14px; }
+.steps li::before { width: 30px; height: 30px; font-size: .92rem; margin-bottom: 10px; }
+.steps h3 { font-size: 1.05rem; margin-bottom: 4px; }
+.steps p { font-size: .92rem; line-height: 1.5; }
+.tabs { gap: 8px; }
+.tab { padding: 11px 14px; gap: 12px; border-radius: 12px; }
+.tab b { font-size: 1rem; }
+.tab span { font-size: .9rem; line-height: 1.45; }
+.tab .dot { margin-top: 7px; }
+.checks { margin-top: 18px; gap: 12px; }
+summary { padding: 13px 16px; font-size: 1rem; }
+details { border-radius: 12px; }
+details + details { margin-top: 8px; }
+details p { padding: 0 16px 14px; font-size: .94rem; line-height: 1.55; }
+.cta-box { padding: 40px 24px; border-radius: 20px; }
+.cta-box p { margin: 10px auto 20px; }
+a.card.contact .go { margin-top: 8px; }
+.brand { width: 38px; height: 38px; border-radius: 11px; margin-bottom: 8px; }
+.brand svg { width: 22px; height: 22px; }
+.inquiry { margin-top: 16px; gap: 10px; }
+.inquiry .sub { font-size: .9rem; margin-top: -4px; }
+.inquiry .f2 { gap: 10px; }
+.inquiry label { gap: 4px; font-size: .9rem; }
+.inquiry input, .inquiry textarea { min-height: 40px; padding: 7px 12px; font-size: .96rem; border-radius: 9px; }
+.inquiry textarea { min-height: 64px; }
