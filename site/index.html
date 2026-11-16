@@ -95,7 +95,7 @@
         </ul>
         
         <p class="invite-note"><b>14 días gratis: no se cobra nada hasta el día 15.</b>
-          Después, desde US$5,99 por mes. Cancelás cuando quieras.
+          Después, desde <span data-price="monthly">US$10</span> por mes. Cancelás cuando quieras.
           ¿Ya tenés cuenta? <a href="__APP_URL__/entrar" data-app>Ingresá</a>.</p>
         
       </div>
@@ -138,20 +138,20 @@
       <div class="price-grid">
         <div class="card">
           <h3>Mensual</h3>
-          <p class="plan-price" style="margin:10px 0 6px">US$5,99 <small>por mes</small></p>
+          <p class="plan-price" style="margin:10px 0 6px"><span data-price="monthly">US$10</span> <small>por mes</small></p>
           <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
           <a class="btn ghost" href="__APP_URL__/connect?plan=monthly" data-app style="margin-top:16px">Probar gratis el mensual</a>
         </div>
         
         <div class="card best">
           <h3>Anual <span class="save">Ahorrás 17%</span></h3>
-          <p class="plan-price" style="margin:10px 0 6px">US$59,99 <small>por año</small></p>
-          <p>Lo mismo, pagando una vez al año: US$11,89 menos que mes a mes.</p>
+          <p class="plan-price" style="margin:10px 0 6px"><span data-price="annual">US$100</span> <small>por año</small></p>
+          <p>Lo mismo, pagando una vez al año: <span data-price="saving">US$20</span> menos que mes a mes.</p>
           <a class="btn" href="__APP_URL__/connect?plan=annual" data-app style="margin-top:16px">Probar gratis el anual</a>
         </div>
         
       </div>
-      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, conectás tu cuenta de Mercado Libre y cargás tu medio de pago en Mercado Pago. Precios en dólares. Se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día.</p>
+      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, conectás tu cuenta de Mercado Libre y cargás tu medio de pago en Mercado Pago. Precios en pesos argentinos, actualizados según el dólar oficial del día.</p>
     </div>
   </section>
 
@@ -238,7 +238,7 @@
       <details><summary>¿Puedo elegir el período que quiero ver?</summary><p>Sí. Podés usar 7, 14 o 30 días, o elegir un rango de fechas personalizado dentro de tu historial.</p></details>
       <details><summary>¿De dónde salen las recomendaciones?</summary><p>De comparar el rendimiento real de cada campaña y publicación con el ROAS objetivo que configuraste. Son orientativas: las decisiones y sus resultados dependen de tu negocio, la temporada y la competencia.</p></details>
       <details><summary>¿Cómo funciona la prueba gratis?</summary><p>Conectás tu cuenta de Mercado Libre, elegís un plan y cargás tu medio de pago en Mercado Pago. Desde ese momento usás Lumo completo 14 días sin que se te cobre nada: el primer cobro es recién el día 15. Si cancelás antes, no pagás.</p></details>
-      <details><summary>¿Cuánto cuesta y cómo se paga?</summary><p>US$5,99 por mes, o US$59,99 por año (ahorrás 17%). Los precios están en dólares y se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día de cada cobro. La suscripción se renueva sola.</p></details>
+      <details><summary>¿Cuánto cuesta y cómo se paga?</summary><p><span data-price="monthly">US$10</span> por mes, o <span data-price="annual">US$100</span> por año (ahorrás 17%). Se paga en pesos con Mercado Pago. El precio sigue al dólar oficial, así que el monto en pesos puede cambiar de un cobro a otro. La suscripción se renueva sola.</p></details>
       <details><summary>¿Qué pasa si falla un cobro?</summary><p>Te avisamos por email y seguís usando Lumo 7 días mientras lo resolvés. Si no se regulariza, el acceso se pausa, pero no borramos nada: cuando vuelvas, encontrás todo como lo dejaste.</p></details>
       <details><summary>¿Cómo cancelo?</summary><p>Desde la página de tu suscripción, con un clic. Seguís teniendo acceso hasta el final del mes ya pagado y no se te vuelve a cobrar.</p></details>
       <details><summary>¿Puedo ver varias cuentas juntas?</summary><p>Hoy, cada persona ve su propia cuenta de Mercado Libre. Estamos trabajando en una vista de cartera pensada para agencias y consultores.</p></details>
@@ -291,7 +291,7 @@
       <h2>Empezá a entender tu publicidad hoy</h2>
       <p>Probá Lumo 14 días gratis y mirá tus campañas con otros ojos.</p>
       <a class="btn" href="#precio">Elegir mi plan y probar gratis</a>
-      <small>No se cobra nada los primeros 14 días. Después, desde US$5,99 por mes. ¿Dudas? <a href="#contacto">Escribinos</a>.</small>
+      <small>No se cobra nada los primeros 14 días. Después, desde <span data-price="monthly">US$10</span> por mes. ¿Dudas? <a href="#contacto">Escribinos</a>.</small>
     </div></div>
   </section>
 </main>
@@ -350,6 +350,19 @@
       .catch(function () { return false; });
   }
   ping();
+  /* Precios en pesos: la portada fija no sabe la cotización del día. Se la pide a Lumo y, mientras despierta,
+     la calcula con el dólar oficial (la misma fuente que usa Lumo para cobrar). */
+  var USD = { monthly: 10.0, annual: 100.0 };
+  function money(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+  function show(p) { document.querySelectorAll('[data-price]').forEach(function (el) { var v = p[el.dataset.price]; if (v) el.textContent = v; }); }
+  var exact = false;
+  fetch(APP + '/api/precios').then(function (r) { return r.json(); })
+    .then(function (p) { if (p.currency === 'ARS') { exact = true; show(p); } }).catch(function () {});
+  fetch('https://dolarapi.com/v1/dolares/oficial').then(function (r) { return r.json(); }).then(function (d) {
+    if (exact || !(d.venta > 0)) return;
+    var m = Math.round(USD.monthly * d.venta), a = Math.round(USD.annual * d.venta);
+    show({ monthly: money(m), annual: money(a), saving: money(m * 12 - a) });
+  }).catch(function () {});
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[data-app]');
     if (!a || ready) return;

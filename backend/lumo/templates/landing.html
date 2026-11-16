@@ -99,7 +99,7 @@
         <p class="invite-note ok"><b>Te invitaron a Lumo{% if label %}, {{ label }}{% endif %}.</b> Conectá tu cuenta de Mercado Libre para activar tu acceso. La invitación es de un solo uso.</p>
         {% else %}
         <p class="invite-note"><b>{{ trial_days }} días gratis: no se cobra nada hasta el día {{ trial_days + 1 }}.</b>
-          {% if price.monthly %}Después, desde {{ price.monthly }} por mes. Cancelás cuando quieras.{% else %}Conectás tu cuenta de Mercado Libre y empezás. Cancelás cuando quieras.{% endif %}
+          {% if price.monthly %}Después, desde <span data-price="monthly">{{ price.monthly }}</span> por mes. Cancelás cuando quieras.{% else %}Conectás tu cuenta de Mercado Libre y empezás. Cancelás cuando quieras.{% endif %}
           ¿Ya tenés cuenta? <a href="{{ app }}/entrar" data-app>Ingresá</a>.</p>
         {% endif %}
       </div>
@@ -142,20 +142,20 @@
       <div class="price-grid">
         <div class="card">
           <h3>Mensual</h3>
-          <p class="plan-price" style="margin:10px 0 6px">{{ price.monthly or '—' }} <small>por mes</small></p>
+          <p class="plan-price" style="margin:10px 0 6px"><span data-price="monthly">{{ price.monthly }}</span> <small>por mes</small></p>
           <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
           <a class="btn ghost" href="{{ app }}/connect?plan=monthly" data-app style="margin-top:16px">Probar gratis el mensual</a>
         </div>
         {% if price.annual %}
         <div class="card best">
           <h3>Anual{% if price.saving_pct %} <span class="save">Ahorrás {{ price.saving_pct }}%</span>{% endif %}</h3>
-          <p class="plan-price" style="margin:10px 0 6px">{{ price.annual }} <small>por año</small></p>
-          <p>Lo mismo, pagando una vez al año{% if price.saving_usd %}: {{ price.saving_usd }} menos que mes a mes{% endif %}.</p>
+          <p class="plan-price" style="margin:10px 0 6px"><span data-price="annual">{{ price.annual }}</span> <small>por año</small></p>
+          <p>Lo mismo, pagando una vez al año{% if price.saving %}: <span data-price="saving">{{ price.saving }}</span> menos que mes a mes{% endif %}.</p>
           <a class="btn" href="{{ app }}/connect?plan=annual" data-app style="margin-top:16px">Probar gratis el anual</a>
         </div>
         {% endif %}
       </div>
-      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, conectás tu cuenta de Mercado Libre y cargás tu medio de pago en Mercado Pago. Precios en dólares. Se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día.</p>
+      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, conectás tu cuenta de Mercado Libre y cargás tu medio de pago en Mercado Pago. Precios en pesos argentinos, actualizados según el dólar oficial del día.</p>
     </div>
   </section>
 
@@ -242,7 +242,7 @@
       <details><summary>¿Puedo elegir el período que quiero ver?</summary><p>Sí. Podés usar 7, 14 o 30 días, o elegir un rango de fechas personalizado dentro de tu historial.</p></details>
       <details><summary>¿De dónde salen las recomendaciones?</summary><p>De comparar el rendimiento real de cada campaña y publicación con el ROAS objetivo que configuraste. Son orientativas: las decisiones y sus resultados dependen de tu negocio, la temporada y la competencia.</p></details>
       <details><summary>¿Cómo funciona la prueba gratis?</summary><p>Conectás tu cuenta de Mercado Libre, elegís un plan y cargás tu medio de pago en Mercado Pago. Desde ese momento usás Lumo completo {{ trial_days }} días sin que se te cobre nada: el primer cobro es recién el día {{ trial_days + 1 }}. Si cancelás antes, no pagás.</p></details>
-      <details><summary>¿Cuánto cuesta y cómo se paga?</summary><p>{% if price.monthly %}{{ price.monthly }} por mes{% if price.annual %}, o {{ price.annual }} por año{% if price.saving_pct %} (ahorrás {{ price.saving_pct }}%){% endif %}{% endif %}. {% endif %}Los precios están en dólares y se cobran en pesos con Mercado Pago, al tipo de cambio oficial del día de cada cobro. La suscripción se renueva sola.</p></details>
+      <details><summary>¿Cuánto cuesta y cómo se paga?</summary><p>{% if price.monthly %}<span data-price="monthly">{{ price.monthly }}</span> por mes{% if price.annual %}, o <span data-price="annual">{{ price.annual }}</span> por año{% if price.saving_pct %} (ahorrás {{ price.saving_pct }}%){% endif %}{% endif %}. {% endif %}Se paga en pesos con Mercado Pago. El precio sigue al dólar oficial, así que el monto en pesos puede cambiar de un cobro a otro. La suscripción se renueva sola.</p></details>
       <details><summary>¿Qué pasa si falla un cobro?</summary><p>Te avisamos por email y seguís usando Lumo {{ grace_days }} días mientras lo resolvés. Si no se regulariza, el acceso se pausa, pero no borramos nada: cuando vuelvas, encontrás todo como lo dejaste.</p></details>
       <details><summary>¿Cómo cancelo?</summary><p>Desde la página de tu suscripción, con un clic. Seguís teniendo acceso hasta el final del mes ya pagado y no se te vuelve a cobrar.</p></details>
       <details><summary>¿Puedo ver varias cuentas juntas?</summary><p>Hoy, cada persona ve su propia cuenta de Mercado Libre. Estamos trabajando en una vista de cartera pensada para agencias y consultores.</p></details>
@@ -295,7 +295,7 @@
       <h2>Empezá a entender tu publicidad hoy</h2>
       <p>Probá Lumo {{ trial_days }} días gratis y mirá tus campañas con otros ojos.</p>
       {% if invited %}<a class="btn" href="{{ app }}/connect" data-app>Aceptar la invitación y conectar</a>{% else %}<a class="btn" href="#precio">Elegir mi plan y probar gratis</a>{% endif %}
-      {% if not invited %}<small>No se cobra nada los primeros {{ trial_days }} días.{% if price.monthly %} Después, desde {{ price.monthly }} por mes.{% endif %}{% if contact %} ¿Dudas? <a href="#contacto">Escribinos</a>.{% endif %}</small>{% endif %}
+      {% if not invited %}<small>No se cobra nada los primeros {{ trial_days }} días.{% if price.monthly %} Después, desde <span data-price="monthly">{{ price.monthly }}</span> por mes.{% endif %}{% if contact %} ¿Dudas? <a href="#contacto">Escribinos</a>.{% endif %}</small>{% endif %}
     </div></div>
   </section>
 </main>
@@ -354,6 +354,19 @@
       .catch(function () { return false; });
   }
   ping();
+  /* Precios en pesos: la portada fija no sabe la cotización del día. Se la pide a Lumo y, mientras despierta,
+     la calcula con el dólar oficial (la misma fuente que usa Lumo para cobrar). */
+  var USD = { monthly: {{ price.usd_monthly_value or 0 }}, annual: {{ price.usd_annual_value or 0 }} };
+  function money(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+  function show(p) { document.querySelectorAll('[data-price]').forEach(function (el) { var v = p[el.dataset.price]; if (v) el.textContent = v; }); }
+  var exact = false;
+  fetch(APP + '/api/precios').then(function (r) { return r.json(); })
+    .then(function (p) { if (p.currency === 'ARS') { exact = true; show(p); } }).catch(function () {});
+  fetch('https://dolarapi.com/v1/dolares/oficial').then(function (r) { return r.json(); }).then(function (d) {
+    if (exact || !(d.venta > 0)) return;
+    var m = Math.round(USD.monthly * d.venta), a = Math.round(USD.annual * d.venta);
+    show({ monthly: money(m), annual: money(a), saving: money(m * 12 - a) });
+  }).catch(function () {});
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[data-app]');
     if (!a || ready) return;

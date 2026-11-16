@@ -26,10 +26,10 @@
 
     <h2>4. Planes y precios</h2>
     <ul>
-      {% if price.monthly %}<li><b>Plan mensual:</b> {{ price.monthly }} por mes.</li>{% endif %}
-      {% if price.annual %}<li><b>Plan anual:</b> {{ price.annual }} por año.</li>{% endif %}
+      {% if price.monthly %}<li><b>Plan mensual:</b> {{ price.monthly }} por mes{% if price.currency == 'ARS' %} (equivale a {{ price.usd_monthly }}){% endif %}.</li>{% endif %}
+      {% if price.annual %}<li><b>Plan anual:</b> {{ price.annual }} por año{% if price.currency == 'ARS' %} (equivale a {{ price.usd_annual }}){% endif %}.</li>{% endif %}
     </ul>
-    <p>Los precios están expresados en dólares estadounidenses e incluyen impuestos. El cobro se hace en pesos argentinos a través de Mercado Pago, al tipo de cambio oficial vendedor del día de cada cobro, por lo que el importe en pesos puede variar de un cobro a otro.</p>
+    <p>Los precios se fijan en dólares estadounidenses, incluyen impuestos y se cobran en pesos argentinos a través de Mercado Pago, al tipo de cambio oficial vendedor del día de cada cobro. Por eso el importe en pesos puede variar de un cobro a otro. Los montos en pesos de esta página corresponden a la cotización de hoy.</p>
 
     <h2>5. Renovación automática</h2>
     <p>La suscripción se renueva sola al final de cada período (cada mes o cada año, según tu plan) y Mercado Pago cobra el nuevo período con el medio de pago que cargaste, hasta que la canceles.</p>
