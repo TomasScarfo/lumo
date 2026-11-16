@@ -34,6 +34,19 @@ def with_meta_pixel(csp: str) -> str:
                .replace("connect-src 'self'", "connect-src 'self' " + META_EVENTS))
 
 
+# Google Tag Manager: carga su script de googletagmanager.com y las etiquetas que tenga (Google Analytics 4)
+# mandan los eventos a google-analytics.com. Solo en la portada, igual que el Píxel.
+GTM_ID = "GTM-PTG4MWVN"
+GOOGLE_TAGS = "https://*.googletagmanager.com"
+GOOGLE_EVENTS = "https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com"
+
+
+def with_gtm(csp: str) -> str:
+    return (csp.replace("script-src 'self' 'unsafe-inline'", "script-src 'self' 'unsafe-inline' " + GOOGLE_TAGS)
+               .replace("img-src 'self' data:", "img-src 'self' data: " + GOOGLE_EVENTS)
+               .replace("connect-src 'self'", "connect-src 'self' " + GOOGLE_EVENTS))
+
+
 HEADERS = {
     "Content-Security-Policy": CSP,
     "X-Content-Type-Options": "nosniff",

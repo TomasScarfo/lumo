@@ -26,7 +26,7 @@ services:
         value: camera=(), microphone=(), geolocation=(), payment=(), usb=()
       - path: /*
         name: Content-Security-Policy
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://www.facebook.com; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'none'"
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://www.facebook.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'none'"
     envVars:
       - key: APP_URL
         sync: false

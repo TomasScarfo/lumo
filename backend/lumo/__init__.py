@@ -281,9 +281,9 @@ def create_app(overrides=None) -> Flask:
         if cfg.get("SITE_URL", "").startswith("https://"):
             return redirect(cfg["SITE_URL"])  # la portada vive aparte y carga al instante
         pixel = meta.pixel_id(cfg)
-        resp = Response(render_template("landing.html", invited=False, label=None, pixel=pixel, **_offer()), mimetype="text/html")
-        if pixel:
-            resp.headers["Content-Security-Policy"] = security.with_meta_pixel(security.CSP)  # solo la portada carga el Píxel
+        resp = Response(render_template("landing.html", invited=False, label=None, pixel=pixel, gtm=security.GTM_ID, **_offer()), mimetype="text/html")
+        csp = security.with_gtm(security.CSP)  # solo la portada carga Google Tag Manager y el Píxel
+        resp.headers["Content-Security-Policy"] = security.with_meta_pixel(csp) if pixel else csp
         return resp
 
     @app.get("/invitacion/<token>")
