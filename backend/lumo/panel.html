@@ -440,6 +440,73 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .hform label small { font-weight: 400; color: var(--ink-3); }
 .hform input, .hform textarea { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); width: 100%; }
 .hform .btn { justify-self: start; }
+/* Celular: menos aire y letras más chicas, para ver más de una tarjeta por pantalla. */
+@media (max-width: 600px) {
+  body { padding-block: 12px 40px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+  .wrap { gap: 12px; }
+  .panel { gap: 18px; }
+  .seg-wrap { width: 100%; justify-content: space-between; }
+  .seg { width: 100%; }
+  .seg button { flex: 1; padding: 6px 8px; font-size: .84rem; min-height: 34px; }
+  .cmp { width: 100%; justify-content: space-between; font-size: .8rem; }
+  .cmp-btn { min-height: 40px; padding: 4px 10px; }
+  .notice { font-size: .8rem; padding: 8px 10px; line-height: 1.45; }
+  .nav button { padding: 10px 9px 9px; font-size: .88rem; gap: 5px; }
+  .badge { min-width: 18px; height: 18px; font-size: .68rem; padding: 0 5px; }
+  .card { padding: 14px; }
+  .sec-head { margin-bottom: 8px; }
+  .sec-head h2, .blk-h h2 { font-size: 1.12rem; }
+  .sub { font-size: .88rem; }
+  .small { font-size: .78rem; }
+  .hero { padding: 16px 14px; gap: 10px; border-radius: 14px; }
+  .hero-head { gap: 12px; }
+  .hero-ic { width: 40px; height: 40px; border-radius: 12px; }
+  .hero-ic .ic { width: 22px; height: 22px; }
+  .hero h1 { font-size: 1.25rem; }
+  .hero-lines { gap: 6px; margin-top: 6px; font-size: .9rem; }
+  .kpis { gap: 8px; }
+  .kpi { padding: 10px 11px; gap: 2px; border-radius: 12px; }
+  .kpi-l { font-size: .78rem; }
+  .kpi-v { font-size: 1.3rem; }
+  .kpi-d { font-size: .72rem; }
+  .delta { font-size: .72rem; }
+  .group-t { font-size: .72rem; margin-bottom: 6px; }
+  .mchips { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .mchip { padding: 7px 8px; border-radius: 10px; }
+  .mt { font-size: .74rem; gap: 5px; }
+  .msw { width: 10px; height: 10px; }
+  .mv { font-size: .98rem; }
+  .mchip .delta { display: none; }
+  .chart-box { min-height: 180px; }
+  .cfilters .row { gap: 6px; }
+  .chip { padding: 4px 10px; min-height: 32px; font-size: .8rem; }
+  .xl-btn { min-height: 34px; font-size: .84rem; }
+  table.ct { font-size: .82rem; }
+  table.ct th, table.ct td { padding: 8px 10px; }
+  table.ct th:first-child, table.ct td:first-child { min-width: 170px; max-width: 190px; white-space: normal; }
+  table.ct td .cname { font-size: .92rem; }
+  table.ct tr.itr td:first-child { padding-left: 18px; }
+  .camp { padding: 14px; gap: 10px; }
+  .camp-top h3 { font-size: 1.02rem; }
+  .alert { padding: 14px; gap: 10px; }
+  .a-ic { width: 34px; height: 34px; border-radius: 10px; }
+  .a-ic .ic { width: 18px; height: 18px; }
+  .a-body h3 { font-size: 1rem; }
+  .a-body p { font-size: .88rem; }
+  .sum { gap: 8px; }
+  .sum-i { padding: 10px 12px; }
+  .sum-i b { font-size: 1.4rem; }
+  .sum-i span { font-size: .8rem; }
+  .item { padding: 14px; gap: 10px; }
+  .item-top h3 { font-size: .98rem; }
+  .stats dd, .trio dd { font-size: .95rem; }
+  .term { padding: 12px 14px; }
+  .term-top h3 { font-size: 1rem; }
+  .term p { font-size: .88rem; }
+  .task span { font-size: .92rem; }
+  .task small { font-size: .8rem; }
+  .trow-top b { font-size: 1rem; }
+}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">

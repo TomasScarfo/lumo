@@ -349,3 +349,101 @@ a.card.contact .go { margin-top: 8px; }
 .inquiry label { gap: 4px; font-size: .9rem; }
 .inquiry input, .inquiry textarea { min-height: 40px; padding: 7px 12px; font-size: .96rem; border-radius: 9px; }
 .inquiry textarea { min-height: 64px; }
+
+/* Celular: todo más chico y alineado al mismo borde. Títulos a la izquierda, botones del mismo ancho,
+   tarjetas con el ícono al costado del título para que cada cuadro ocupe la mitad de alto. */
+@media (max-width: 640px) {
+  .nav .wrap { height: 56px; }
+  .logo { font-size: 1.15rem; }
+  .logo img { width: 30px; height: 30px; }
+  .nav .btn.sm { min-height: 36px; padding: 0 14px; }
+  .hero { padding: 26px 0 30px; }
+  .hero .wrap { gap: 30px; }
+  .eyebrow { font-size: .76rem; padding: 5px 12px; }
+  .hero h1 { font-size: 1.9rem; line-height: 1.15; margin: 14px 0 12px; }
+  .lead { font-size: 1rem; line-height: 1.55; }
+  .cta-row { margin-top: 20px; gap: 10px; }
+  .cta-row .btn { width: 100%; min-height: 46px; }
+  .chips { margin-top: 16px; gap: 6px 14px; font-size: .84rem; }
+  .chips svg { width: 16px; height: 16px; }
+  .invite-note { margin-top: 16px; padding: 12px 14px; font-size: .9rem; }
+  .mock { padding: 12px; border-radius: 16px; }
+  .mk-hero { padding: 12px; gap: 12px; }
+  .mk-hero .ic { width: 36px; height: 36px; border-radius: 10px; }
+  .mk-hero b { font-size: .95rem; }
+  .mk-hero span { font-size: .8rem; }
+  .mk-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 10px 0; }
+  .mk-kpi { padding: 8px; border-radius: 10px; }
+  .mk-kpi small { font-size: .66rem; line-height: 1.25; }
+  .mk-kpi b { display: block; font-size: .92rem; }
+  .mk-kpi em { font-size: .68rem; }
+  .mk-table { font-size: .8rem; }
+  .mk-table th, .mk-table td { padding-inline: 5px; }
+  .mk-table th:nth-child(4), .mk-table td:nth-child(4) { display: none; }
+  .mk-reco { padding: 10px 12px; }
+  .mk-reco b { font-size: .9rem; }
+  .mk-reco p { font-size: .8rem; }
+
+  section.block { padding: 36px 0; }
+  section.block .head, .head.center { margin: 0 0 18px; text-align: left; }
+  .head h2 { font-size: 1.45rem; }
+  .head p { font-size: .97rem; margin-top: 8px; }
+  .kicker { font-size: .75rem; margin-bottom: 6px; }
+  section.block .grid { gap: 10px; }
+  section.block .card { padding: 14px; }
+  section.block .grid:not(.feats) > .card:not(.contact):not(.inquiry) { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 12px; align-items: start; }
+  section.block .grid > .card .ico { width: 32px; height: 32px; margin: 0; grid-row: span 2; }
+  section.block .grid > .card .ico svg { width: 18px; height: 18px; }
+  section.block .card h3 { font-size: 1rem; align-self: center; }
+  section.block .card p { font-size: .88rem; }
+  section.block .price-grid .card { padding: 18px 16px; }
+  .price-grid .card .btn { width: 100%; }
+  .price-grid .card .plan-price { font-size: 1.75rem; }
+  .steps { gap: 10px; }
+  .steps li { padding: 14px; display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 12px; }
+  .steps li::before { width: 28px; height: 28px; margin: 0; grid-row: span 2; font-size: .85rem; }
+  .steps h3 { font-size: 1rem; align-self: center; }
+  .steps p { font-size: .88rem; }
+  .tab { padding: 10px 12px; gap: 10px; }
+  .tab b { font-size: .95rem; }
+  .tab span { display: block; font-size: .86rem; line-height: 1.4; }
+  .split { gap: 20px; }
+  .checks { gap: 12px; }
+  .checks svg { width: 20px; height: 20px; }
+  .checks span { font-size: .88rem; }
+  summary { padding: 12px 14px; font-size: .95rem; }
+  details p { padding: 0 14px 12px; font-size: .9rem; }
+  .cta-band { margin: 0 16px; }
+  .cta-box { padding: 30px 18px; }
+  .cta-box h2 { font-size: 1.45rem; }
+  .cta-box p { font-size: .97rem; }
+  .cta-box .btn { width: 100%; }
+  footer { padding: 32px 0 40px; }
+}
+
+/* Qué hace Lumo, Cómo funciona y El panel: cuadros chicos, de una línea de texto, en grilla. */
+.feats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 860px) { .grid.c4.feats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+section.block .feats .card { padding: 14px; }
+section.block .feats .card .ico { width: 32px; height: 32px; margin: 0 0 8px; }
+section.block .feats .card .ico svg { width: 18px; height: 18px; }
+section.block .feats .card h3 { font-size: .98rem; line-height: 1.2; }
+section.block .feats .card p { font-size: .86rem; line-height: 1.4; }
+.steps li { padding: 14px 16px; }
+.tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 860px) { .tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tab { padding: 10px 12px; gap: 8px; }
+.tab .dot { width: 8px; height: 8px; margin-top: 7px; }
+.tab b { font-size: .95rem; line-height: 1.3; }
+.tab span { display: block; font-size: .84rem; line-height: 1.35; }
+.tab .soon { display: inline-block; margin: 2px 0 0; }
+@media (max-width: 640px) {
+  .feats { gap: 8px !important; }
+  section.block .feats .card { padding: 12px; }
+  section.block .feats .card h3 { font-size: .92rem; }
+  section.block .feats .card p { font-size: .8rem; }
+  .tabs { gap: 8px; }
+  .tab { padding: 9px 10px; }
+  .tab b { font-size: .88rem; }
+  .tab span { font-size: .78rem; }
+}
