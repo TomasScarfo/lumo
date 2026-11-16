@@ -39,6 +39,7 @@
               {% elif x.kind in ('free', 'admin') %}<span class="pill bi">Acceso sin cargo</span>
               {% elif x.reason == 'unpaid' %}<span class="pill re">Suspendida por falta de pago</span>
               {% elif x.reason == 'cancelled' %}<span class="pill us">Cancelada</span>
+              {% elif x.reason == 'new' %}<span class="pill us">No cargó el medio de pago</span><br><small>sin acceso</small>
               {% else %}<span class="pill us">Prueba vencida</span>{% endif %}</td>
           <td>{{ x.plan|capitalize if x.plan else '—' }}{% if x.next_plan %}<br><small>cambia a {{ x.next_plan }}</small>{% endif %}</td>
           <td>{{ x.email or '—' }}</td>
