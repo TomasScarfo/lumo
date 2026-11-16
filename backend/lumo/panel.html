@@ -593,6 +593,11 @@ function actReco(o, camps) {
   if (o.stock != null && o.stock < 10) txt += ' Ojo: con ' + pl(o.stock, 'unidad', 'unidades') + ' de stock se puede agotar rápido. Reponé antes de invertir.';
   return txt;
 }
+/* Una categoría o marca con oportunidad: crece 10% o más y, o pocas publicaciones tienen anuncios (menos de 70%), o poca de su facturación está integrada en campañas (menos de 30%). */
+function isHot(g) { return g.growth >= 0.1 && (g.cover < 0.7 || g.adShare < 0.3); }
+function hotWhy(g) {
+  return 'Solo ' + Math.round(g.adShare * 100) + '% de lo que facturó en los últimos 30 días está integrado en campañas de publicidad, y ' + g.act + ' de sus ' + g.n + ' publicaciones tienen anuncios activos.';
+}
 function groups(items, key) {
   var m = {};
   items.forEach(function (i) {
@@ -735,12 +740,12 @@ function compute() {
         action: 'Subí el presupuesto diario de ' + money(c.budget) + ' a ' + money(roundTo(c.budget * 1.3, 500)) + ' (un 30% más) y mirá cómo responde durante unos días.' });
     }
   });
-  var hot = catG.filter(function (g) { return g.growth >= 0.1 && g.cover < 0.7; })[0];
+  var hot = catG.filter(isHot)[0];
   if (hot) {
     var free = items.filter(function (o) { return o.cat === hot.name && !o.active; }).length;
     recs.push({ id: 'rec-trend-' + hot.name, camp: null, sev: 'oportunidad', score: hot.sales, go: 'alertas',
-      title: hot.name + ' crece ' + Math.round(hot.growth * 100) + '% y tiene poca publicidad',
-      text: 'Las ventas de esta categoría crecieron ' + Math.round(hot.growth * 100) + '% en los últimos 30 días, pero solo ' + hot.act + ' de sus ' + hot.n + ' publicaciones tienen publicidad activa.' + (free ? ' ' + pl(free, 'publicación sin anuncios', 'publicaciones sin anuncios') + ' en esta categoría.' : ''),
+      title: hot.name + ' crece ' + Math.round(hot.growth * 100) + '% y tiene poca facturación en campañas',
+      text: 'Las ventas de esta categoría crecieron ' + Math.round(hot.growth * 100) + '% en los últimos 30 días. ' + hotWhy(hot) + (free ? ' ' + pl(free, 'publicación sin anuncios', 'publicaciones sin anuncios') + ' en esta categoría.' : ''),
       action: 'Mirá en Alertas las publicaciones sin publicidad que ya venden bien y activá las que tengan stock.' });
   }
   var sevOrder = { urgente: 0, mejora: 1, oportunidad: 2, buena: 3 };
@@ -1397,10 +1402,10 @@ function toastHTML() {
 function trendsHTML() {
   var dim = S.trendDim, list = dim === 'cat' ? M.catG : M.brandG, maxS = Math.max.apply(null, list.map(function (g) { return g.sales; }));
   var label = dim === 'cat' ? 'categorías' : 'marcas';
-  var hot = list.filter(function (g) { return g.growth >= 0.1 && g.cover < 0.7; })[0];
+  var hot = list.filter(isHot)[0];
   var insight = hot
-    ? '<div class="reco"><strong>Para mirar primero</strong>' + hot.name + ' crece ' + Math.round(hot.growth * 100) + '% y solo ' + hot.act + ' de sus ' + hot.n + ' publicaciones tienen publicidad activa. Revisá la sección Alertas.</div>'
-    : '<div class="reco"><strong>Para mirar primero</strong>Ninguna de tus ' + label + ' crece con poca cobertura de publicidad.</div>';
+    ? '<div class="reco"><strong>Para mirar primero</strong>' + hot.name + ' crece ' + Math.round(hot.growth * 100) + '%. ' + hotWhy(hot) + ' Revisá la sección Alertas.</div>'
+    : '<div class="reco"><strong>Para mirar primero</strong>Ninguna de tus ' + label + ' crece con poca facturación en campañas.</div>';
   var rows = list.map(function (g) {
     return '<div class="trow"><div class="trow-top"><b>' + g.name + '</b>' + growthTag(g.growth) + '</div>' +
       '<div class="tbar" aria-hidden="true"><span style="width:' + (maxS ? g.sales / maxS * 100 : 0) + '%"></span></div>' +
