@@ -12,6 +12,7 @@ from pathlib import Path
 from flask import render_template
 
 from lumo import ERRORES, create_app
+from lumo.security import GTM_ID
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site"
@@ -27,7 +28,7 @@ def render() -> str:
     # Sin cotización: la página queda igual en cualquier máquina y los pesos los completa el navegador al abrirla.
     app = create_app({"DATABASE_URL": "sqlite://", "SECRET_KEY": "build", "ML_CLIENT_ID": "build", "USD_ARS_RATE": "", "USD_RATE_URL": ""})
     with app.test_request_context("/"):
-        return render_template("landing.html", invited=False, label=None, app=APP_PLACEHOLDER, pixel=PIXEL_PLACEHOLDER, **app.extensions["lumo_offer"]())
+        return render_template("landing.html", invited=False, label=None, app=APP_PLACEHOLDER, pixel=PIXEL_PLACEHOLDER, gtm=GTM_ID, **app.extensions["lumo_offer"]())
 
 
 def render_404() -> str:

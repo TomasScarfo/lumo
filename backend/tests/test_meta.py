@@ -113,6 +113,14 @@ class SinMeta(Base):
         app = create_app(META)
         self.assertNotIn("facebook", app.test_client().get("/privacidad").headers["Content-Security-Policy"])
 
+    def test_portada_carga_google_tag_manager_y_el_panel_no(self):
+        app = create_app(CFG).test_client()
+        r = app.get("/")
+        self.assertIn("gtm.js?id=GTM-PTG4MWVN", r.get_data(as_text=True))
+        self.assertIn("googletagmanager.com", r.headers["Content-Security-Policy"])
+        self.assertNotIn("googletagmanager", app.get("/privacidad").headers["Content-Security-Policy"])
+        self.assertIn("gtm.js?id=GTM-PTG4MWVN", build_site.render())
+
     def test_la_portada_estatica_lo_deja_para_render(self):
         html = build_site.render()
         self.assertIn("var PIXEL = '__META_PIXEL_ID__'", html)
