@@ -24,7 +24,8 @@ PIXEL_PLACEHOLDER = "__META_PIXEL_ID__"  # Render lo reemplaza por META_PIXEL_ID
 def render() -> str:
     # Solo hace falta lo mínimo para armar la app. El contacto, el precio (PLAN_PRICE) y los días de prueba (TRIAL_DAYS)
     # salen de load_config: de las variables de entorno si están, o de sus valores por defecto.
-    app = create_app({"DATABASE_URL": "sqlite://", "SECRET_KEY": "build", "ML_CLIENT_ID": "build"})
+    # Sin cotización: la página queda igual en cualquier máquina y los pesos los completa el navegador al abrirla.
+    app = create_app({"DATABASE_URL": "sqlite://", "SECRET_KEY": "build", "ML_CLIENT_ID": "build", "USD_ARS_RATE": "", "USD_RATE_URL": ""})
     with app.test_request_context("/"):
         return render_template("landing.html", invited=False, label=None, app=APP_PLACEHOLDER, pixel=PIXEL_PLACEHOLDER, **app.extensions["lumo_offer"]())
 
