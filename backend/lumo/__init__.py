@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import os
@@ -535,9 +536,9 @@ def create_app(overrides=None) -> Flask:
         return _json({"ok": True})
 
     # ---------- Administración: invitaciones y accesos ----------
-    def _app_link():
+    def _app_link(tab="recomendaciones"):
         base = cfg["REDIRECT_URI"].rsplit("/callback", 1)[0] if cfg["REDIRECT_URI"] else ""
-        return base + "/panel#alertas"
+        return base + "/panel#" + tab
 
     @app.post("/api/email")
     def api_email():
@@ -556,82 +557,95 @@ def create_app(overrides=None) -> Flask:
             s.commit()
         return _json({"ok": True, "email": mail})
 
-    @app.post("/api/avisos/prueba")
-    def avisos_prueba():
-        """Manda un mail de prueba a la propia cuenta, para comprobar que los avisos llegan."""
-        uid = _current_user()
-        if not uid:
-            return _json({"error": "login"}, 401)
+    MAIL_WHY = "Te lo mandamos porque lo pediste desde tu panel de Lumo. No enviamos nada que no pidas."
+    MAIL_PER_HOUR = 10  # tope de mails pedidos por persona
+
+    def _mail_request(uid, kind, ref):
+        """Valida lo común de los mails a pedido. Devuelve (email, error): el error ya es una respuesta."""
         if not notify.enabled(cfg):
-            return _json({"error": "apagado"}, 503)
+            return None, _json({"error": "apagado"}, 503)
         with Session(engine) as s:
             acc = s.get(Account, uid)
             if not acc or not acc.email:
-                return _json({"error": "sin_email"}, 400)
+                return None, _json({"error": "sin_email"}, 400)
             now = utcnow()
-            if not notify._due(s, uid, "test", "x", timedelta(minutes=1), now):
-                return _json({"error": "espera"}, 429)
-            try:
-                notify.send_mail(cfg, acc.email, "Prueba de avisos de Lumo", "Si leés esto, los avisos de Lumo te van a llegar a este mail.\n",
-                                 "<p>Si leés esto, los avisos de Lumo te van a llegar a este mail.</p>")
-            except Exception as exc:  # proveedor y red: al usuario no se le detalla, pero el motivo queda en el registro
-                log.warning("mail de prueba falló: %s", notify.why(exc))
-                return _json({"error": "envio"}, 502)
-            notify._mark(s, uid, "test", "x", now)
+            pedidos = s.execute(select(func.count()).select_from(Notice).where(
+                Notice.user_id == uid, Notice.kind.in_(("rec", "resumen")), Notice.sent_at > now - timedelta(hours=1))).scalar()
+            if pedidos >= MAIL_PER_HOUR or not notify._due(s, uid, kind, ref, timedelta(minutes=1), now):
+                return None, _json({"error": "espera"}, 429)
+            return acc.email, None
+
+    def _mail_sent(uid, kind, ref):
+        with Session(engine) as s:
+            notify._mark(s, uid, kind, ref, utcnow())
             s.commit()
-            return _json({"ok": True, "email": acc.email})
+
+    @app.post("/api/recomendacion/mail")
+    def recomendacion_mail():
+        """Manda a la propia cuenta la recomendación que la persona eligió. Nunca a otra dirección."""
+        uid = _current_user()
+        if not uid:
+            return _json({"error": "login"}, 401)
+        body = request.get_json(silent=True)
+        body = body if isinstance(body, dict) else {}
+        title, text, action = (" ".join(str(body.get(k) or "").split()) if k == "title" else str(body.get(k) or "").strip() for k in ("title", "text", "action"))
+        if not title or len(title) > 200 or not text or len(text) > 1500 or len(action) > 800:
+            return _json({"error": "formato"}, 400)
+        ref = hashlib.sha256(title.encode()).hexdigest()[:16]
+        email, err = _mail_request(uid, "rec", ref)
+        if err:
+            return err
+        try:
+            notify.send_mail(cfg, email, *notify.recommendation_mail(title, text, action, _app_link(), MAIL_WHY))
+        except Exception as exc:  # proveedor y red: al usuario no se le detalla, pero el motivo queda en el registro
+            log.warning("mail de recomendación falló: %s", notify.why(exc))
+            return _json({"error": "envio"}, 502)
+        _mail_sent(uid, "rec", ref)
+        return _json({"ok": True, "email": email})
+
+    @app.post("/api/resumen/mail")
+    def resumen_mail():
+        """El resumen de los últimos 7 días con su Excel, a la propia cuenta y solo cuando la persona lo pide."""
+        uid = _current_user()
+        if not uid:
+            return _json({"error": "login"}, 401)
+        email, err = _mail_request(uid, "resumen", "x")
+        if err:
+            return err
+        with Session(engine) as s:
+            snap = s.get(Snapshot, uid)
+            data = json.loads(snap.data) if snap else None
+        if not data:
+            return _json({"error": "sin_datos"}, 409)
+        try:
+            attachments = [notify.weekly_excel(data)]
+        except Exception as exc:  # sin el Excel igual se manda el resumen
+            log.warning("el Excel del resumen falló: %s", type(exc).__name__)
+            attachments = []
+        try:
+            notify.send_mail(cfg, email, *notify.weekly_mail(data, _app_link("principal"), MAIL_WHY), **({"attachments": attachments} if attachments else {}))
+        except Exception as exc:
+            log.warning("mail de resumen falló: %s", notify.why(exc))
+            return _json({"error": "envio"}, 502)
+        _mail_sent(uid, "resumen", "x")
+        return _json({"ok": True, "email": email})
 
     @app.post("/cron/avisos")
     def cron_avisos():
-        """Lo llama una tarea programada una vez por día. Se protege con la clave CRON_TOKEN."""
+        """Tarea diaria (la llama GitHub Actions con la clave CRON_TOKEN): cobros, vencimientos y plazos de conservación de datos.
+        No envía recomendaciones: esas solo salen cuando la persona las pide con un botón del panel."""
         token = cfg["CRON_TOKEN"]
         if not token:
             abort(404)
         if not security.safe_eq(request.headers.get("X-Cron-Token", ""), token):
             log.warning("cron/avisos: clave incorrecta")
             abort(403)
-        cobros = _billing_tick()  # no depende del correo: mantiene al día las suscripciones aunque no haya SMTP
-        if not notify.enabled(cfg):
-            return _json({"ok": False, "motivo": "envío de mails sin configurar (BREVO_API_KEY)", "cobros": cobros}, 503)
-        result = {"cuentas": 0, "enviados": 0, "errores": 0}
-        with Session(engine) as s:
-            rows = s.execute(select(PanelState)).scalars().all()
-        for st in rows:
-            try:
-                prefs = (json.loads(st.data) or {}).get("sw") or {}
-            except ValueError:
-                continue
-            if not any(prefs.get(k) for k in notify.KINDS):
-                continue
-            result["cuentas"] += 1
-            try:
-                with Session(engine) as s:
-                    acc = s.get(Account, st.user_id)
-                    if not acc or acc.status != "connected" or not access.has_access(s, cfg, st.user_id):
-                        continue  # sin acceso (prueba vencida o suscripción suspendida) no se mandan resúmenes
-                    token_ml = valid_access_token(s, cfg, st.user_id)
-                    if not acc.email:
-                        acc.email = _read_email(token_ml)
-                        s.commit()
-                    if not acc.email:
-                        continue
-                    advs = ml.advertisers(cfg, token_ml)
-                    if not advs:
-                        continue
-                    snap = s.get(Snapshot, st.user_id)
-                    adv = next((a for a in advs if snap and a["advertiser_id"] == snap.advertiser_id), advs[0])
-                    get = lambda path, params=None, version="2": ml.api_get(cfg, token_ml, path, params, version)
-                    data = ads.build_dataset(get, adv)
-                    sent = notify.run_for(s, cfg, st.user_id, acc.email, prefs, data, _app_link())
-                    result["enviados"] += len(sent)
-            except Exception as exc:  # una cuenta con problemas no frena a las demás
-                result["errores"] += 1
-                log.warning("avisos de %s fallaron: %s", st.user_id, type(exc).__name__, exc_info=True)
+        cobros = _billing_tick()
         with Session(engine) as s:
             purged = privacy.purge(s)  # plazos de conservación: se aplican una vez por día
-            audit.record(s, "cron_run", detail="cuentas=%(cuentas)s enviados=%(enviados)s errores=%(errores)s" % result)
+            audit.record(s, "cron_run", detail="tarea diaria")
             s.commit()
-        return _json(dict(result, ok=True, purga=purged, cobros=cobros))
+        return _json({"ok": True, "purga": purged, "cobros": cobros})
 
     def _admin_uid():
         uid = _current_user()

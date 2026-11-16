@@ -2,7 +2,6 @@ import io
 import json
 import unittest
 import zipfile
-from datetime import timedelta
 from unittest import mock
 
 import fake_ml
@@ -11,7 +10,7 @@ from sqlalchemy.orm import Session
 from lumo import create_app, exportar, notify
 from lumo.models import Access, PanelState
 from lumo.tokens import save_tokens
-from test_avisos import CFG, LUNES, dataset
+from test_avisos import CFG, dataset
 
 HOJAS = ["Resumen", "Campañas", "Publicaciones", "Por día"]
 
@@ -63,25 +62,6 @@ class MailSemanal(unittest.TestCase):
 
 
 class Adjunto(unittest.TestCase):
-    def test_el_resumen_semanal_se_manda_con_el_excel(self):
-        engine = create_app(CFG).extensions["lumo_engine"]
-        sent = []
-        with Session(engine) as s:
-            notify.run_for(s, CFG, 5, "ana@test.com", {"m1": True}, dataset(), "https://lumo.test/panel", LUNES,
-                           lambda cfg, to, subject, text, html, attachments=None: sent.append(attachments))
-        self.assertEqual(len(sent), 1)
-        (name, content), = sent[0]
-        self.assertTrue(name.endswith(".xlsx"))
-        self.assertEqual(hojas(content), HOJAS)
-
-    def test_los_avisos_de_publicaciones_no_llevan_adjunto(self):
-        engine = create_app(CFG).extensions["lumo_engine"]
-        sent = []
-        with Session(engine) as s:
-            notify.run_for(s, CFG, 5, "ana@test.com", {"m3": True}, dataset(), "https://lumo.test/panel", LUNES + timedelta(days=5),
-                           lambda cfg, to, subject, text, html, attachments=None: sent.append(attachments))
-        self.assertEqual(sent, [None])
-
     def test_brevo_recibe_el_archivo_en_base64(self):
         cfg = dict(CFG, BREVO_API_KEY="k", MAIL_FROM="lumo@test.com", SMTP_PASSWORD="")
         with mock.patch("lumo.notify.requests.post") as post:

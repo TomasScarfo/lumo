@@ -81,7 +81,7 @@ Referencias: **ISO 27001:2022** Anexo A · **SOC 2** criterios comunes (CC) y ad
 |---|---|---|---|---|
 | Aviso de privacidad claro | 7.3.2, 7.3.3 | P1.1 | ✅ | `/privacidad`, enlace desde la portada |
 | Registro de tratamientos | 7.2.8 | P1.1 | ✅ | [privacidad.md](privacidad.md) |
-| Consentimiento y opt-in de avisos | 7.2.3, 7.2.4 | P2.1 | ✅ | Los avisos están apagados hasta que la persona los activa en Alertas |
+| Consentimiento y opt-in de avisos | 7.2.3, 7.2.4 | P2.1 | ✅ | Las recomendaciones y el resumen por mail solo salen cuando la persona toca el botón; no hay envíos automáticos |
 | Minimización | 7.4.1–7.4.4 | P3.1, P3.2 | ✅ | Lumo solo lee y nunca ve contraseñas; sin IP en la base |
 | Acceso y portabilidad | 7.3.9 | P5.1 | ✅ | `GET /api/cuenta/exportar` |
 | Rectificación | 7.3.6 | P5.2 | ✅ | El email se corrige en Alertas |

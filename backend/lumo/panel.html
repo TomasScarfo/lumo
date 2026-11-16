@@ -359,16 +359,6 @@ table.ct td .link { padding: 2px 0; font-size: .85rem; }
 .tnums b { color: var(--ink); }
 
 /* Switches */
-.switches { display: flex; flex-direction: column; }
-.sw { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
-.sw:last-child { border-bottom: 0; }
-.sw span { min-width: 0; font-size: .95rem; }
-.sw small { display: block; color: var(--ink-3); font-size: .82rem; }
-.sw input { appearance: none; -webkit-appearance: none; width: 46px; height: 28px; border-radius: 999px; background: var(--ink-3); position: relative; flex: none; margin: 0; cursor: pointer; transition: background .15s; }
-.sw input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
-.sw input:disabled { opacity: .5; cursor: not-allowed; }
-.sw input:checked { background: var(--accent); }
-.sw input:checked::after { transform: translateX(18px); background: var(--accent-ink); }
 
 /* Glosario */
 .search { width: 100%; font: inherit; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
@@ -514,7 +504,7 @@ function notesHTML() {
   return h;
 }
 var lastSaved = null, saveT = null;
-function stateObj() { return { done: S.done, actions: S.actions.filter(function (a) { return a.src === 'tuya'; }).concat(OLD_ACTIONS), custom: S.custom, sw: S.sw }; }
+function stateObj() { return { done: S.done, actions: S.actions.filter(function (a) { return a.src === 'tuya'; }).concat(OLD_ACTIONS), custom: S.custom }; }
 function saveState() {
   var j = JSON.stringify(stateObj());
   if (lastSaved === null) { lastSaved = j; return; }
@@ -529,7 +519,7 @@ function saveState() {
 
 /*LOGIC-START*/
 var S = { days: 7, off: 0, cust: false, pick: '', anchor: '', vm: null, cmp: 'prev', cmpOpen: false, cf: '', ct: '', ser: { units: true, sales: true }, tab: 'principal', open: {}, done: Object.assign({}, EST.done || {}), table: false, sort: { k: 'status', d: 1 }, fstat: 'all', cq: '',
-  showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', sw: Object.assign({ m1: false, m2: false, m3: false }, EST.sw || {}), mailMsg: '', mailDraft: '' };
+  showAllLow: false, actions: SEED_ACTIONS.slice(), sim: {}, toast: '', trendDim: 'cat', custom: (EST.custom || []).slice(), draft: '', q: '', mailMsg: '', mailDraft: '', editMail: false, recMail: {}, sumMsg: '' };
 var nf0 = { format: function (n) { return fmtNum(n, 0); } };
 var money = function (n) { return '$' + nf0.format(Math.round(n)); };
 var r1 = function (n) { return fmtNum(n, 1); };
@@ -929,16 +919,25 @@ function periodStart() { var d = periodEnd(); d.setDate(d.getDate() - (S.days - 
 function periodIn() { return S.cust ? 'el período del ' + dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'los últimos ' + S.days + ' días'; }
 function periodSub() { return S.cust ? dayShort(periodStart()) + ' al ' + dayShort(periodEnd()) : 'Últimos ' + S.days + ' días'; }
 function dayLong(d) { return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); }
-/* Los avisos por email se muestran como "Próximamente" y no se pueden activar mientras el servidor no tenga el envío configurado (SMTP_PASSWORD). */
-function avisosPronto() { return !D.mailOn; }
+/* Los mails salen solo cuando la persona los pide con un botón; no hay envíos automáticos. */
 function mailNote() {
   var from = (window.LUMO_CONTACT || {}).email;
-  if (!D.mailOn) return '<p class="small" style="margin-top:10px">Guardamos tus preferencias. Los avisos por email todavía no están habilitados en Lumo.</p>';
-  if (!D.email) return '<form class="mailform" id="mailForm"><p class="small">Mercado Libre no nos informó el email de tu cuenta. Escribí a qué dirección querés recibir los avisos.</p>' +
-    '<div class="mailrow"><input type="email" id="mailIn" placeholder="tu@email.com" autocomplete="email" maxlength="200" value="' + esc(S.mailDraft) + '" aria-label="Tu email para los avisos"><button class="btn" type="submit">Guardar</button></div>' +
+  if (!D.mailOn) return '<p class="small">Las recomendaciones por mail todavía no están habilitadas en Lumo.</p>';
+  var intro = '<p class="sub">Las recomendaciones llegan por mail solo cuando vos lo pedís: en la solapa Recomendaciones, tocá «Enviarme por mail» en la que quieras. No te mandamos nada automáticamente.</p>';
+  if (!D.email || S.editMail) return intro + '<form class="mailform" id="mailForm"><p class="small">' + (D.email ? 'Escribí la nueva dirección.' : 'Mercado Libre no nos informó el email de tu cuenta. Escribí a qué dirección querés recibirlas.') + '</p>' +
+    '<div class="mailrow"><input type="email" id="mailIn" placeholder="tu@email.com" autocomplete="email" maxlength="200" value="' + esc(S.mailDraft) + '" aria-label="Tu email para las recomendaciones"><button class="btn" type="submit">Guardar</button></div>' +
     (S.mailMsg ? '<p class="small" role="status">' + esc(S.mailMsg) + '</p>' : '') + '</form>';
-  return '<p class="small" style="margin-top:10px">Los avisos llegan a <b>' + esc(D.email) + '</b>' + (from ? ', desde ' + esc(from) : '') + '. Solo te escribimos por los avisos que activaste.</p>' +
-    '<button class="link" data-act="mailTest">Enviarme un mail de prueba</button>' + (S.mailMsg ? ' <span class="small" role="status">' + esc(S.mailMsg) + '</span>' : '');
+  return intro + '<p class="small">Las enviamos a <b>' + esc(D.email) + '</b>' + (from ? ', desde ' + esc(from) : '') + '. <button class="link" data-act="editMail">Cambiar</button></p>';
+}
+/* El texto de una recomendación trae los nombres con entidades HTML; al mail va como texto plano. */
+function plain(html) { return new DOMParser().parseFromString(String(html || ''), 'text/html').documentElement.textContent; }
+function sendMail(url, body, done) {
+  fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, j: j }; });
+  }).then(function (x) {
+    done(x.ok ? 'Listo, te la mandamos a ' + (x.j.email || D.email) + '. Revisá también el spam.' : x.j.error === 'sin_email' ? 'Primero cargá tu email en la solapa Alertas.' : x.status === 429 ? 'Esperá un momento antes de pedir otro mail.' : 'No pudimos enviarlo. Probá más tarde.');
+    render();
+  }).catch(function () { done('No pudimos enviarlo. Probá más tarde.'); render(); });
 }
 function chartCardHTML() {
   var t = M.tot, p = M.prev;
@@ -1166,14 +1165,11 @@ function alertasHTML() {
     ? shown.map(lowCard).join('') + (low.length > 5 ? '<button class="link" data-act="allLow" aria-expanded="' + S.showAllLow + '">' + (S.showAllLow ? 'Ver solo las 5 más importantes' : 'Ver las ' + low.length + ' publicaciones') + icon('chevron') + '</button>' : '')
     : '<div class="card empty">' + icon('check-circle') + '<p>Todas tus publicaciones con publicidad cumplen el ROAS objetivo de su campaña.</p></div>';
   var orgBlock = M.strong.length ? M.strong.map(orgCard).join('') : '<div class="card empty">' + icon('check-circle') + '<p>No hay publicaciones sin publicidad con buenas ventas orgánicas por ahora.</p></div>';
-  var sw = [['m1', 'Resumen semanal por email', 'Los lunes a la mañana, con lo más importante de la semana.'], ['m2', 'Aviso cuando una publicación gasta mucho y no vende', 'Para no seguir gastando donde no rinde. Se revisa una vez por día y no se repite en 7 días.'], ['m3', 'Aviso cuando una publicación vende bien sin publicidad', 'Para que la actives a tiempo. No se repite en 14 días.']];
   return '<div class="sum"><div class="sum-i"><b>' + M.strong.length + '</b><span>publicaciones sin publicidad que ya venden bien</span></div><div class="sum-i"><b>' + low.length + '</b><span>publicaciones con oportunidad de mejora (ROAS por debajo del objetivo)</span></div></div>' +
     '<section aria-labelledby="h-org"><div class="blk-h"><h2 id="h-org">Vendiendo bien sin publicidad</h2><p class="sub">Publicaciones activas en Mercado Libre pero sin anuncios, con buen desempeño orgánico en los últimos 30 días. Activarlas en publicidad puede ayudarlas a vender más.</p>' +
     '<p class="small">Criterio: 10 o más unidades vendidas en 30 días sin publicidad, conversión del 3% o más (cuando la conocemos) y sin caída respecto de los 30 días anteriores.</p></div><div class="stack">' + orgBlock + '</div></section>' +
     '<section aria-labelledby="h-low"><div class="blk-h"><h2 id="h-low">Con publicidad y oportunidad de mejora</h2><p class="sub">Publicaciones con anuncios activos que están por debajo del ROAS objetivo de su campaña. No es que estén mal: mejorarlas es la forma más directa de subir el ROAS general de tu cuenta (hoy $' + r2(M.roas) + '). Se ordenan por cuánto les faltó para llegar al objetivo, en ' + periodIn() + '.</p></div><div class="stack">' + lowBlock + '</div></section>' +
-    '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Cómo querés que te avisemos</h2>' + (avisosPronto() ? '<span class="tag">Próximamente</span>' : '') + '</div><div class="switches">' +
-    sw.map(function (s) { return '<label class="sw" for="' + s[0] + '"><span>' + s[1] + '<small>' + s[2] + '</small></span><input type="checkbox" id="' + s[0] + '" role="switch" data-act="sw" data-id="' + s[0] + '"' + (S.sw[s[0]] ? ' checked' : '') + (avisosPronto() ? ' disabled' : '') + '></label>'; }).join('') +
-    '</div>' + (avisosPronto() ? '<p class="small" style="margin-top:10px">Estamos preparando los avisos por email. Muy pronto vas a poder activarlos desde acá.</p>' : mailNote()) + '</section>';
+    '<section class="card" aria-labelledby="h-avisos"><div class="sec-head"><h2 id="h-avisos">Recomendaciones por mail</h2></div>' + mailNote() + '</section>';
 }
 
 /* ---------- Recomendaciones ---------- */
@@ -1185,10 +1181,13 @@ function recsHTML() {
       '<p class="a-do"><strong>Qué podés hacer:</strong> ' + a.action + '</p><div class="a-btns">' +
       (a.sev === 'buena' ? '' : '<button class="btn" data-act="done" data-id="' + a.id + '">Ya lo hice</button>') +
       (a.go === 'camp' ? '<button class="btn ghost" data-act="goCamp" data-c="' + a.camp + '">Ver campaña</button>' : '<button class="btn ghost" data-act="goTab" data-v="alertas" data-id="' + a.id + '">Ver alertas</button>') +
-      '</div></div></article>';
+      (D.mailOn ? '<button class="btn ghost" data-act="recMail" data-id="' + a.id + '">Enviarme por mail</button>' : '') +
+      '</div>' + (S.recMail[a.id] ? '<p class="small" role="status">' + esc(S.recMail[a.id]) + '</p>' : '') + '</div></article>';
   }).join('');
   return '<section aria-labelledby="h-rec"><div class="sec-head"><h2 id="h-rec">Recomendaciones para tus campañas</h2><span class="sub">' + (M.openRecs ? M.openRecs + (M.openRecs === 1 ? ' pendiente' : ' pendientes') : 'Todo al día') + '</span></div>' +
-    '<p class="sub" style="margin-bottom:12px">Ajustes de presupuesto y oportunidades, calculados con el período de ' + S.days + ' días y el ROAS objetivo de cada campaña.</p><div class="stack">' + cards + '</div></section>';
+    '<p class="sub" style="margin-bottom:12px">Ajustes de presupuesto y oportunidades, calculados con el período de ' + S.days + ' días y el ROAS objetivo de cada campaña.</p>' +
+    (D.mailOn ? '<p class="small" style="margin-bottom:12px">Podés recibir cada recomendación, o el resumen de la semana con su Excel, en tu mail. <button class="link" data-act="sumMail">Enviarme el resumen de la semana</button>' + (S.sumMsg ? ' <span role="status">' + esc(S.sumMsg) + '</span>' : '') + '</p>' : '') +
+    '<div class="stack">' + cards + '</div></section>';
 }
 
 /* ---------- Seguimiento ---------- */
@@ -1551,13 +1550,19 @@ document.addEventListener('click', function (e) {
   else if (a === 'fstat') S.fstat = b.dataset.v;
   else if (a === 'clearF') { S.fstat = 'all'; S.cq = ''; }
   else if (a === 'toggleAll') { var every = M.camps.every(function (c) { return S.open[c.id]; }); M.camps.forEach(function (c) { S.open[c.id] = !every; }); }
-  else if (a === 'mailTest') {
-    S.mailMsg = 'Enviando…';
-    fetch('/api/avisos/prueba', { method: 'POST', credentials: 'same-origin' }).then(function (r) {
-      S.mailMsg = r.ok ? 'Listo, revisá tu bandeja (y el spam).' : r.status === 429 ? 'Esperá un minuto antes de pedir otro.' : 'No pudimos enviarlo. Probá más tarde.';
-      render();
-    }).catch(function () { S.mailMsg = 'No pudimos enviarlo. Probá más tarde.'; render(); });
+  else if (a === 'recMail') {
+    var rec = M.recs.filter(function (r) { return r.id === b.dataset.id; })[0], rid = b.dataset.id;
+    if (rec && !D.email) S.recMail[rid] = 'Primero cargá tu email en la solapa Alertas.';
+    else if (rec) {
+      S.recMail[rid] = 'Enviando…';
+      sendMail('/api/recomendacion/mail', { title: plain(rec.title), text: plain(rec.text), action: plain(rec.action) }, function (m) { S.recMail[rid] = m; });
+    }
   }
+  else if (a === 'sumMail') {
+    if (!D.email) S.sumMsg = 'Primero cargá tu email en la solapa Alertas.';
+    else { S.sumMsg = 'Enviando…'; sendMail('/api/resumen/mail', {}, function (m) { S.sumMsg = m; }); }
+  }
+  else if (a === 'editMail') S.editMail = true;
   else if (a === 'ser') { var on0 = onSeries(); if (!(S.ser[b.dataset.v] && on0.length === 1)) S.ser[b.dataset.v] = !S.ser[b.dataset.v]; }
   else if (a === 'table') S.table = !S.table;
   else if (a === 'toggleCamp') S.open[b.dataset.id] = !S.open[b.dataset.id];
@@ -1568,7 +1573,6 @@ document.addEventListener('click', function (e) {
   else if (a === 'closeToast') S.toast = '';
   else if (a === 'allLow') S.showAllLow = !S.showAllLow;
   else if (a === 'dim') S.trendDim = b.dataset.v;
-  else if (a === 'sw') S.sw[b.dataset.id] = !S.sw[b.dataset.id];
   else if (a === 'goCamp') {
     S.tab = 'principal'; S.open[b.dataset.c] = true; render();
     var el = document.getElementById('camp-' + b.dataset.c);
@@ -1603,7 +1607,7 @@ document.addEventListener('submit', function (e) {
     e.preventDefault();
     var mail = S.mailDraft.trim();
     fetch('/api/email', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: mail }) })
-      .then(function (r) { if (r.ok) { D.email = mail; S.mailMsg = ''; } else S.mailMsg = 'Ese email no parece válido.'; render(); })
+      .then(function (r) { if (r.ok) { D.email = mail; S.mailMsg = ''; S.editMail = false; } else S.mailMsg = 'Ese email no parece válido.'; render(); })
       .catch(function () { S.mailMsg = 'No pudimos guardarlo. Probá de nuevo.'; render(); });
     return;
   }

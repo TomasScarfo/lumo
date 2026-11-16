@@ -1,4 +1,5 @@
-# Dispara una vez por día los avisos por email de Lumo (resumen semanal y alertas).
+# Dispara una vez por día la tarea diaria de Lumo: cobros y vencimientos de suscripciones y plazos de conservación de datos.
+# No manda recomendaciones por mail: esas salen solo cuando la persona toca un botón en el panel.
 # Necesita dos secretos del repositorio: APP_URL (por ejemplo https://lumo-xxxx.onrender.com, sin barra al final)
 # y CRON_TOKEN (el mismo valor que la variable CRON_TOKEN del servicio "lumo" en Render).
 name: Avisos por email

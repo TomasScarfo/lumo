@@ -177,16 +177,17 @@ Cuándo se considera que **mejoró / empeoró** (si no, "sin cambios claros"):
 | Activar publicidad | Ventas +5% o más | ROAS menor al 85% del objetivo **y** −5% o peor |
 | Mejorar publicaciones | ROAS +5% o más, o ventas +10% con ROAS no peor que −3% | ROAS −5% o peor |
 
-### G. Avisos por email
+### G. Mails (solo a pedido)
 
-Se envían desde `lumoads.ml@gmail.com` (o el remitente configurado) a quien activó cada interruptor en Alertas. Un chequeo diario a las 11:00 de Argentina los dispara. Solo funcionan si el servidor tiene configurado el envío (Brevo o SMTP); si no, el panel los muestra como "Próximamente".
+Lumo **no manda recomendaciones por su cuenta**. Salen únicamente cuando la persona toca un botón, y siempre a su propio email (el de Mercado Libre o el que cargó en Alertas). Solo funciona si el servidor tiene configurado el envío (Brevo o SMTP); si no, los botones no se muestran.
 
-| Aviso | Cuándo se envía | Datos y cuentas | Qué dice |
+| Mail | Cómo se pide | Datos y cuentas | Qué dice |
 |---|---|---|---|
-| **Resumen semanal** (m1) | Lunes (si falló, martes o miércoles), una vez por semana | Últimos 7 días contra los 7 anteriores: inversión, ventas por publicidad, ROAS, inversión por día, top 5 publicaciones por ventas (estimadas), campañas con ROAS menor al objetivo (hasta 3). Adjunta un Excel con campañas, publicaciones y días | Resumen y campañas "con oportunidad de mejora" |
-| **Publicaciones que gastan y no venden** (m2) | Una vez por día si hay alguna nueva; no se repite por publicación en 7 días | Publicaciones con anuncios activos que en 30 días gastaron **$10.000 o más** y tuvieron **ventas por publicidad en cero** (estimadas con el reparto de la campaña) | Lista de hasta 10 con lo invertido |
-| **Publicaciones que venden bien sin publicidad** (m3) | No se repite por publicación en 14 días | Mismo criterio que D2 | Lista de hasta 10 con las unidades vendidas |
-| Avisos de suscripción | Cobro rechazado, acceso en pausa, fin de prueba gratis | Estado de la suscripción en Mercado Pago | No son recomendaciones de publicidad |
+| **Una recomendación** | Botón «Enviarme por mail» en cada tarjeta de la solapa Recomendaciones | Exactamente el título, el texto y la acción que se ven en pantalla (las mismas de la sección B y C) | La recomendación y «Qué podés hacer» |
+| **Resumen de la semana** | Botón «Enviarme el resumen de la semana» en la solapa Recomendaciones | Últimos 7 días contra los 7 anteriores, de la última lectura guardada: inversión, ventas por publicidad, ROAS, inversión por día, top 5 publicaciones por ventas (estimadas) y las campañas con oportunidad de mejora, que vienen mejorando o con margen de visibilidad (mismos estados que el panel). Adjunta un Excel con campañas, publicaciones y días | Resumen y recomendaciones de ROAS objetivo |
+| Avisos de suscripción | Salen solos: cobro rechazado, acceso en pausa, fin de prueba gratis | Estado de la suscripción en Mercado Pago | No son recomendaciones de publicidad |
+
+Límites: no más de 10 mails por hora por persona y una vez por minuto cada uno. Ya no existen los avisos automáticos de «gastan y no venden» ni de «venden bien sin publicidad»: esa información sigue en la solapa Alertas.
 
 ---
 
@@ -204,11 +205,10 @@ Se envían desde `lumoads.ml@gmail.com` (o el remitente configurado) a quien act
 | Uso de presupuesto al tope | 95% | "Se queda sin presupuesto" |
 | Bajar presupuesto | a la mitad (redondeo $500) | Recomendación urgente |
 | Subir presupuesto | +30% (redondeo $500) | Recomendación de presupuesto |
-| Venta orgánica fuerte | 10 unidades en 30 días y conversión 3% o más | Alertas, tareas, mail m3 |
+| Venta orgánica fuerte | 10 unidades en 30 días y conversión 3% o más | Alertas, tareas |
 | Stock bajo | menos de 10 unidades | Alertas |
 | Categoría que crece | +10% y (cobertura menor a 70% o facturación en campañas menor a 30%) | Recomendación por categoría, Tendencias |
 | "En alza" / "En baja" | ±10% | Tendencias |
-| Gasto sin ventas | $10.000 en 30 días | Mail m2 |
 | ROAS objetivo por defecto | $5 (ACOS 20%) | Campañas que no informan objetivo |
 | Veredictos de Seguimiento | ver sección F | Seguimiento |
 | Factores de simulación | ver sección F | Seguimiento |
@@ -225,7 +225,7 @@ Para tener en cuenta al decidir qué mejorar:
 4. **Los porcentajes de las acciones son fijos**: "a la mitad" y "+30%" no consideran el nivel de gasto ni la estacionalidad.
 5. **Uso del presupuesto con el presupuesto de hoy**, aunque se haya cambiado dentro del período.
 6. **La participación de impresiones y las pérdidas** son siempre de los últimos 30 días, aunque el período elegido sea otro.
-7. **El mail semanal no usa el mismo criterio que el panel**: marca "oportunidad de mejora" a toda campaña con ROAS menor al objetivo, sin distinguir las que vienen mejorando ni mencionar visibilidad. Conviene alinearlo.
+7. **Los mails son solo a pedido**, así que una recomendación que la persona no abre en el panel no le llega nunca por otro canal.
 8. **Las publicaciones tipo "familia"** no traen stock, marca ni visitas, así que quedan fuera de conversión y de recomendaciones de stock.
 9. **Hay datos útiles sin usar** (sección 4), en particular la participación en primeras posiciones y la referencia de ACOS de Mercado Libre.
 10. **Las simulaciones de Seguimiento** son supuestos y deben leerse como tales.

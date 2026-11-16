@@ -211,10 +211,11 @@ class Ingreso(Base):
         self.assertEqual(r.status_code, 302)
         self.assertTrue(r.headers["Location"].endswith("/panel"))
 
-    def test_los_avisos_por_email_se_habilitan_solos_cuando_el_servidor_puede_enviar(self):
+    def test_las_recomendaciones_por_mail_salen_solo_con_un_boton(self):
         fuente = open(os.path.join(os.path.dirname(__file__), "..", "lumo", "panel.html"), encoding="utf-8").read()
-        self.assertIn("function avisosPronto() { return !D.mailOn; }", fuente)
-        self.assertNotIn("AVISOS_PRONTO", fuente)
+        self.assertIn('data-act="recMail"', fuente)          # el botón de cada recomendación
+        self.assertIn("D.mailOn ?", fuente)                    # solo si el servidor puede enviar
+        self.assertNotIn('data-act="sw"', fuente)            # ya no hay interruptores de avisos automáticos
 
     def test_la_pantalla_principal_ordena_metricas_graficos_y_campanas(self):
         fuente = open(os.path.join(os.path.dirname(__file__), "..", "lumo", "panel.html"), encoding="utf-8").read()

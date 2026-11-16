@@ -10,7 +10,7 @@ Lumo trata datos personales **como responsable** frente a quienes lo usan, y usa
 |---|---|---|---|---|
 | Conexión de la cuenta | ID de Mercado Libre, tokens (cifrados), permisos | Leer las métricas de la persona | Contrato / consentimiento al conectar | Mientras la cuenta esté conectada |
 | Panel | Métricas de campañas, estado del panel | Mostrar el servicio | Contrato | Copia: 3 h de validez; historial: 730 días |
-| Avisos por email | Email, preferencias, registro de avisos | Resumen semanal y alertas que la persona activó | Consentimiento (opt-in en Alertas) | Hasta que desactive o borre la cuenta; registro de envíos 400 días |
+| Mails a pedido | Email, registro de pedidos (para limitar la cantidad) | Una recomendación o el resumen de la semana, solo cuando la persona toca el botón | Pedido expreso de la persona en cada envío | Hasta que borre la cuenta; registro de pedidos 400 días |
 | Control de acceso | ID, nota del administrador, invitaciones | Permitir el ingreso solo a quien corresponde | Interés legítimo | Mientras tenga acceso; invitaciones 90 días tras vencer |
 | Auditoría de seguridad | ID, tipo de evento, fecha | Detectar y investigar incidentes | Interés legítimo (seguridad) | 400 días |
 
@@ -23,7 +23,7 @@ No se tratan datos sensibles, ni se toman decisiones automatizadas sobre las per
 | Acceso y portabilidad | Botón «Descargar mis datos» en `/privacidad` (JSON) | Inmediato |
 | Rectificación | Cambiar el email en Alertas; para otros datos, escribir al contacto | 10 días |
 | Supresión | Botón «Borrar mi cuenta y mis datos» en `/privacidad`, o pedido al contacto (el administrador usa Quitar acceso) | Inmediato / 10 días |
-| Oposición al envío de avisos | Desactivarlos en Alertas | Inmediato |
+| Oposición al envío de mails | No hay envíos automáticos de recomendaciones: solo salen al tocar un botón | Inmediato |
 | Consultas y reclamos | Email de contacto de la portada | 10 días |
 
 **Pedidos por correo**: confirmar la identidad respondiendo desde el email registrado o pidiendo que se conecte la cuenta de Mercado Libre; nunca entregar datos a quien no pueda demostrarlo. Anotar fecha, pedido y respuesta.

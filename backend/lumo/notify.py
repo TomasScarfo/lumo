@@ -1,7 +1,6 @@
-"""Avisos por email: resumen semanal, publicaciones que gastan sin vender y las que venden bien sin publicidad.
+"""Mails de Lumo. Las recomendaciones y el resumen semanal solo se envían cuando la persona los pide con un botón del panel.
 
-Solo reciben avisos las cuentas que los activaron en la pestaña Alertas (m1, m2, m3). Un chequeo diario (ver
-`.github/workflows/avisos.yml`) llama a /cron/avisos. Cada aviso se registra en la tabla `notice` para no repetirlo.
+No hay envíos automáticos de recomendaciones: el único aviso que sale solo es el de la suscripción (cobro rechazado, fin de prueba).
 El envío usa la API web de Brevo (BREVO_API_KEY): va por HTTPS, así que funciona en el plan gratuito de Render, que bloquea el SMTP.
 Si no hay clave de Brevo, usa SMTP (por defecto el de Gmail con una contraseña de aplicación, SMTP_PASSWORD). Sin ninguno de los dos, el envío queda apagado.
 """
@@ -14,21 +13,13 @@ from html import escape
 from urllib.parse import urlsplit
 
 import requests
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from . import exportar
 from .ads import DEFAULT_ROAS_TARGET
-from .models import Notice, utcnow
+from .models import Notice
 
 log = logging.getLogger("lumo")
-
-MIN_SPEND = 10000.0       # pesos invertidos en 30 días, sin ventas, para avisar que una publicación gasta sin vender
-URGENT_EVERY = timedelta(days=7)
-ORGANIC_EVERY = timedelta(days=14)
-WEEKLY_DAYS = (0, 1, 2)   # lunes; si el chequeo falló ese día, se reintenta martes y miércoles
-KINDS = ("m1", "m2", "m3")
-
 
 BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 
@@ -144,33 +135,6 @@ def weekly(data: dict) -> dict:
             "opp": top(opp), "up": top(up), "vis": top(vis)}
 
 
-def wasteful(data: dict) -> list:
-    """Publicaciones con anuncios activos que gastaron y no vendieron nada en 30 días. Devuelve (id, nombre, gasto)."""
-    by = {str(c["id"]): c for c in data["camps"]}
-    out = []
-    for it in data["items"]:
-        c = by.get(str(it.get("camp")))
-        if not c:
-            continue
-        sp30 = sum(d["spend"] for d in c["daily"][-30:]) * it["sp"]
-        sa30 = sum(d["sales"] for d in c["daily"][-30:]) * it["sa"]
-        if sa30 == 0 and sp30 >= MIN_SPEND:
-            out.append((it["id"], it["name"], sp30))
-    return sorted(out, key=lambda x: -x[2])
-
-
-def organic(data: dict) -> list:
-    """Publicaciones sin publicidad que venden bien solas (mismo criterio que la pestaña Alertas). Devuelve (id, nombre, unidades)."""
-    out = []
-    for it in data["items"]:
-        conv = it.get("conv")
-        prev = it.get("prevUnits") or 0
-        growth = it["units"] / prev - 1 if prev else 0
-        if it.get("camp") is None and it["units"] >= 10 and (conv is None or conv >= 0.03) and growth >= 0:
-            out.append((it["id"], it["name"], it["units"]))
-    return sorted(out, key=lambda x: -x[2])
-
-
 def _logo(link: str) -> str:
     """El logo (el amanecer) como imagen: los mails no pueden usar SVG, así que se pide el PNG que sirve la app."""
     u = urlsplit(link)
@@ -284,10 +248,13 @@ def weekly_excel(data: dict):
     return exportar.nombre_archivo(data, 7), exportar.excel(data, 7)
 
 
-def list_mail(subject: str, title: str, intro: str, lines: list, link: str, why: str):
-    h = "<p>%s</p><ul>%s</ul>" % (escape(intro), "".join("<li>%s</li>" % escape(x) for x in lines))
-    t = intro + "\n" + "".join("- %s\n" % x for x in lines)
-    return (subject,) + _layout(title, h, t, link, why)
+def recommendation_mail(title: str, text: str, action: str, link: str, why: str):
+    """Una recomendación del panel, tal como la ve la persona. Todo el texto se escapa: viene del navegador."""
+    h = "<p style='margin:0 0 10px'>%s</p>" % escape(text)
+    if action:
+        h += "<p style='margin:12px 0;padding:12px;background:#E3E9FC;border-radius:10px'><b>Qué podés hacer:</b> %s</p>" % escape(action)
+    t = text + ("\n\nQué podés hacer: " + action if action else "")
+    return ("Recomendación de Lumo: " + title,) + _layout(title, h, t, link, why)
 
 
 def billing_mail(kind: str, link: str, until: datetime = None, days: int = None, price: str = None, plan: str = None):
@@ -319,41 +286,3 @@ def _mark(s: Session, uid: int, kind: str, ref: str, now) -> None:
     row = s.get(Notice, (uid, kind, ref)) or Notice(user_id=uid, kind=kind, ref=ref)
     row.sent_at = now
     s.add(row)
-
-
-def run_for(s: Session, cfg: dict, uid: int, email: str, prefs: dict, data: dict, link: str, now: datetime = None, send=None) -> list:
-    """Envía lo que corresponda a una cuenta y devuelve los tipos enviados."""
-    send = send or send_mail
-    now = now or utcnow()  # hora UTC sin zona, como se guarda en la base
-    local = now + timedelta(hours=-3)  # Argentina
-    why = "Recibís este mail porque activaste los avisos en Lumo. Podés desactivarlos cuando quieras en la pestaña Alertas de tu panel."
-    sent = []
-    if prefs.get("m1") and local.weekday() in WEEKLY_DAYS:
-        wk = "%d-W%02d" % local.isocalendar()[:2]
-        if _due(s, uid, "m1", wk, timedelta(days=1000), now):
-            try:
-                attachments = [weekly_excel(data)]
-            except Exception as exc:  # sin el Excel igual se manda el resumen
-                log.warning("el Excel del resumen semanal falló: %s", type(exc).__name__)
-                attachments = []
-            send(cfg, email, *weekly_mail(data, link, why), **({"attachments": attachments} if attachments else {}))
-            _mark(s, uid, "m1", wk, now)
-            sent.append("m1")
-    if prefs.get("m2"):
-        items = [x for x in wasteful(data) if _due(s, uid, "m2", str(x[0]), URGENT_EVERY, now)]
-        if items:
-            lines = ["%s: invirtió %s en 30 días y no vendió nada" % (n, money(sp)) for _, n, sp in items[:10]]
-            send(cfg, email, *list_mail("Publicaciones que gastan y no venden", "Revisá estas publicaciones", "Tienen anuncios activos, gastaron y no tuvieron ninguna venta por publicidad:", lines, link, why))
-            for iid, _, _ in items:
-                _mark(s, uid, "m2", str(iid), now)
-            sent.append("m2")
-    if prefs.get("m3"):
-        items = [x for x in organic(data) if _due(s, uid, "m3", str(x[0]), ORGANIC_EVERY, now)]
-        if items:
-            lines = ["%s: %d unidades vendidas en 30 días sin publicidad" % (n, u) for _, n, u in items[:10]]
-            send(cfg, email, *list_mail("Publicaciones que venden bien sin publicidad", "Una oportunidad para activar publicidad", "Estas publicaciones ya venden solas. Activarlas en publicidad puede ayudarlas a vender más:", lines, link, why))
-            for iid, _, _ in items:
-                _mark(s, uid, "m3", str(iid), now)
-            sent.append("m3")
-    s.commit()
-    return sent
