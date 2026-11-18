@@ -69,3 +69,12 @@ Después de cambiar la portada, los estilos o el logo, regenerarla (un test avis
 ```bash
 cd backend && python build_site.py
 ```
+
+## Registro e ingreso
+
+Las personas se registran con su email: Lumo les manda un enlace de un solo uso (vence a los 30 minutos, sin contraseña) y, ya adentro, conectan su cuenta de Mercado Libre.
+- Rutas: `/entrar` (pide el email), `/acceso/<enlace>` (confirma el ingreso con un botón, para que los programas que revisan los mails no gasten el enlace).
+- Hace falta que el envío de mails esté configurado (`BREVO_API_KEY` y `MAIL_FROM`). Sin eso, `/entrar` ofrece ingresar con Mercado Libre.
+- Quien ya estaba conectado sigue entrando con "Ingresar con Mercado Libre" (`/connect`); al registrarse con su email y conectar la misma cuenta, queda asociado a su usuario.
+- La administración siempre pide confirmar con Mercado Libre, aunque se haya entrado con el email.
+- Por ahora cada usuario conecta una sola cuenta de Mercado Libre (las agencias con varias cuentas vienen después).

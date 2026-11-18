@@ -41,7 +41,7 @@
   var fbclid = new URLSearchParams(location.search).get('fbclid') || '';
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[data-app]');
-    if (!a || !/\/(connect|suscripcion)$/.test(a.pathname)) return;
+    if (!a || !/\/(connect|suscripcion|entrar)$/.test(a.pathname)) return;
     var u = new URL(a.href, location.href), fbc = cookie('_fbc'), fbp = cookie('_fbp');
     if (fbc) u.searchParams.set('fbc', fbc); else if (fbclid) u.searchParams.set('fbclid', fbclid);
     if (fbp) u.searchParams.set('fbp', fbp);
@@ -161,7 +161,7 @@
           <span class="why-tag">Para decidir</span>
           <article class="card"><div class="ico"><svg><use href="#i-sliders"/></svg></div><h3>Recomendaciones con números</h3><p>Cuánto subir o bajar el presupuesto de cada campaña, con tus cifras. Nada de consejos genéricos.</p></article>
           <article class="card"><div class="ico"><svg><use href="#i-alert"/></svg></div><h3>Alertas por publicación</h3><p>Detectás las que gastan sin vender y las que ya venden solas y merecen publicidad.</p></article>
-          <article class="card"><div class="ico"><svg><use href="#i-mail"/></svg></div><h3>Resumen semanal, con Excel</h3><p>Cada semana te llega por mail la evolución de tu inversión, las 5 publicaciones que más aportaron y un Excel con las mismas tablas del panel.</p></article>
+          <article class="card"><div class="ico"><svg><use href="#i-mail"/></svg></div><h3>Tu semana, en un mail</h3><p>Cada semana sabés cuánto invertiste, cuánto vendiste con publicidad, qué publicaciones tiraron del resultado y qué campañas quedaron por debajo de su objetivo.</p></article>
         </div>
       </div>
       <p class="also"><b>Y además:</b> seguimiento de lo que hacés, tendencias de tu catálogo y el período que quieras (7, 14, 30 días o un rango a medida).</p>
@@ -179,30 +179,16 @@
         <p>Sin instalar nada, sin cargar planillas y sin que Lumo toque tus campañas.</p>
       </div>
       <ol class="tl">
-        <li><div class="tl-n">1</div><div><h3>Elegí tu plan</h3><p>Cargás tu medio de pago en Mercado Pago. No se cobra nada por 14 días y, si cancelás antes, no pagás.</p></div></li>
-        <li><div class="tl-n">2</div><div><h3>Conectá tu cuenta de Mercado Libre</h3><p>Un clic y listo. Iniciás sesión en Mercado Libre, así que tu contraseña no pasa por Lumo. Y Lumo queda en modo lectura: solo consulta.</p></div></li>
+        <li><div class="tl-n">1</div><div><h3>Creá tu cuenta con tu email</h3><p>Te mandamos un enlace para entrar, sin contraseña. Elegís tu plan y cargás tu medio de pago en Mercado Pago: no se cobra nada por 14 días y, si cancelás antes, no pagás.</p></div></li>
+        <li><div class="tl-n">2</div><div><h3>Conectá tu cuenta de Mercado Libre</h3><p>Ya adentro de Lumo, un clic y listo. Iniciás sesión en Mercado Libre, así que tu contraseña no pasa por Lumo. Y Lumo queda en modo lectura: solo consulta.</p></div></li>
         <li><div class="tl-n">3</div><div><h3>Lumo lee tus campañas</h3><p>Trae hasta 90 días de Product Ads y compara cada campaña y cada publicación con su ROAS objetivo.</p></div></li>
         <li><div class="tl-n">4</div><div><h3>Seguí lo que Lumo te marca</h3><p>Tareas, alertas y recomendaciones ordenadas por importancia. Los cambios los hacés vos, en Mercado Libre, cuando quieras.</p></div></li>
-        <li><div class="tl-n">5</div><div><h3>Comprobá si funcionó</h3><p>Marcás lo que hiciste y ves el antes y el después. Cada semana te llega el resumen por mail, con un Excel para guardar o compartir.</p></div></li>
+        <li><div class="tl-n">5</div><div><h3>Comprobá si funcionó</h3><p>Marcás lo que hiciste y ves el antes y el después. Cada semana te llega por mail un resumen de cómo te fue, para no tener que entrar a buscarlo.</p></div></li>
       </ol>
     </div>
   </section>
 
-  <section class="block" id="vistazo">
-    <div class="wrap">
-      <div class="head center">
-        <h2>Lumo de un vistazo</h2>
-        <p>Tres cosas que conviene saber antes de empezar.</p>
-      </div>
-      <div class="stats">
-        <div class="stat"><b>+90</b><span>días de métricas de Product Ads, leídos apenas conectás. Después, tu historial propio crece día a día.</span></div>
-        <div class="stat"><b>0</b><span>cambios que hace Lumo en tus campañas. Solo consulta: las decisiones son tuyas.</span></div>
-        <div class="stat"><b>14</b><span>días de prueba gratis. No se cobra nada hasta el día 15.</span></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="block alt" id="seguridad">
+  <section class="block" id="seguridad">
     <div class="wrap split">
       <div class="head" style="margin-bottom:0">
         <span class="kicker">Seguridad y transparencia</span>
@@ -218,7 +204,7 @@
     </div>
   </section>
 
-  <section class="block" id="precio">
+  <section class="block alt" id="precio">
     <div class="wrap">
       <div class="head center">
         <span class="kicker">Planes</span>
@@ -230,17 +216,17 @@
           <h3>Mensual</h3>
           <p class="plan-price" style="margin:10px 0 6px"><span data-price="monthly">US$10</span> <small>por mes</small></p>
           <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
-          <ul class="plan-list"><li>Estado por campaña, tareas, alertas y recomendaciones</li><li>Resumen semanal por email, con Excel</li><li>Tu historial de métricas, día a día</li><li>Soporte por email</li></ul>
-          <a class="btn ghost" href="__APP_URL__/suscripcion?plan=monthly" data-app>Probar gratis el mensual</a>
+          <ul class="plan-list"><li>Estado de cada campaña frente a su objetivo</li><li>Tareas, alertas y recomendaciones con tus cifras</li><li>Resumen semanal por email</li><li>Historial de tus métricas, día a día</li><li>Soporte con especialistas</li></ul>
+          <a class="btn ghost" href="__APP_URL__/entrar?plan=monthly" data-app>Probar gratis el mensual</a>
         </div>
         
         <div class="card best">
           <span class="badge">Más conveniente</span>
           <h3>Anual <span class="save">Ahorrás 17%</span></h3>
           <p class="plan-price" style="margin:10px 0 6px"><span data-price="annual">US$100</span> <small>por año</small></p>
-          <p>Lo mismo, pagando una vez al año: <span data-price="saving">US$20</span> menos que mes a mes.</p>
-          <ul class="plan-list"><li>Todo lo del plan mensual</li><li>Un solo pago al año</li><li>Soporte por email</li></ul>
-          <a class="btn" href="__APP_URL__/suscripcion?plan=annual" data-app>Probar gratis el anual</a>
+          <p>Todo el panel con un solo pago al año: ahorrás <span data-price="saving">US$20</span> frente al plan mensual.</p>
+          <ul class="plan-list"><li>Estado de cada campaña frente a su objetivo</li><li>Tareas, alertas y recomendaciones con tus cifras</li><li>Resumen semanal por email</li><li>Historial de tus métricas, día a día</li><li>Soporte con especialistas</li></ul>
+          <a class="btn" href="__APP_URL__/entrar?plan=annual" data-app>Probar gratis el anual</a>
         </div>
         
         <div class="card">
@@ -251,11 +237,11 @@
           <a class="btn ghost" href="#contacto">Contactanos</a>
         </div>
       </div>
-      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, cargás tu medio de pago en Mercado Pago y conectás tu cuenta de Mercado Libre. Precios en pesos argentinos, actualizados según el dólar oficial del día.</p>
+      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, creás tu cuenta con tu email, cargás tu medio de pago en Mercado Pago y conectás tu cuenta de Mercado Libre. Precios en pesos argentinos, actualizados según el dólar oficial del día.</p>
     </div>
   </section>
 
-  <section class="block alt" id="preguntas">
+  <section class="block" id="preguntas">
     <div class="wrap" style="max-width:820px">
       <div class="head center">
         <span class="kicker">Preguntas frecuentes</span>
@@ -276,7 +262,7 @@
   </section>
 
   
-  <section class="block" id="contacto">
+  <section class="block alt" id="contacto">
     <div class="wrap">
       <div class="head center">
         <span class="kicker">Contacto</span>

@@ -257,6 +257,14 @@ def recommendation_mail(title: str, text: str, action: str, link: str, why: str)
     return ("Recomendación de Lumo: " + title,) + _layout(title, h, t, link, why)
 
 
+def login_mail(link: str, minutes: int):
+    """El enlace para entrar a Lumo sin contraseña."""
+    h = "<p style='margin:6px 0'>Tocá el botón para entrar a Lumo. El enlace sirve <b>una sola vez</b> y vence en %d minutos.</p>" % minutes
+    t = "Tocá el enlace para entrar a Lumo. Sirve una sola vez y vence en %d minutos." % minutes
+    why = "Te escribimos porque alguien pidió entrar a Lumo con este email. Si no fuiste vos, ignorá este mensaje: no pasa nada."
+    return ("Tu enlace para entrar a Lumo",) + _layout("Entrá a Lumo", h, t, link, why, button="Entrar a Lumo")
+
+
 def billing_mail(kind: str, link: str, until: datetime = None, days: int = None, price: str = None, plan: str = None):
     """Avisos de la suscripción: "pago" (cobro rechazado), "baja" (acceso suspendido) y "prueba" (la prueba gratis termina y viene el primer cobro)."""
     why = "Te escribimos porque tenés una cuenta en Lumo. Este aviso es sobre tu suscripción."

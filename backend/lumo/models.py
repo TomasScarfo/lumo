@@ -73,6 +73,33 @@ class Invite(Base):
     used_at = Column(DateTime, nullable=True)
 
 
+class User(Base):
+    """Una persona registrada en Lumo con su email (sin contraseña: entra con un enlace de un solo uso).
+    Después conecta su cuenta de Mercado Libre; `ml_user_id` es el id de esa cuenta, con el que se guardan sus datos."""
+
+    __tablename__ = "lumo_user"
+
+    id = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    email = Column(String(254), nullable=False, unique=True)
+    ml_user_id = Column(BigInteger, nullable=True, unique=True)
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+    last_login_at = Column(DateTime, nullable=True)
+
+
+class LoginToken(Base):
+    """Enlace de un solo uso para entrar a Lumo. Se guarda el resumen (hash) del enlace, nunca el enlace."""
+
+    __tablename__ = "login_token"
+
+    token_hash = Column(String(64), primary_key=True)
+    email = Column(String(254), nullable=False)
+    plan = Column(String(16), nullable=True)      # el plan que había elegido en la portada
+    invite = Column(String(64), nullable=True)    # la invitación con la que llegó, si vino invitada
+    created_at = Column(DateTime, nullable=False, default=utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+
+
 class CampaignDay(Base):
     """Un día de una campaña. Lumo lo guarda para que el historial supere los 90 días que deja consultar Mercado Libre."""
 

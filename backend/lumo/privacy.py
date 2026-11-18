@@ -9,7 +9,8 @@ from datetime import timedelta
 from sqlalchemy import delete, select, update
 
 from .history import KEEP_DAYS as HISTORY_DAYS
-from .models import Access, Account, AdClick, AuditLog, CampaignDay, Invite, Notice, PanelState, Snapshot, Subscription, utcnow
+from .models import (Access, Account, AdClick, AuditLog, CampaignDay, Invite, LoginToken, Notice, PanelState, Snapshot, Subscription, User,
+                     utcnow)
 
 # Plazos de conservación, en días.
 AUDIT_DAYS = 400      # un año de auditoría más margen para el cierre del período
@@ -29,6 +30,10 @@ def erase_user(db, uid: int) -> None:
     for model in PER_USER:
         db.execute(delete(model).where(model.user_id == uid))
     db.execute(update(Invite).where(Invite.used_by == uid).values(used_by=0))  # sigue figurando como usada, sin la cuenta
+    mail = db.execute(select(User.email).where(User.ml_user_id == uid)).scalar_one_or_none()
+    db.execute(delete(User).where(User.ml_user_id == uid))  # el usuario de Lumo asociado a esa cuenta
+    if mail:
+        db.execute(delete(LoginToken).where(LoginToken.email == mail))
 
 
 def export_user(db, uid: int) -> dict:
@@ -65,6 +70,7 @@ def purge(db, now=None) -> dict:
     out = {}
     out["auditoria"] = db.execute(delete(AuditLog).where(AuditLog.at < now - timedelta(days=AUDIT_DAYS))).rowcount
     out["avisos"] = db.execute(delete(Notice).where(Notice.sent_at < now - timedelta(days=NOTICE_DAYS))).rowcount
+    out["enlaces"] = db.execute(delete(LoginToken).where(LoginToken.expires_at < now - timedelta(days=1))).rowcount  # enlaces de ingreso vencidos
     out["invitaciones"] = db.execute(delete(Invite).where(Invite.expires_at < now - timedelta(days=INVITE_DAYS))).rowcount
     cutoff = (now - timedelta(days=HISTORY_DAYS)).strftime("%Y-%m-%d")
     out["historial"] = db.execute(delete(CampaignDay).where(CampaignDay.day < cutoff)).rowcount

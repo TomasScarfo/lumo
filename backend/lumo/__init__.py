@@ -18,8 +18,8 @@ from sqlalchemy.pool import StaticPool
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import access, ads, audit, billing, cuenta, exportar, history, meta, ml, notify, privacy, security
-from .models import Access, Account, AuditLog, Base, Invite, Notice, PanelState, Snapshot, Subscription, utcnow
+from . import access, ads, audit, billing, cuenta, exportar, history, meta, ml, notify, privacy, security, usuarios
+from .models import Access, Account, AuditLog, Base, Invite, Notice, PanelState, Snapshot, Subscription, User, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
 log = logging.getLogger("lumo")
@@ -278,8 +278,8 @@ def create_app(overrides=None) -> Flask:
         uid = _current_user()
         if uid:
             return redirect("/admin" if access.is_admin(cfg, uid) else "/panel")
-        if _session_uid():
-            return redirect("/suscripcion")
+        if _session_uid() or _luid():
+            return redirect(_after_login())
         if cfg.get("SITE_URL", "").startswith("https://"):
             return redirect(cfg["SITE_URL"])  # la portada vive aparte y carga al instante
         pixel = meta.pixel_id(cfg)
@@ -298,13 +298,108 @@ def create_app(overrides=None) -> Flask:
         session["invite"] = token
         return render_template("landing.html", invited=True, label=label, **_offer())
 
-    @app.get("/entrar")
-    def entrar():
-        """"Ingresar" de la portada: quien ya tiene sesión en este navegador va directo, sin pasar por Mercado Libre."""
+    def _luid():
+        """El usuario de Lumo (registrado con su email) de esta sesión, si existe."""
+        luid = session.get("luid")
+        if not isinstance(luid, int):
+            return None
+        with Session(engine) as s:
+            return luid if s.get(User, luid) else None
+
+    def _after_login():
+        """A dónde va quien acaba de entrar: al panel, a elegir su plan o a conectar Mercado Libre."""
         uid = _session_uid()
         if uid:
-            return redirect("/admin" if access.is_admin(cfg, uid) else "/panel" if _current_user() else "/suscripcion")
-        return redirect("/connect")
+            if access.is_admin(cfg, uid):
+                return "/admin"
+            return "/panel" if _current_user() else "/suscripcion"
+        pending = _pending()
+        if pending:
+            with Session(engine) as s:
+                if s.get(Subscription, pending).status == "authorized":
+                    return "/suscripcion/conectar"
+        return "/suscripcion"
+
+    def _entrar_page(state="form", email=None, error=None, status=200):
+        resp = Response(render_template("entrar.html", title="Entrar", state=state, email=email, error=error, plan=session.get("plan"),
+                                        invited=bool(session.get("invite")), minutes=usuarios.TOKEN_MINUTES, home=_home()), status, mimetype="text/html")
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
+    @app.route("/entrar", methods=["GET", "POST"])
+    def entrar():
+        """Registro e ingreso: la persona escribe su email y recibe un enlace de un solo uso (sin contraseña).
+        Quien ya tiene sesión en este navegador va directo. Mercado Libre se conecta después, desde adentro."""
+        if missing_config():
+            return redirect("/")
+        if request.method == "GET":
+            if _session_uid() or _luid():
+                return redirect(_after_login())
+            _remember_origin()
+            return _entrar_page()
+        if request.form.get("plan") in billing.PLANS:
+            session["plan"] = request.form["plan"]
+        email = usuarios.normalize_email(request.form.get("email"))
+        if not email:
+            return _entrar_page(error="Revisá el email: no parece válido.", status=400)
+        if not notify.enabled(cfg):
+            log.warning("no se puede mandar el enlace de ingreso: falta configurar el envío de mails")
+            return _entrar_page(email=email, error="Hoy no podemos mandar el enlace. Probá más tarde o ingresá con Mercado Libre.", status=503)
+        if not limiter.allow("mail|" + email, 3, 900):
+            return _entrar_page(state="sent", email=email)  # ya se le mandó hace un momento: no se manda otro ni se avisa distinto
+        with Session(engine) as s:
+            token = usuarios.create_login_token(s, email, session.get("plan"), session.get("invite"))
+            s.commit()
+        try:
+            notify.send_mail(cfg, email, *notify.login_mail("%s/acceso/%s" % (_base_url(), token), usuarios.TOKEN_MINUTES))
+        except Exception as exc:  # proveedor de correo o red: se muestra un mensaje amable y el motivo queda en el registro
+            log.warning("el enlace de ingreso no salió: %s", notify.why(exc))
+            return _entrar_page(email=email, error="No pudimos mandar el enlace. Probá de nuevo en un rato.", status=502)
+        return _entrar_page(state="sent", email=email)
+
+    def _acceso_page(state, email=None, status=200):
+        resp = Response(render_template("acceso.html", title="Entrar", state=state, email=email, minutes=usuarios.TOKEN_MINUTES, home=_home()), status, mimetype="text/html")
+        resp.headers["Cache-Control"] = "no-store"
+        # El enlace trae el código: no se le pasa a ningún otro sitio (ni a las tipografías). Con "no-referrer" el navegador
+        # mandaría "Origin: null" en el botón y Lumo lo rechazaría como pedido de otro origen, por eso es "same-origin".
+        resp.headers["Referrer-Policy"] = "same-origin"
+        return resp
+
+    @app.get("/acceso/<token>")
+    def acceso(token):
+        """Abrir el enlace solo muestra una confirmación: así los programas que revisan los enlaces de los mails no lo gastan."""
+        with Session(engine) as s:
+            row = usuarios.peek_login_token(s, token)
+            email = row.email if row else None
+        return _acceso_page("confirm", email) if email else _acceso_page("invalid", status=410)
+
+    @app.post("/acceso/<token>")
+    def acceso_entrar(token):
+        with Session(engine) as s:
+            row = usuarios.consume_login_token(s, token)
+            if row is None:
+                return _acceso_page("invalid", status=410)
+            user = usuarios.get_or_create(s, row.email)
+            plan, invite, ml_id, luid = row.plan, row.invite, user.ml_user_id, user.id
+            acc = s.get(Account, ml_id) if ml_id else None
+            reconnect = bool(ml_id and not (acc and acc.status == "connected"))
+            audit.record(s, "login_email", actor=ml_id, detail="usuario %s" % luid)
+            s.commit()
+        pending = session.get("pending_sub")  # si empezó a pagar antes de entrar, no se pierde
+        session.clear()
+        session["luid"] = luid
+        if pending:
+            session["pending_sub"] = pending
+        if plan in billing.PLANS:
+            session["plan"] = plan
+        if invite:
+            session["invite"] = invite
+        if ml_id:
+            session["uid"] = ml_id
+        session["at"] = int(time.time())
+        session["via"] = "email"  # la administración pide confirmar con Mercado Libre
+        session.permanent = True
+        return redirect("/connect" if reconnect else _after_login())
 
     def _remember_origin():
         """El plan que eligió en la portada y de qué anuncio de Meta vino (la portada estática pasa sus cookies del Píxel en la dirección)."""
@@ -345,7 +440,13 @@ def create_app(overrides=None) -> Flask:
         user_id = int(tok["user_id"])
         invite_token = session.get("invite")
         pending = session.get("pending_sub")
+        luid = session.get("luid")
         with Session(engine) as s:
+            lumo_user = s.get(User, luid) if isinstance(luid, int) else usuarios.by_ml(s, user_id)
+            if lumo_user and usuarios.link_conflict(s, lumo_user, user_id):
+                log.warning("la cuenta %s no se puede asociar al usuario %s: %s", user_id, lumo_user.id, usuarios.link_conflict(s, lumo_user, user_id))
+                return page("<h1>No se pudo conectar</h1><p>Esa cuenta de Mercado Libre ya está asociada a otro usuario de Lumo, o tu usuario ya tiene otra cuenta conectada. "
+                            "Escribinos y lo resolvemos.</p><a class='btn' href='/entrar'>Volver</a>", 409)
             is_new = s.get(Account, user_id) is None
             if pending:
                 _claim(s, pending, user_id)  # pagó antes de conectar: la suscripción pasa a esta cuenta
@@ -357,6 +458,10 @@ def create_app(overrides=None) -> Flask:
                     allowed = True
             acc = save_tokens(s, cfg, user_id, tok)
             acc.email = _read_email(tok["access_token"]) or acc.email
+            if lumo_user:
+                usuarios.link(s, lumo_user, user_id)
+                acc.email = lumo_user.email  # los avisos van al email con el que se registró
+                lumo_user.last_login_at = utcnow()
             audit.record(s, "login_ok", actor=user_id)
             if meta.enabled(cfg) and not access.is_admin(cfg, user_id):
                 meta.remember(s, user_id, session.get("fbc"), session.get("fbp"), request.headers.get("User-Agent"))
@@ -366,12 +471,16 @@ def create_app(overrides=None) -> Flask:
                 if sub and sub.trial_started_at:  # pagó antes de conectar: la prueba ya empezó (Meta recibe cada evento una sola vez)
                     _meta_track(s, "StartTrial", user_id, billing.price_usd(cfg, sub.plan or "monthly"), live=True)
             s.commit()
+            luid = lumo_user.id if lumo_user else None
         chosen = session.get("plan")
         session.clear()
         if chosen in billing.PLANS:
             session["plan"] = chosen
+        if luid:
+            session["luid"] = luid
         session["uid"] = user_id  # Lumo recuerda a la persona en este navegador
         session["at"] = int(time.time())  # cuándo entró: las sesiones de administración vencen antes
+        session["via"] = "ml"  # entró con Mercado Libre: es lo que pide la administración
         session.permanent = True
         if not allowed:
             log.info("la cuenta %s no tiene una suscripción activa", user_id)  # nueva: va a empezar su prueba gratis
@@ -664,8 +773,8 @@ def create_app(overrides=None) -> Flask:
             if uid:
                 log.warning("la cuenta %s intentó entrar a la administración", uid)
             abort(404)  # a quien no administra, la página ni siquiera le aparece
-        if time.time() - session.get("at", 0) > ADMIN_SESSION_HOURS * 3600:
-            abort(redirect("/connect"))  # sesión de administración vencida: se vuelve a confirmar con Mercado Libre
+        if session.get("via") != "ml" or time.time() - session.get("at", 0) > ADMIN_SESSION_HOURS * 3600:
+            abort(redirect("/connect"))  # entró con el email, o la sesión venció: la administración se confirma con Mercado Libre
         return uid
 
     def _csrf() -> str:
@@ -874,13 +983,15 @@ def create_app(overrides=None) -> Flask:
             p = access.plan(s, cfg, uid) if uid else {"kind": "none"}
             sub = s.get(Subscription, uid) if uid else None
             acc = s.get(Account, uid) if uid and uid > 0 else None
-            email = (sub.payer_email if sub else None) or (acc.email if acc else None) or ""
+            luid = session.get("luid")
+            lumo_user = s.get(User, luid) if isinstance(luid, int) else None
+            email = (sub.payer_email if sub else None) or (acc.email if acc else None) or (lumo_user.email if lumo_user else None) or ""
             can_cancel = bool(sub and sub.mp_preapproval_id and sub.status in billing.LIVE)
             trial_offer = billing.trial_available(sub)
         html = render_template("suscripcion.html", plan=p, email=email, csrf=_csrf(), error=error, detail=detail, can_cancel=can_cancel, home=_home(), trial_offer=trial_offer,
                                chosen=request.form.get("plan") or session.get("plan"),
                                names=billing.NAMES, estado=request.args.get("estado"), billing_on=billing.enabled(cfg),
-                               anon=not (uid and uid > 0), **_offer())
+                               anon=not (uid and uid > 0), registered=bool(lumo_user), **_offer())
         resp = Response(html, status, mimetype="text/html")
         # El formulario de pago termina en Mercado Pago: esta página, y solo esta, puede enviar hacia sus dominios de pago.
         # Sin esto, los navegadores bloquean la redirección por la regla form-action 'self'.

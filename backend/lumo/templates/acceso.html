@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="same-origin">
+<title>{{ title }} · Lumo</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<main class="page">
+  <a class="logo" href="{{ home }}"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
+  <div class="panel" style="margin-top:24px">
+    {% if state == "confirm" %}
+      <h1>Entrar a Lumo</h1>
+      <p>Vas a entrar como <b>{{ email }}</b>.</p>
+      <form method="post" style="margin-top:16px">
+        <button class="btn" type="submit">Entrar</button>
+      </form>
+    {% else %}
+      <h1>Este enlace ya no sirve</h1>
+      <p>Venció o ya se usó. Los enlaces valen una sola vez y duran {{ minutes }} minutos.</p>
+      <div class="row" style="margin-top:16px"><a class="btn" href="/entrar">Pedir un enlace nuevo</a></div>
+    {% endif %}
+  </div>
+</main>
+</body>
+</html>

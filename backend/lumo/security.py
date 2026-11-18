@@ -127,6 +127,8 @@ LIMITS = (
     ("/connect", False, 20, 300),
     ("/callback", False, 20, 300),
     ("/invitacion/", False, 20, 300),
+    ("/entrar", True, 8, 300),
+    ("/acceso/", True, 10, 300),
     ("/admin", True, 60, 60),
     ("/api/recomendacion", True, 10, 60),
     ("/api/resumen", True, 10, 60),

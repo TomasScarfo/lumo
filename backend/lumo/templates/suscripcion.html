@@ -15,7 +15,7 @@
 <main class="page">
   <div class="row" style="justify-content:space-between">
     <a class="logo" href="{{ home }}"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
-    {% if anon %}<a class="btn ghost sm" href="/entrar">¿Ya tenés cuenta? Ingresar</a>
+    {% if anon and not registered %}<a class="btn ghost sm" href="/entrar">¿Ya tenés cuenta? Ingresar</a>
     {% else %}<div class="row">{% if plan.kind in ('trial', 'paid', 'admin', 'free') %}<a class="btn ghost sm" href="/panel">Ir al panel</a>{% endif %}<a class="btn ghost sm" href="/salir">Salir</a></div>{% endif %}
   </div>
   <div class="panel" style="margin-top:24px">

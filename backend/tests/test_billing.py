@@ -213,8 +213,8 @@ class Prueba(Base):
 
     def test_el_plan_elegido_en_la_portada_queda_marcado_al_conectarse(self):
         html = self.client.get("/").get_data(as_text=True)
-        self.assertIn('href="/suscripcion?plan=annual" data-app', html)
-        self.assertIn('href="/suscripcion?plan=monthly" data-app', html)
+        self.assertIn('href="/entrar?plan=annual" data-app', html)
+        self.assertIn('href="/entrar?plan=monthly" data-app', html)
         c = self.app.test_client()
         c.get("/connect?plan=monthly")  # connect_as vuelve a pasar por /connect: el plan tiene que sobrevivir a todo el ingreso
         with c.session_transaction() as sess:
@@ -626,19 +626,22 @@ class Administracion(Base):
 class Portada(Base):
     def test_la_portada_sigue_el_orden_de_una_pagina_de_producto_y_los_botones_llevan_a_los_planes(self):
         html = self.client.get("/").get_data(as_text=True)
-        orden = [html.index('id="%s"' % i) for i in ("que-hace", "como", "vistazo", "seguridad", "precio", "preguntas")]
-        self.assertEqual(orden, sorted(orden))  # presentación, por qué elegirla, cómo funciona, números, seguridad, planes y preguntas
+        orden = [html.index('id="%s"' % i) for i in ("que-hace", "como", "seguridad", "precio", "preguntas")]
+        self.assertEqual(orden, sorted(orden))  # presentación, qué hace, cómo funciona, seguridad, planes y preguntas
         self.assertNotIn("sin letra chica", html)
         self.assertIn("Probalo 14 días gratis", html)
         self.assertIn('<a class="btn" href="#precio">Probar gratis 14 días</a>', html)
         self.assertIn('href="#precio">Elegir mi plan y probar gratis</a>', html)
-        # los botones de cada plan llevan a elegir y pagar; Mercado Libre se conecta después
-        self.assertEqual(html.count('/suscripcion?plan='), 2)
+        # los botones de cada plan llevan a registrarse con el email; Mercado Libre se conecta después, desde adentro
+        self.assertEqual(html.count('/entrar?plan='), 2)
+        self.assertNotIn('/suscripcion?plan=', html)
         self.assertNotIn('href="/connect" data-app', html)
         self.assertIn('href="/entrar" data-app>Ingresar', html)
 
     def test_ingresar_con_sesion_no_pasa_por_mercado_libre(self):
-        self.assertEqual(self.client.get("/entrar").headers["Location"], "/connect")  # sin sesión: hay que identificarse
+        anonimo = self.client.get("/entrar")  # sin sesión: pide el email (o ingresar con Mercado Libre, para quien ya está conectado)
+        self.assertEqual(anonimo.status_code, 200)
+        self.assertIn('href="/connect"', anonimo.get_data(as_text=True))
         self.trialing(895)
         self.assertEqual(self.client.get("/entrar").headers["Location"], "/panel")
         nuevo = self.app.test_client()
