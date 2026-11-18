@@ -1,17 +1,60 @@
 <!doctype html>
-<html lang="es">
+{% set faq_precio %}{% if price.monthly %}<span data-price="monthly">{{ price.monthly }}</span> por mes{% if price.annual %}, o <span data-price="annual">{{ price.annual }}</span> por año{% if price.saving_pct %} (ahorrás {{ price.saving_pct }}%){% endif %}{% endif %}. {% endif %}Se paga en pesos con Mercado Pago. El precio sigue al dólar oficial, así que el monto en pesos puede cambiar de un cobro a otro. La suscripción se renueva sola.{% endset %}
+{% set faqs = [
+  ("¿Lumo modifica mis campañas?", "No. Lumo solo lee tus datos y te dice qué mejorar. Cualquier cambio, como subir un presupuesto o pausar una publicación, lo hacés vos desde Mercado Libre."),
+  ("¿Qué necesito para usarlo?", "Una cuenta de Mercado Libre con Publicidad (Product Ads) habilitada. Si todavía no tenés campañas, el panel te lo avisa y se completa cuando crees la primera."),
+  ("¿Qué son el ROAS y el ACOS en Mercado Libre?", "El ROAS es cuánto vendés por cada peso que invertís en publicidad: un ROAS de 5 quiere decir que por cada $1 invertido vendiste $5. El ACOS es lo mismo al revés y en porcentaje: qué parte de cada venta se fue en publicidad (un ROAS de 5 es un ACOS del 20%). Lumo te muestra los dos en cada campaña y te dice si estás por encima o por debajo de tu objetivo."),
+  ("¿Cómo me ayuda a mejorar mis campañas de Product Ads?", "Lumo te marca qué campañas están por debajo de su ROAS objetivo, qué publicaciones gastan sin vender y cuánto conviene subir o bajar cada presupuesto. Así sabés dónde ajustar primero: dejar de gastar en lo que no vende y empujar lo que sí."),
+  ("¿Cada cuánto se actualizan los datos?", "Mercado Libre actualiza sus métricas una vez por día, alrededor de las 10 de la mañana (hora de Argentina). Lumo guarda una copia por unas horas para cargar rápido, y tenés un botón para actualizar cuando lo necesites."),
+  ("¿Puedo ver más de 3 meses de métricas?", "Mercado Libre solo permite consultar los últimos 90 días. Lumo guarda tus métricas todos los días desde que te conectás, así que tu historial crece con el tiempo (hasta dos años). Las fechas anteriores a tu conexión que ya no están en Mercado Libre no se pueden recuperar."),
+  ("¿Puedo elegir el período que quiero ver?", "Sí. Podés usar 7, 14 o 30 días, o elegir un rango de fechas personalizado dentro de tu historial."),
+  ("¿De dónde salen las recomendaciones?", "De comparar el rendimiento real de cada campaña y publicación con el ROAS objetivo que configuraste. Son orientativas: las decisiones y sus resultados dependen de tu negocio, la temporada y la competencia."),
+  ("¿Cómo funciona la prueba gratis?", "Elegís un plan, cargás tu medio de pago en Mercado Pago y conectás tu cuenta de Mercado Libre. Desde que Mercado Pago confirma tu medio de pago usás Lumo completo " ~ trial_days ~ " días sin que se te cobre nada: el primer cobro es recién el día " ~ (trial_days + 1) ~ ". Si cancelás antes, no pagás."),
+  ("¿Cuánto cuesta y cómo se paga?", faq_precio),
+  ("¿Qué pasa si falla un cobro?", "Te avisamos por email y seguís usando Lumo " ~ grace_days ~ " días mientras lo resolvés. Si no se regulariza, el acceso se pausa, pero no borramos nada: cuando vuelvas, encontrás todo como lo dejaste."),
+  ("¿Cómo cancelo?", "Desde la página de tu suscripción, con un clic. Seguís teniendo acceso hasta el final del mes ya pagado y no se te vuelve a cobrar."),
+  ("¿Puedo ver varias cuentas juntas?", "Hoy, cada persona ve su propia cuenta de Mercado Libre. Estamos trabajando en una vista de cartera pensada para agencias y consultores."),
+] %}
+<html lang="es-AR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lumo: entendé tu publicidad en Mercado Libre</title>
-<meta name="description" content="Lumo lee tus métricas de Product Ads y te dice qué mejorar, campaña por campaña, con palabras simples.">
-<meta property="og:title" content="Lumo: entendé tu publicidad en Mercado Libre">
-<meta property="og:description" content="Lee tus métricas de Product Ads y te dice qué mejorar con palabras simples.">
+{% set seo_title = "Lumo: análisis de Product Ads de Mercado Libre, en simple" %}
+{% set seo_desc = "Lumo analiza tus campañas de Product Ads de Mercado Libre y te dice qué mejorar: ROAS, ACOS y presupuesto, campaña por campaña, en palabras simples. Probalo " ~ trial_days ~ " días gratis." %}
+<title>{{ seo_title }}</title>
+<meta name="description" content="{{ seo_desc }}">
+{% if invited or invite_error %}<meta name="robots" content="noindex">{% else %}<meta name="robots" content="index,follow,max-image-preview:large">{% endif %}
+<link rel="canonical" href="{{ public_url }}/">
+<meta property="og:site_name" content="Lumo">
+<meta property="og:locale" content="es_AR">
 <meta property="og:type" content="website">
-<meta property="og:image" content="/static/logo.png">
+<meta property="og:url" content="{{ public_url }}/">
+<meta property="og:title" content="{{ seo_title }}">
+<meta property="og:description" content="{{ seo_desc }}">
+<meta property="og:image" content="{{ public_url }}/static/logo.png">
+<meta property="og:image:width" content="1000">
+<meta property="og:image:height" content="1000">
+<meta property="og:image:alt" content="Logo de Lumo: un amanecer blanco sobre fondo azul">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{{ seo_title }}">
+<meta name="twitter:description" content="{{ seo_desc }}">
+<meta name="twitter:image" content="{{ public_url }}/static/logo.png">
 <meta name="theme-color" content="#2446D6">
-{% if invited or invite_error %}<meta name="robots" content="noindex">{% endif %}
 <link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/logo.png">
+{% if not (invited or invite_error) %}
+{# Datos estructurados (schema.org): le dicen a Google quién es Lumo, qué es y cuáles son las preguntas frecuentes. #}
+{% set faq_ld = [] %}{% for q, a in faqs %}{% set _ = faq_ld.append({"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a|striptags}}) %}{% endfor %}
+{% set app_ld = {"@type": "SoftwareApplication", "name": "Lumo", "url": public_url ~ "/", "applicationCategory": "BusinessApplication",
+                 "operatingSystem": "Web", "inLanguage": "es-AR", "description": seo_desc, "image": public_url ~ "/static/logo.png",
+                 "publisher": {"@id": public_url ~ "/#organizacion"}} %}
+{% if price.usd_monthly_value %}{% set _ = app_ld.update({"offers": {"@type": "Offer", "price": price.usd_monthly_value, "priceCurrency": "USD", "category": "subscription"}}) %}{% endif %}
+<script type="application/ld+json">{{ {"@context": "https://schema.org", "@graph": [
+  {"@type": "Organization", "@id": public_url ~ "/#organizacion", "name": "Lumo", "url": public_url ~ "/", "logo": public_url ~ "/static/logo.png"},
+  {"@type": "WebSite", "@id": public_url ~ "/#sitio", "name": "Lumo", "url": public_url ~ "/", "inLanguage": "es-AR", "publisher": {"@id": public_url ~ "/#organizacion"}},
+  app_ld,
+  {"@type": "FAQPage", "mainEntity": faq_ld}]}|tojson }}</script>
+{% endif %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
@@ -251,17 +294,15 @@
         <span class="kicker">Preguntas frecuentes</span>
         <h2>Lo que más nos preguntan</h2>
       </div>
-      <details><summary>¿Lumo modifica mis campañas?</summary><p>No. Lumo solo lee tus datos y te dice qué mejorar. Cualquier cambio, como subir un presupuesto o pausar una publicación, lo hacés vos desde Mercado Libre.</p></details>
-      <details><summary>¿Qué necesito para usarlo?</summary><p>Una cuenta de Mercado Libre con Publicidad (Product Ads) habilitada. Si todavía no tenés campañas, el panel te lo avisa y se completa cuando crees la primera.</p></details>
-      <details><summary>¿Cada cuánto se actualizan los datos?</summary><p>Mercado Libre actualiza sus métricas una vez por día, alrededor de las 10 de la mañana (hora de Argentina). Lumo guarda una copia por unas horas para cargar rápido, y tenés un botón para actualizar cuando lo necesites.</p></details>
-      <details><summary>¿Puedo ver más de 3 meses de métricas?</summary><p>Mercado Libre solo permite consultar los últimos 90 días. Lumo guarda tus métricas todos los días desde que te conectás, así que tu historial crece con el tiempo (hasta dos años). Las fechas anteriores a tu conexión que ya no están en Mercado Libre no se pueden recuperar.</p></details>
-      <details><summary>¿Puedo elegir el período que quiero ver?</summary><p>Sí. Podés usar 7, 14 o 30 días, o elegir un rango de fechas personalizado dentro de tu historial.</p></details>
-      <details><summary>¿De dónde salen las recomendaciones?</summary><p>De comparar el rendimiento real de cada campaña y publicación con el ROAS objetivo que configuraste. Son orientativas: las decisiones y sus resultados dependen de tu negocio, la temporada y la competencia.</p></details>
-      <details><summary>¿Cómo funciona la prueba gratis?</summary><p>Elegís un plan, cargás tu medio de pago en Mercado Pago y conectás tu cuenta de Mercado Libre. Desde que Mercado Pago confirma tu medio de pago usás Lumo completo {{ trial_days }} días sin que se te cobre nada: el primer cobro es recién el día {{ trial_days + 1 }}. Si cancelás antes, no pagás.</p></details>
-      <details><summary>¿Cuánto cuesta y cómo se paga?</summary><p>{% if price.monthly %}<span data-price="monthly">{{ price.monthly }}</span> por mes{% if price.annual %}, o <span data-price="annual">{{ price.annual }}</span> por año{% if price.saving_pct %} (ahorrás {{ price.saving_pct }}%){% endif %}{% endif %}. {% endif %}Se paga en pesos con Mercado Pago. El precio sigue al dólar oficial, así que el monto en pesos puede cambiar de un cobro a otro. La suscripción se renueva sola.</p></details>
-      <details><summary>¿Qué pasa si falla un cobro?</summary><p>Te avisamos por email y seguís usando Lumo {{ grace_days }} días mientras lo resolvés. Si no se regulariza, el acceso se pausa, pero no borramos nada: cuando vuelvas, encontrás todo como lo dejaste.</p></details>
-      <details><summary>¿Cómo cancelo?</summary><p>Desde la página de tu suscripción, con un clic. Seguís teniendo acceso hasta el final del mes ya pagado y no se te vuelve a cobrar.</p></details>
-      <details><summary>¿Puedo ver varias cuentas juntas?</summary><p>Hoy, cada persona ve su propia cuenta de Mercado Libre. Estamos trabajando en una vista de cartera pensada para agencias y consultores.</p></details>
+      {% for q, a in faqs %}<details><summary>{{ q }}</summary><p>{{ a|safe }}</p></details>
+      {% endfor %}
+      <div class="head center" style="margin-top:48px">
+        <h2 style="font-size:1.5rem">Guías para entender tu publicidad</h2>
+      </div>
+      <ul class="guia-lista">
+        {% for o in guias %}<li><a href="{{ guia_ruta(o.slug) }}"><h3>{{ o.titulo }}</h3><p>{{ o.resumen }}</p><span>Leer la guía →</span></a></li>
+        {% endfor %}
+      </ul>
     </div>
   </section>
 
@@ -320,7 +361,7 @@
   <div class="wrap">
     <div class="foot-top">
       <a class="logo" href="/" style="font-size:1.1rem"><img src="/static/logo.svg" alt="" width="28" height="28">Lumo</a>
-      <nav aria-label="Pie"><a href="{{ app }}/entrar" data-app>Ingresar</a>{% if contact %}{% if contact.email %} · <a href="{{ contact.mailto }}">Email</a>{% endif %}{% endif %} · <a href="{{ app }}/privacidad" data-app>Privacidad</a></nav>
+      <nav aria-label="Pie"><a href="{{ app }}/entrar" data-app>Ingresar</a> · <a href="{{ guia_ruta() }}">Guías</a>{% if contact %}{% if contact.email %} · <a href="{{ contact.mailto }}">Email</a>{% endif %}{% endif %} · <a href="{{ app }}/privacidad" data-app>Privacidad</a></nav>
     </div>
     <p>Lumo es una herramienta independiente: no está afiliada ni respaldada por Mercado Libre. Mercado Libre y Mercado Ads son marcas de sus respectivos titulares.</p>
     <p class="legal"><a href="{{ app }}/terminos" data-app>Términos y condiciones</a> · <a href="{{ app }}/privacidad" data-app>Privacidad</a> · <a class="regret" href="{{ app }}/arrepentimiento" data-app>Botón de arrepentimiento</a></p>

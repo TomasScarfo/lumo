@@ -123,7 +123,8 @@ class Portada(Base):
         """El logo es el amanecer (semicírculo sobre una línea). La "L" vieja no tiene que aparecer en ningún lado."""
         raiz = os.path.join(os.path.dirname(__file__), "..", "..")
         archivos = ["backend/lumo/panel.html", "backend/lumo/static/logo.svg", "design/lumo-prototipo.html", "design/logo/lumo-logo.svg"]
-        archivos += ["backend/lumo/templates/" + f for f in os.listdir(os.path.join(raiz, "backend/lumo/templates"))]
+        plantillas = os.path.join(raiz, "backend/lumo/templates")
+        archivos += [os.path.relpath(os.path.join(d, f), raiz) for d, _, fs in os.walk(plantillas) for f in fs]  # también las guías
         for f in archivos:
             texto = open(os.path.join(raiz, f), encoding="utf-8").read()
             self.assertNotIn("M9 4.5v14h7.5", texto, f)

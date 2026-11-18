@@ -1,0 +1,17 @@
+{% extends "guias/base.html" %}
+{% block cuerpo %}
+<header class="guia-head">
+  <span class="kicker">Guías</span>
+  <h1>Publicidad en Mercado Libre, explicada simple</h1>
+  <p class="bajada">Guías cortas para entender tus campañas de Product Ads: qué significan los números, cuánto invertir y cómo mejorar sin perder plata.</p>
+</header>
+<ul class="guia-lista">
+  {% for o in guias %}<li><a href="{{ guia_ruta(o.slug) }}"><h2>{{ o.titulo }}</h2><p>{{ o.resumen }}</p><span>Leer la guía →</span></a></li>
+  {% endfor %}
+</ul>
+<aside class="guia-cta">
+  <h2>¿Preferís que te lo diga Lumo?</h2>
+  <p>Lumo lee tus Product Ads y te dice, campaña por campaña, qué mejorar primero. Sin planillas ni jerga.</p>
+  <a class="btn" href="/#precio">Probar Lumo {{ trial_days }} días gratis</a>
+</aside>
+{% endblock %}

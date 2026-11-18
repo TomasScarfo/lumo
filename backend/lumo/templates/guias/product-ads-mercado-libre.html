@@ -1,0 +1,52 @@
+{% extends "guias/base.html" %}
+{% block cuerpo %}
+<article>
+<header class="guia-head">
+  <span class="kicker">Guía · Product Ads</span>
+  <h1>Cómo funciona Product Ads de Mercado Libre</h1>
+  <p class="bajada">Product Ads es la publicidad de tus publicaciones dentro de Mercado Libre. Acá va lo esencial: dónde aparecen tus anuncios, cuánto pagás y qué números mirar para saber si te conviene.</p>
+</header>
+
+<h2>Qué es Product Ads</h2>
+<p>Product Ads (parte de Mercado Ads) te deja mostrar tus publicaciones en lugares destacados de Mercado Libre: entre los resultados de búsqueda y en las páginas de otros productos. El anuncio es tu propia publicación, con una marca que indica que es publicidad. Quien hace clic llega directo a ella.</p>
+
+<h2>Cuánto pagás</h2>
+<p>Pagás <b>por clic</b>: cada vez que alguien toca tu anuncio. Mostrarlo no cuesta nada. Cuánto cuesta cada clic depende de la competencia por esa búsqueda y del ROAS objetivo de tu campaña. Vos ponés el <b>presupuesto</b> y Mercado Libre no gasta más que eso.</p>
+
+<h2>Campañas, presupuesto y ROAS objetivo</h2>
+<p>Tus publicaciones se agrupan en <b>campañas</b>. Cada campaña tiene dos perillas principales:</p>
+<ul>
+  <li><b>Presupuesto:</b> cuánto estás dispuesto a invertir.</li>
+  <li><b>ROAS objetivo:</b> cuántos pesos querés vender por cada peso de publicidad. Mercado Libre ajusta lo que ofrece por cada clic para acercarse a ese número.</li>
+</ul>
+<p>Un ROAS objetivo alto cuida la rentabilidad pero muestra menos tus anuncios; uno bajo te da más visibilidad a cambio de pagar más por venta. Para elegirlo, empezá por <a href="{{ guia_ruta('roas-mercado-libre') }}">tu ROAS mínimo</a>.</p>
+
+<h2>Las métricas que vas a ver</h2>
+<table class="tabla">
+  <thead><tr><th>Métrica</th><th>Qué te dice</th></tr></thead>
+  <tbody>
+    <tr><td>Impresiones</td><td>Cuántas veces se mostró tu anuncio.</td></tr>
+    <tr><td>Clics</td><td>Cuántas veces lo tocaron. Es lo que pagás.</td></tr>
+    <tr><td>CTR</td><td>Clics ÷ impresiones. Si es bajo, el anuncio no atrae: revisá foto, título y precio.</td></tr>
+    <tr><td>CPC</td><td>Costo por clic: inversión ÷ clics.</td></tr>
+    <tr><td>Inversión</td><td>Lo que gastaste en publicidad en el período.</td></tr>
+    <tr><td>Ventas por publicidad</td><td>Lo que vendiste después de un clic en tus anuncios: el producto del anuncio u otro tuyo.</td></tr>
+    <tr><td>ROAS</td><td>Ventas por publicidad ÷ inversión. Cuánto vendés por cada peso.</td></tr>
+    <tr><td>ACOS</td><td>Inversión ÷ ventas por publicidad. Qué parte de cada venta se fue en anuncios. <a href="{{ guia_ruta('acos-mercado-libre') }}">Cómo bajarlo</a>.</td></tr>
+  </tbody>
+</table>
+<p class="nota">Mercado Libre actualiza estas métricas una vez por día y deja consultar los últimos 90 días. Si querés comparar contra meses anteriores, tenés que ir guardando tus números.</p>
+
+<h2>Cómo empezar bien</h2>
+<ol>
+  <li><b>Elegí publicaciones que ya venden.</b> La publicidad amplifica: una publicación con buenas fotos, buen precio y opiniones convierte mejor los clics.</li>
+  <li><b>Revisá el stock.</b> Pagar clics por un producto que se queda sin unidades es tirar plata.</li>
+  <li><b>Separá por margen.</b> Productos con márgenes parecidos en la misma campaña, así un solo ROAS objetivo tiene sentido.</li>
+  <li><b>Poné el ROAS objetivo por encima de tu mínimo</b> y un presupuesto que puedas sostener. Para calcularlo, mirá <a href="{{ guia_ruta('presupuesto-publicidad-mercado-libre') }}">cuánto invertir</a>.</li>
+  <li><b>Esperá una o dos semanas</b> antes de sacar conclusiones, y después revisá campaña por campaña y publicación por publicación.</li>
+</ol>
+
+<h2>En resumen</h2>
+<p>Product Ads muestra tus publicaciones en lugares destacados y cobra por clic. Vos manejás el presupuesto y el ROAS objetivo de cada campaña; Mercado Libre ajusta el resto. Para saber si te conviene, compará el ROAS de cada campaña con tu ROAS mínimo.</p>
+</article>
+{% endblock %}

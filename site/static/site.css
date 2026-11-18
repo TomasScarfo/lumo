@@ -507,3 +507,38 @@ section.block .feats .card p { font-size: .86rem; line-height: 1.4; }
 .plan-list { list-style: none; margin: 12px 0 18px; padding: 0; display: grid; gap: 6px; color: var(--ink-2); font-size: .9rem; }
 .plan-list li { display: flex; gap: 8px; }
 .plan-list li::before { content: "✓"; color: var(--good); font-weight: 800; flex: none; }
+
+/* Guías: una columna de lectura, cómoda en el celular. */
+.guia { max-width: 760px; margin: 0 auto; padding: 24px 20px 40px; }
+.migas { font-size: .88rem; color: var(--ink-3); margin-bottom: 22px; }
+.migas a { color: var(--ink-2); }
+.guia-head { margin-bottom: 30px; }
+.guia h1 { font-size: clamp(1.9rem, 4.6vw, 2.8rem); font-weight: 800; }
+.guia .bajada { margin-top: 14px; color: var(--ink-2); font-size: 1.12rem; }
+.guia article h2 { font-size: clamp(1.3rem, 3vw, 1.6rem); font-weight: 800; margin: 36px 0 10px; }
+.guia article h3 { font-size: 1.1rem; font-weight: 700; margin: 22px 0 6px; }
+.guia article p + p, .guia article p + ul, .guia article p + ol, .guia article ul + p { margin-top: 12px; }
+.guia article ul, .guia article ol { padding-left: 22px; margin: 10px 0 0; }
+.guia article li + li { margin-top: 8px; }
+.guia .formula { margin: 16px 0; padding: 14px 18px; background: var(--accent-soft); border-radius: 12px; font-weight: 700; color: var(--ink); }
+.guia .nota { margin: 18px 0; padding: 14px 18px; border-left: 4px solid var(--accent); background: var(--surface); border-radius: 0 12px 12px 0; color: var(--ink-2); }
+.tabla { width: 100%; border-collapse: collapse; margin: 18px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: .95rem; }
+.tabla caption { text-align: left; color: var(--ink-3); font-size: .88rem; padding-bottom: 8px; }
+.tabla th, .tabla td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tabla th { background: var(--surface-2); font-weight: 700; }
+.tabla tr:last-child td { border-bottom: 0; }
+.guia-cta { margin-top: 44px; padding: 28px 24px; border-radius: 20px; background: var(--accent); color: var(--accent-ink); }
+.guia-cta h2 { font-size: 1.45rem; font-weight: 800; }
+.guia-cta p { margin: 10px 0 20px; opacity: .92; }
+.guia-cta .btn { background: var(--accent-ink); color: var(--accent); }
+.guia-mas { margin-top: 40px; }
+.guia-mas h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 12px; }
+.guia-mas ul, .guia-lista { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.guia-mas a, .guia-lista a { display: block; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; text-decoration: none; color: var(--ink); transition: border-color .12s; }
+.guia-mas a:hover, .guia-lista a:hover { border-color: var(--accent); }
+.guia-mas b { display: block; }
+.guia-mas span { display: block; color: var(--ink-2); font-size: .93rem; margin-top: 2px; }
+.guia-lista h2, .guia-lista h3 { font-size: 1.15rem; font-weight: 800; }
+.guia-lista p { color: var(--ink-2); margin-top: 6px; }
+.guia-lista span { display: inline-block; margin-top: 10px; color: var(--accent); font-weight: 700; font-size: .93rem; }
+@media (min-width: 640px) { .guia-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

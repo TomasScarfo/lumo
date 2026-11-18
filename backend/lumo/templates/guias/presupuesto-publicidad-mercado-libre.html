@@ -1,0 +1,52 @@
+{% extends "guias/base.html" %}
+{% block cuerpo %}
+<article>
+<header class="guia-head">
+  <span class="kicker">Guía · Presupuesto</span>
+  <h1>Cuánto invertir en publicidad en Mercado Libre</h1>
+  <p class="bajada">No hay un número mágico, pero sí una forma ordenada de calcularlo: desde tu margen y desde cuánto querés vender. Acá va paso a paso, con un ejemplo.</p>
+</header>
+
+<h2>Paso 1: calculá tu margen antes de publicidad</h2>
+<p>Tomá el precio de venta y restale el costo del producto, la comisión de Mercado Libre, el envío y los impuestos. Lo que queda, dividido por el precio, es tu margen.</p>
+<p>Ejemplo: vendés a <b>$20.000</b> y te quedan <b>$5.000</b> después de todos esos costos. Tu margen es <b>25%</b>, y tu ROAS mínimo es 1 ÷ 0,25 = <b>4</b>. Más detalle en <a href="{{ guia_ruta('roas-mercado-libre') }}">la guía del ROAS</a>.</p>
+
+<h2>Paso 2: definí cuánto querés vender con publicidad</h2>
+<p>Pensalo en ventas extra por mes. Por ejemplo: querés sumar <b>$1.500.000</b> por mes en ventas por publicidad.</p>
+
+<h2>Paso 3: estimá tu ROAS</h2>
+<p>Si ya tenés campañas, usá tu ROAS de los últimos 30 días. Si recién empezás, usá un ROAS objetivo prudente, por encima de tu mínimo. En el ejemplo, apuntamos a un ROAS de <b>6</b>.</p>
+
+<h2>Paso 4: hacé la cuenta</h2>
+<p class="formula">Inversión mensual = ventas buscadas ÷ ROAS esperado</p>
+<p class="formula">$1.500.000 ÷ 6 = $250.000 por mes ≈ $8.300 por día</p>
+<p>Y la verificación que no hay que saltear: con un margen del 25%, esas ventas te dejan $375.000 antes de publicidad. Menos $250.000 de inversión, te quedan <b>$125.000</b> de ganancia extra. Si la cuenta da negativa, el objetivo de ventas o el ROAS esperado no cierran: bajá uno de los dos.</p>
+
+<table class="tabla">
+  <caption>Mismo objetivo de ventas ($1.500.000 por mes), distintos ROAS</caption>
+  <thead><tr><th>ROAS</th><th>Inversión por mes</th><th>Ganancia con 25% de margen</th></tr></thead>
+  <tbody>
+    <tr><td>4</td><td>$375.000</td><td>$0</td></tr>
+    <tr><td>5</td><td>$300.000</td><td>$75.000</td></tr>
+    <tr><td>6</td><td>$250.000</td><td>$125.000</td></tr>
+    <tr><td>8</td><td>$187.500</td><td>$187.500</td></tr>
+  </tbody>
+</table>
+
+<h2>Cuándo subir el presupuesto</h2>
+<ul>
+  <li>La campaña está <b>por encima de su ROAS objetivo</b> y <b>se queda sin presupuesto</b> antes de terminar el día: hay ventas rentables que te estás perdiendo. Subilo de a poco, por ejemplo un 10% a 20%.</li>
+  <li>Se viene una fecha fuerte (Hot Sale, Black Friday, Cyber Monday, Navidad): subilo unos días antes, cuando la gente empieza a buscar.</li>
+</ul>
+
+<h2>Cuándo bajarlo</h2>
+<ul>
+  <li>La campaña lleva <b>dos semanas o más por debajo de tu ROAS mínimo</b>, aun después de sacar las publicaciones que no venden.</li>
+  <li>Te estás quedando <b>sin stock</b> de los productos que más gastan.</li>
+</ul>
+<p class="nota">Antes de bajar el presupuesto de una campaña que no rinde, probá subir su ROAS objetivo y limpiar las publicaciones que gastan sin vender. Muchas veces el problema no es cuánto gastás sino en qué.</p>
+
+<h2>En resumen</h2>
+<p>Partí de tu margen, definí cuánto querés vender, dividí por el ROAS que esperás y verificá que te quede ganancia. Después, movés el presupuesto según los números: más donde rinde y se queda corto, menos donde no llega a tu mínimo.</p>
+</article>
+{% endblock %}

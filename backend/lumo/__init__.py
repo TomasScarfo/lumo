@@ -18,7 +18,7 @@ from sqlalchemy.pool import StaticPool
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from . import access, ads, audit, billing, cuenta, exportar, history, meta, ml, notify, privacy, security, usuarios
+from . import access, ads, audit, billing, cuenta, exportar, guias, history, meta, ml, notify, privacy, security, usuarios
 from .models import Access, Account, AuditLog, Base, Invite, Notice, PanelState, Snapshot, Subscription, User, utcnow
 from .tokens import NeedsReconnect, save_tokens, valid_access_token
 
@@ -28,6 +28,7 @@ SNAPSHOT_TTL = timedelta(hours=3)  # Mercado Libre actualiza los datos una vez a
 MIN_REFRESH = timedelta(minutes=10)  # tope para el botón "Actualizar"
 MAX_STATE_BYTES = 200_000
 MAX_REQUEST_BYTES = 1_000_000
+PUBLIC_URL = "https://lumoads.com.ar"  # dirección pública de la portada: la canónica para Google y la de las imágenes al compartir
 TERMS_UPDATED = "10 de noviembre de 2026"  # cambiar cuando cambien los términos y condiciones
 ACTIVITY_PAGE = 20  # filas por página en la actividad de /admin
 SESSION_DAYS = 30
@@ -139,6 +140,7 @@ def create_app(overrides=None) -> Flask:
         if prod and cfg[name] and len(cfg[name]) < minimum:
             log.error("%s es demasiado corta (menos de %d caracteres): reemplazala por un valor largo y aleatorio", name, minimum)
     app = Flask(__name__)
+    app.jinja_env.globals.update(public_url=PUBLIC_URL, guia_ruta=guias.ruta, guias=guias.GUIAS)
     app.config["SECRET_KEY"] = cfg["SECRET_KEY"] or secrets.token_hex(32)
     app.config["SESSION_COOKIE_SECURE"] = prod
     app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -890,6 +892,24 @@ def create_app(overrides=None) -> Flask:
         return redirect("/admin#accesos")
 
     # ---------- Privacidad: transparencia, descarga y borrado de los propios datos ----------
+    def guia_page(slug=None):
+        """Las guías se sirven igual que en la portada estática (build_site.py las genera con esta misma función)."""
+        g = guias.POR_SLUG.get(slug) if slug else None
+        if slug and g is None:
+            abort(404)
+        datos = {"guia": g, "titulo": g["titulo"] if g else "Guías de publicidad en Mercado Libre",
+                 "descripcion": g["descripcion"] if g else "Guías simples de Product Ads de Mercado Libre: ROAS, ACOS, presupuesto y cómo mejorar tus campañas.",
+                 "trial_days": billing.trial_days(cfg), "gtm": security.GTM_ID}
+        return render_template("guias/%s.html" % (slug or "index"), **datos)
+    app.extensions["lumo_guia"] = guia_page
+
+    @app.get("/guias/")
+    @app.get("/guias/<slug>/")
+    def guia(slug=None):
+        resp = Response(guia_page(slug), mimetype="text/html")
+        resp.headers["Content-Security-Policy"] = security.with_gtm(security.CSP)
+        return resp
+
     @app.get("/privacidad")
     def privacidad():
         uid = _current_user()

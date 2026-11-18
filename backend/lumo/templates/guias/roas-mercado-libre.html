@@ -1,0 +1,57 @@
+{% extends "guias/base.html" %}
+{% block cuerpo %}
+<article>
+<header class="guia-head">
+  <span class="kicker">Guía · ROAS</span>
+  <h1>Qué es el ROAS en Mercado Libre y cómo calcularlo</h1>
+  <p class="bajada">El ROAS te dice cuánto vendés por cada peso que ponés en publicidad. Es el número más útil de Product Ads, siempre que lo compares con el correcto: tu ROAS mínimo.</p>
+</header>
+
+<h2>Qué es el ROAS</h2>
+<p>ROAS viene del inglés <i>Return On Ad Spend</i>: retorno de la inversión en publicidad. En Mercado Libre mide cuántos pesos vendiste con tus anuncios de Product Ads por cada peso que invertiste en ellos.</p>
+<p class="formula">ROAS = ventas por publicidad ÷ inversión en publicidad</p>
+
+<h2>Un ejemplo</h2>
+<p>En la última semana invertiste <b>$50.000</b> en una campaña y Mercado Libre te atribuye <b>$250.000</b> en ventas por publicidad.</p>
+<p class="formula">$250.000 ÷ $50.000 = ROAS de 5</p>
+<p>Quiere decir que por cada $1 que pusiste en publicidad vendiste $5. Ojo: son <b>ventas</b>, no ganancia. De esos $5 todavía tenés que pagar el producto, la comisión, el envío y los impuestos.</p>
+
+<h2>El número que importa: tu ROAS mínimo</h2>
+<p>Un ROAS de 5 puede ser excelente para un producto y una pérdida para otro. Depende de cuánto te queda de cada venta <b>antes</b> de pagar publicidad: tu margen.</p>
+<p>Supongamos que vendés un producto a <b>$20.000</b>. Pagás $9.000 de costo, $3.000 de comisión de Mercado Libre, $2.000 de envío y $1.000 de impuestos. Te quedan <b>$5.000</b>, un margen del 25%.</p>
+<p class="formula">ROAS mínimo = 1 ÷ margen = 1 ÷ 0,25 = 4</p>
+<p>Con un ROAS de 4, toda la ganancia de esas ventas se va en publicidad: salís hecho. Por encima de 4 ganás plata con cada venta por publicidad; por debajo, la perdés.</p>
+
+<table class="tabla">
+  <caption>ROAS mínimo según tu margen antes de publicidad</caption>
+  <thead><tr><th>Margen</th><th>ROAS mínimo</th><th>ACOS máximo</th></tr></thead>
+  <tbody>
+    <tr><td>50%</td><td>2</td><td>50%</td></tr>
+    <tr><td>33%</td><td>3</td><td>33%</td></tr>
+    <tr><td>25%</td><td>4</td><td>25%</td></tr>
+    <tr><td>20%</td><td>5</td><td>20%</td></tr>
+    <tr><td>10%</td><td>10</td><td>10%</td></tr>
+  </tbody>
+</table>
+<p class="nota">Si tus productos tienen márgenes muy distintos, conviene separarlos en campañas distintas. Un mismo ROAS no puede ser bueno para un producto con 50% de margen y para otro con 15%.</p>
+
+<h2>El ROAS objetivo de tus campañas</h2>
+<p>En Product Ads cada campaña tiene un <b>ROAS objetivo</b>. Mercado Libre ajusta cuánto ofrece por cada clic para acercarse a ese número:</p>
+<ul>
+  <li><b>Un objetivo más alto</b> cuida la rentabilidad: gastás menos por venta, pero tus anuncios aparecen menos.</li>
+  <li><b>Un objetivo más bajo</b> te da más visibilidad: aparecés más y podés vender más, pero cada venta te cuesta más publicidad.</li>
+</ul>
+<p>La regla práctica: <b>nunca pongas un ROAS objetivo por debajo de tu ROAS mínimo</b>, salvo que estés empujando un producto nuevo a propósito y por un tiempo corto.</p>
+
+<h2>Cómo leer tu ROAS sin equivocarte</h2>
+<ul>
+  <li><b>Mirá al menos 7 días.</b> Un día suelto no dice mucho: las ventas por publicidad varían bastante de un día a otro.</li>
+  <li><b>Compará contra el período anterior.</b> Un ROAS de 4 que viene de 6 cuenta otra historia que uno que viene de 3.</li>
+  <li><b>Miralo por campaña y por publicación.</b> Un ROAS total bueno puede esconder publicaciones que gastan sin vender.</li>
+  <li><b>No cambies todo todos los días.</b> Mercado Libre actualiza las métricas una vez por día; dale a cada cambio una o dos semanas.</li>
+</ul>
+
+<h2>En resumen</h2>
+<p>El ROAS es cuánto vendés por cada peso de publicidad. Calculá tu ROAS mínimo con tu margen, usalo de piso para el ROAS objetivo de cada campaña y revisá campaña por campaña cuáles están por encima y cuáles por debajo.</p>
+</article>
+{% endblock %}

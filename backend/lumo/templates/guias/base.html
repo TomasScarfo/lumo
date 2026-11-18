@@ -1,0 +1,90 @@
+<!doctype html>
+{# Base de las guías (y de su índice). Cada guía define titulo, descripcion y el bloque "cuerpo".
+   Los botones llevan a los planes de la portada: así no hace falta despertar la app desde acá. #}
+{% set canonica = public_url ~ (guia_ruta(guia.slug) if guia else guia_ruta()) %}
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ titulo }} · Lumo</title>
+<meta name="description" content="{{ descripcion }}">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<link rel="canonical" href="{{ canonica }}">
+<meta property="og:site_name" content="Lumo">
+<meta property="og:locale" content="es_AR">
+<meta property="og:type" content="{{ 'article' if guia else 'website' }}">
+<meta property="og:url" content="{{ canonica }}">
+<meta property="og:title" content="{{ titulo }}">
+<meta property="og:description" content="{{ descripcion }}">
+<meta property="og:image" content="{{ public_url }}/static/logo.png">
+<meta property="og:image:alt" content="Logo de Lumo: un amanecer blanco sobre fondo azul">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#2446D6">
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/logo.png">
+{% set migas = [{"@type": "ListItem", "position": 1, "name": "Inicio", "item": public_url ~ "/"},
+                {"@type": "ListItem", "position": 2, "name": "Guías", "item": public_url ~ guia_ruta()}] %}
+{% if guia %}{% set _ = migas.append({"@type": "ListItem", "position": 3, "name": guia.corto, "item": canonica}) %}{% endif %}
+{% set grafo = [{"@type": "BreadcrumbList", "itemListElement": migas}] %}
+{% if guia %}{% set _ = grafo.append({"@type": "Article", "headline": guia.titulo, "description": guia.descripcion, "inLanguage": "es-AR",
+    "mainEntityOfPage": canonica, "datePublished": guia.publicada, "dateModified": guia.get("actualizada", guia.publicada),
+    "image": public_url ~ "/static/logo.png",
+    "author": {"@type": "Organization", "name": "Lumo", "url": public_url ~ "/"},
+    "publisher": {"@type": "Organization", "name": "Lumo", "url": public_url ~ "/", "logo": {"@type": "ImageObject", "url": public_url ~ "/static/logo.png"}}}) %}{% endif %}
+<script type="application/ld+json">{{ {"@context": "https://schema.org", "@graph": grafo}|tojson }}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+{% if gtm %}
+<script async src="https://www.googletagmanager.com/gtm.js?id={{ gtm }}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+</script>
+{% endif %}
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="/" aria-label="Lumo, inicio"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
+    <nav class="links" aria-label="Secciones"><a href="/#que-hace">Qué hace</a><a href="{{ guia_ruta() }}">Guías</a><a href="/#precio">Planes</a></nav>
+    <div class="nav-cta"><a class="btn sm" href="/#precio">Probar gratis</a></div>
+  </div>
+</header>
+
+<main id="main" class="guia">
+  <nav class="migas" aria-label="Estás en"><a href="/">Inicio</a> <span aria-hidden="true">›</span> {% if guia %}<a href="{{ guia_ruta() }}">Guías</a> <span aria-hidden="true">›</span> <span aria-current="page">{{ guia.corto }}</span>{% else %}<span aria-current="page">Guías</span>{% endif %}</nav>
+  {% block cuerpo %}{% endblock %}
+
+  {% if guia %}
+  <aside class="guia-cta">
+    <h2>Mirá tus campañas así, sin hacer cuentas</h2>
+    <p>Lumo lee tus Product Ads y te muestra el ROAS, el ACOS y qué mejorar primero en cada campaña, con palabras simples. Solo consulta tus datos: los cambios los hacés vos.</p>
+    <a class="btn" href="/#precio">Probar Lumo {{ trial_days }} días gratis</a>
+  </aside>
+
+  <section class="guia-mas" aria-labelledby="mas-guias">
+    <h2 id="mas-guias">Otras guías</h2>
+    <ul>
+      {% for o in guias if o.slug != guia.slug %}<li><a href="{{ guia_ruta(o.slug) }}"><b>{{ o.titulo }}</b><span>{{ o.resumen }}</span></a></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <a class="logo" href="/" style="font-size:1.1rem"><img src="/static/logo.svg" alt="" width="28" height="28">Lumo</a>
+      <nav aria-label="Pie"><a href="/">Inicio</a> · <a href="{{ guia_ruta() }}">Guías</a> · <a href="/#precio">Planes</a> · <a href="/#preguntas">Preguntas</a></nav>
+    </div>
+    <p>Lumo es una herramienta independiente: no está afiliada ni respaldada por Mercado Libre. Mercado Libre y Mercado Ads son marcas de sus respectivos titulares. Las guías son orientativas: cada negocio tiene sus propios costos y márgenes.</p>
+    <p>© 2026 Lumo</p>
+  </div>
+</footer>
+</body>
+</html>
