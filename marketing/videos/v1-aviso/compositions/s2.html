@@ -71,36 +71,36 @@
   <script>
     const tl = gsap.timeline({ paused: true });
     // el mail aparece sobre el mismo color de la pantalla del celular
-    tl.fromTo("#s2-from, #s2-sample", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.05);
-    tl.fromTo("#s2-subject", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25, ease: "power4.out" }, 0.149);
-    tl.fromTo("#s2-item", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.55, ease: "expo.out" }, 0.361);
+    tl.fromTo("#s2-from, #s2-sample", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.053);
+    tl.fromTo("#s2-subject", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25, ease: "power4.out" }, 0.159);
+    tl.fromTo("#s2-item", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.55, ease: "expo.out" }, 0.377);
     tl.set("#s2-rec, #s2-camp", { opacity: 0 }, 0);
     // "Lumo lo detectó": la línea se marca en verde
-    tl.to("#s2-item-glow", { opacity: 1, duration: 0.2, ease: "power2.out" }, 0.713);
-    tl.fromTo("#s2-item", { scale: 1 }, { scale: 1.04, duration: 0.3, ease: "back.out(2.5)" }, 0.713);
-    tl.to("#s2-item", { scale: 1, duration: 0.25, ease: "power2.out" }, 0.987);
+    tl.to("#s2-item-glow", { opacity: 1, duration: 0.2, ease: "power2.out" }, 0.729);
+    tl.fromTo("#s2-item", { scale: 1 }, { scale: 1.04, duration: 0.3, ease: "back.out(2.5)" }, 0.729);
+    tl.to("#s2-item", { scale: 1, duration: 0.25, ease: "power2.out" }, 1.002);
     // el mail se va y la publicación sube: ahora es una recomendación
-    tl.to("#s2-from, #s2-subject", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in", stagger: 0.04 }, 1.573);
-    tl.to("#s2-item", { y: -390, duration: 0.6, ease: "expo.out" }, 1.652);
-    tl.set("#s2-rec", { opacity: 1 }, 1.847);
-    tl.fromTo("#s2-rec", { clipPath: "inset(0% 100% 0% 0% round 36px)" }, { clipPath: "inset(0% 0% 0% 0% round 36px)", duration: 0.5, ease: "power3.out" }, 1.847);
-    tl.fromTo("#s2-rec .text", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 2.004);
+    tl.to("#s2-from, #s2-subject", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in", stagger: 0.04 }, 1.589);
+    tl.to("#s2-item", { y: -390, duration: 0.6, ease: "expo.out" }, 1.667);
+    tl.set("#s2-rec", { opacity: 1 }, 1.863);
+    tl.fromTo("#s2-rec", { clipPath: "inset(0% 100% 0% 0% round 36px)" }, { clipPath: "inset(0% 0% 0% 0% round 36px)", duration: 0.5, ease: "power3.out" }, 1.863);
+    tl.fromTo("#s2-rec .text", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 2.019);
     tl.set("#s2-done", { opacity: 0 }, 0);
-    tl.fromTo("#s2-camp", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 2.396);
+    tl.fromTo("#s2-camp", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 2.413);
     // la publicación viaja a la campaña
-    tl.set("#s2-chip", { opacity: 1 }, 3.205);
-    tl.to("#s2-chip", { keyframes: [{ x: 300, y: -60, scale: 0.8, duration: 0.3, ease: "power2.out" }, { x: 760, y: 590, scale: 0.45, duration: 0.45, ease: "power2.in" }] }, 3.205);
-    tl.to("#s2-chip", { opacity: 0, duration: 0.08 }, 3.812);
-    tl.fromTo("#s2-camp", { scale: 1 }, { scale: 1.035, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1 }, 3.812);
-    tl.to("#s2-count-in", { y: -40, duration: 0.3, ease: "back.out(2)" }, 3.853);
+    tl.set("#s2-chip", { opacity: 1 }, 3.231);
+    tl.to("#s2-chip", { keyframes: [{ x: 300, y: -60, scale: 0.8, duration: 0.3, ease: "power2.out" }, { x: 760, y: 590, scale: 0.45, duration: 0.45, ease: "power2.in" }] }, 3.231);
+    tl.to("#s2-chip", { opacity: 0, duration: 0.08 }, 3.845);
+    tl.fromTo("#s2-camp", { scale: 1 }, { scale: 1.035, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1 }, 3.845);
+    tl.to("#s2-count-in", { y: -40, duration: 0.3, ease: "back.out(2)" }, 3.885);
     // tarea hecha
-    tl.fromTo("#s2-done", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.4)" }, 4.338);
+    tl.fromTo("#s2-done", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.4)" }, 4.376);
     // "la que mejor rinde": el ROAS de la campaña se marca
-    tl.fromTo("#s2-camp .roas b", { color: "#13202C", scale: 1 }, { color: "#146C43", scale: 1.15, duration: 0.25, ease: "back.out(2.4)", transformOrigin: "100% 50%" }, 4.945);
+    tl.fromTo("#s2-camp .roas b", { color: "#13202C", scale: 1 }, { color: "#146C43", scale: 1.15, duration: 0.25, ease: "back.out(2.4)", transformOrigin: "100% 50%" }, 4.99);
     // salida: la cámara se aleja
     // salida: el mail vuelve al celular (la pantalla se achica hasta el celular de la vendedora, que ya está detrás)
-    tl.to("#s2-stage", { opacity: 0, filter: "blur(6px)", duration: 0.2, ease: "power2.in" }, 5.269);
-    tl.fromTo("#s2-bg", { clipPath: "inset(0px 0px 0px 0px round 0px)" }, { clipPath: "inset(564px 134px 584px 574px round 50px)", duration: 0.5, ease: "power3.inOut" }, 5.39);
+    tl.to("#s2-stage", { opacity: 0, filter: "blur(6px)", duration: 0.2, ease: "power2.in" }, 5.317);
+    tl.fromTo("#s2-bg", { clipPath: "inset(0px 0px 0px 0px round 0px)" }, { clipPath: "inset(564px 134px 584px 574px round 50px)", duration: 0.5, ease: "power3.inOut" }, 5.44);
     window.__timelines["s2"] = tl;
   </script>
 </template>

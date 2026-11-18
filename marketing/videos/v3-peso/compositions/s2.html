@@ -30,12 +30,12 @@
   </div>
   <script>
     const tl = gsap.timeline({ paused: true });
-    tl.fromTo("#s2-badge", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2.2)" }, 0.109);
-    tl.fromTo("#s2-card", { opacity: 0, scale: 1.08, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 0.055);
+    tl.fromTo("#s2-badge", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2.2)" }, 0.107);
+    tl.fromTo("#s2-card", { opacity: 0, scale: 1.08, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 0.054);
     // "vendiste tres con ochenta": el número sube como un contador
-    tl.to("#s2-num-in", { keyframes: [{ y: -230, duration: 0.18 }, { y: -460, duration: 0.18 }, { y: -690, duration: 0.3, ease: "back.out(2)" }], ease: "power2.inOut" }, 2.902);
-    tl.fromTo("#s2-kpis div", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out", stagger: 0.12 }, 3.495);
-    tl.to("#s2-card, #s2-sample", { opacity: 0, y: -40, filter: "blur(6px)", duration: 0.3, ease: "power3.in" }, 4.569);
+    tl.to("#s2-num-in", { keyframes: [{ y: -230, duration: 0.18 }, { y: -460, duration: 0.18 }, { y: -690, duration: 0.3, ease: "back.out(2)" }], ease: "power2.inOut" }, 3.019);
+    tl.fromTo("#s2-kpis div", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "expo.out", stagger: 0.12 }, 3.595);
+    tl.to("#s2-card, #s2-sample", { opacity: 0, y: -40, filter: "blur(6px)", duration: 0.3, ease: "power3.in" }, 4.638);
     window.__timelines["s2"] = tl;
   </script>
 </template>

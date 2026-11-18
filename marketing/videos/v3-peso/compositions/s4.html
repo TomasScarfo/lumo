@@ -20,7 +20,7 @@
       <rect id="s4-line" x="158" y="688" width="684" height="64" rx="32" fill="#fff"/>
     </svg>
     <div id="s4-name"><span>L</span><span>u</span><span>m</span><span>o</span></div>
-    <div id="s4-tag">Tu asistente de publicidad en Mercado Libre, para gastar mejor y vender más</div>
+    <div id="s4-tag">Tu asistente de publicidad en Mercado Libre, para invertir mejor y vender más</div>
     <div id="s4-cta">Probalo gratis 14 días</div>
     <div id="s4-url">lumoads.com.ar</div>
     <div id="s4-legal">Cifras de ejemplo. Lumo es independiente: no es un producto de Mercado Libre.</div>
@@ -30,16 +30,16 @@
     // el azul se abre desde el parche de Lumo
     tl.fromTo("#s4-flood", { clipPath: "circle(0px at 540px 560px)" }, { clipPath: "circle(2300px at 540px 560px)", duration: 0.6, ease: "power2.inOut" }, 0);
     // el amanecer: primero la línea, después sale el sol
-    tl.fromTo("#s4-line", { scaleX: 0, transformOrigin: "500px 720px" }, { scaleX: 1, duration: 0.45, ease: "expo.out" }, 0.214);
-    tl.fromTo("#s4-sun", { y: 300 }, { y: 0, duration: 0.8, ease: "expo.out" }, 0.569);
-    tl.fromTo("#s4-name span", { opacity: 0.25, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out", stagger: 0.08 }, 0.687);
+    tl.fromTo("#s4-line", { scaleX: 0, transformOrigin: "500px 720px" }, { scaleX: 1, duration: 0.45, ease: "expo.out" }, 0.2);
+    tl.fromTo("#s4-sun", { y: 300 }, { y: 0, duration: 0.8, ease: "expo.out" }, 0.595);
+    tl.fromTo("#s4-name span", { opacity: 0.25, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out", stagger: 0.08 }, 0.727);
     tl.set("#s4-name, #s4-tag, #s4-cta", { opacity: 0 }, 0);
     // botón y link: entran justo con "Probalo gratis" (sincronizar.py ajusta este momento a la voz)
-    tl.fromTo("#s4-url", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 5.204); // probalo+0.05
-    tl.fromTo("#s4-legal", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 5.554); // probalo+0.4
-    tl.set("#s4-name", { opacity: 1 }, 0.687);
-    tl.fromTo("#s4-tag", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 1.141);
-    tl.fromTo("#s4-cta", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 5.154); // probalo
+    tl.fromTo("#s4-url", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 4.920); // probalo+0.05
+    tl.fromTo("#s4-legal", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 5.270); // probalo+0.4
+    tl.set("#s4-name", { opacity: 1 }, 0.727);
+    tl.fromTo("#s4-tag", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 1.165);
+    tl.fromTo("#s4-cta", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 4.870); // probalo
     window.__timelines["s4"] = tl;
   </script>
 </template>

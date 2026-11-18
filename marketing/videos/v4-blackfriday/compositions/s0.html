@@ -1,0 +1,18 @@
+<template>
+  <style>
+    @font-face { font-family: "Bricolage Grotesque"; src: url("assets/fonts/BricolageGrotesque.ttf"); font-weight: 200 800; }
+    #root { position: absolute; inset: 0; pointer-events: none; }
+    #s0-marca { position: absolute; left: 44px; top: 176px; display: flex; align-items: center; gap: 14px; padding: 10px 22px 10px 10px;
+                border-radius: 22px; background: rgba(255, 255, 255, 0.92); box-shadow: 0 6px 18px rgba(19, 32, 44, 0.12);
+                font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 46px; letter-spacing: -0.02em; color: #13202C; }
+    #s0-marca img { width: 64px; height: 64px; border-radius: 16px; }
+  </style>
+  <div id="root" data-composition-id="s0" data-width="1080" data-height="1920">
+    <div id="s0-marca"><img src="assets/logo.svg" alt="">Lumo</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#s0-marca", { opacity: 0 }, { opacity: 1, duration: 0.01 }, 0);
+    window.__timelines["s0"] = tl;
+  </script>
+</template>

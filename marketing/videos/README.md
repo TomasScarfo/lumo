@@ -7,6 +7,7 @@ Tres Reels verticales (1080×1920, 30 fps), cada uno en dos versiones: con la ve
 | `lumo-video1-aviso` | Llega un aviso de Lumo: una publicación vende sola y conviene sumarla a la campaña. Después, el aviso de una que gasta y no vende. |
 | `lumo-video2-ganancia` | Le llueven siglas (ROAS, ACOS, CTR…). Lumo las ordena en campañas con su estado y recomienda qué hacer. |
 | `lumo-video3-peso` | Tira $1 a la publicidad. Lumo le dice cuánto volvió ($3,8) y qué hacer con cada presupuesto. |
+| `lumo-video4-blackfriday` | Se viene el Black Friday: en vez de subir el presupuesto a ciegas, Lumo dice dónde ponerlo, avisa durante la semana y compara cuánto dejó la promo. Sirve hasta el 27/11. |
 
 Voces: la versión de mujer del video 1 usa la voz que generaste en AI Studio. Las otras cinco salen de Gemini (voz Kore para la mujer y Charon para el hombre), con la clave guardada en `.env`, que no se sube a git. Cada versión está sincronizada con su propia voz.
 

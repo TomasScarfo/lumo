@@ -20,7 +20,7 @@
       <rect id="s3-line" x="158" y="688" width="684" height="64" rx="32" fill="#fff"/>
     </svg>
     <div id="s3-name"><span>L</span><span>u</span><span>m</span><span>o</span></div>
-    <div id="s3-tag">Tu asistente de publicidad en Mercado Libre, para gastar mejor y vender más</div>
+    <div id="s3-tag">Tu asistente de publicidad en Mercado Libre, para invertir mejor y vender más</div>
     <div id="s3-cta">Probalo gratis 14 días</div>
     <div id="s3-url">lumoads.com.ar</div>
     <div id="s3-legal">Cifras de ejemplo. Lumo es independiente: no es un producto de Mercado Libre.</div>
@@ -30,16 +30,16 @@
     // el azul se abre desde el parche de Lumo
     tl.fromTo("#s3-flood", { clipPath: "circle(0px at 540px 840px)" }, { clipPath: "circle(2300px at 540px 840px)", duration: 0.6, ease: "power2.inOut" }, 0);
     // el amanecer: primero la línea, después sale el sol
-    tl.fromTo("#s3-line", { scaleX: 0, transformOrigin: "500px 720px" }, { scaleX: 1, duration: 0.45, ease: "expo.out" }, 0.164);
-    tl.fromTo("#s3-sun", { y: 300 }, { y: 0, duration: 0.8, ease: "expo.out" }, 0.292);
-    tl.fromTo("#s3-name span", { opacity: 0.25, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out", stagger: 0.08 }, 0.335);
+    tl.fromTo("#s3-line", { scaleX: 0, transformOrigin: "500px 720px" }, { scaleX: 1, duration: 0.45, ease: "expo.out" }, 0.199);
+    tl.fromTo("#s3-sun", { y: 300 }, { y: 0, duration: 0.8, ease: "expo.out" }, 0.335);
+    tl.fromTo("#s3-name span", { opacity: 0.25, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out", stagger: 0.08 }, 0.38);
     tl.set("#s3-name, #s3-tag, #s3-cta", { opacity: 0 }, 0);
     // botón y link: entran justo con "Probalo gratis" (sincronizar.py ajusta este momento a la voz)
-    tl.fromTo("#s3-url", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 5.624); // probalo+0.05
-    tl.fromTo("#s3-legal", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 5.974); // probalo+0.4
-    tl.set("#s3-name", { opacity: 1 }, 0.335);
-    tl.fromTo("#s3-tag", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.791);
-    tl.fromTo("#s3-cta", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 5.574); // probalo
+    tl.fromTo("#s3-url", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out" }, 5.279); // probalo+0.05
+    tl.fromTo("#s3-legal", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 5.629); // probalo+0.4
+    tl.set("#s3-name", { opacity: 1 }, 0.38);
+    tl.fromTo("#s3-tag", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.807);
+    tl.fromTo("#s3-cta", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, 5.229); // probalo
     window.__timelines["s3"] = tl;
   </script>
 </template>

@@ -1,0 +1,5 @@
+# .media · 2 assets
+
+id         type   dur    dims   path                         description
+voice_003  voice  26.8s  —      assets/voice/voz-mujer.wav   ¿Hacés publicidad en Mercado Libre? Se viene el Black Friday. Antes de subir el presupuesto a ciegas, Lumo te muestra qué publicaciones venden y merecen más publicidad, y cuáles gastan sin vender. Durante la semana te avisa todos los días, y después comparás cuánto te dejó la promo. Lumo: tu asistente de publicidad en Mercado Libre, para invertir mejor y vender más. Probalo gratis 14 días.
+voice_004  voice  22.2s  —      assets/voice/voz-hombre.wav  ¿Hacés publicidad en Mercado Libre? Se viene el Black Friday. Antes de subir el presupuesto a ciegas, Lumo te muestra qué publicaciones venden y merecen más publicidad, y cuáles gastan sin vender. Durante la semana te avisa todos los días, y después comparás cuánto te dejó la promo. Lumo: tu asistente de publicidad en Mercado Libre, para invertir mejor y vender más. Probalo gratis 14 días.

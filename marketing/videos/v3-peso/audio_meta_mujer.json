@@ -15,42 +15,42 @@
     {
       "id": "voz-mujer",
       "path": "assets/voice/voz-mujer.wav",
-      "duration_s": 23.4,
+      "duration_s": 23.44,
       "words": [
         {
           "id": "w0",
           "text": "Por",
           "start": 0.19,
-          "end": 0.26
+          "end": 0.2
         },
         {
           "id": "w1",
           "text": "cada",
-          "start": 0.26,
-          "end": 0.37
+          "start": 0.2,
+          "end": 0.44
         },
         {
           "id": "w2",
           "text": "peso",
           "start": 0.44,
-          "end": 0.68
+          "end": 0.69
         },
         {
           "id": "w3",
           "text": "que",
-          "start": 0.8,
+          "start": 0.69,
           "end": 0.88
         },
         {
           "id": "w4",
           "text": "pones",
           "start": 0.88,
-          "end": 1.16
+          "end": 1.19
         },
         {
           "id": "w5",
           "text": "en",
-          "start": 1.23,
+          "start": 1.19,
           "end": 1.31
         },
         {
@@ -63,293 +63,305 @@
           "id": "w7",
           "text": "en",
           "start": 2,
-          "end": 2.16
+          "end": 2.14
         },
         {
           "id": "w8",
-          "text": "MercadoLibre,¿cuánto",
-          "start": 2.16,
-          "end": 3.83
+          "text": "Mercado",
+          "start": 2.14,
+          "end": 2.63
         },
         {
           "id": "w9",
-          "text": "vuelven",
-          "start": 3.83,
-          "end": 4.43
+          "text": "Libre,¿cuánto",
+          "start": 2.63,
+          "end": 3.61
         },
         {
           "id": "w10",
-          "text": "ventas?",
-          "start": 4.43,
-          "end": 5.24
+          "text": "vuelven",
+          "start": 3.61,
+          "end": 4.13
         },
         {
           "id": "w11",
-          "text": "Lumo",
-          "start": 5.49,
-          "end": 5.6
+          "text": "ventas?",
+          "start": 4.13,
+          "end": 4.84
         },
         {
           "id": "w12",
-          "text": "te",
-          "start": 5.68,
-          "end": 5.78
+          "text": "Lumo",
+          "start": 5.03,
+          "end": 5.14
         },
         {
           "id": "w13",
-          "text": "lo",
-          "start": 5.78,
-          "end": 5.92
+          "text": "te",
+          "start": 5.22,
+          "end": 5.35
         },
         {
           "id": "w14",
-          "text": "dice",
-          "start": 6.04,
-          "end": 6.3
+          "text": "lo",
+          "start": 5.35,
+          "end": 5.47
         },
         {
           "id": "w15",
-          "text": "en",
-          "start": 6.35,
-          "end": 6.5
+          "text": "dice",
+          "start": 5.51,
+          "end": 5.82
         },
         {
           "id": "w16",
-          "text": "una",
-          "start": 6.5,
-          "end": 6.77
+          "text": "en",
+          "start": 5.9,
+          "end": 6.03
         },
         {
           "id": "w17",
-          "text": "frase,",
-          "start": 6.77,
-          "end": 7.37
+          "text": "una",
+          "start": 6.03,
+          "end": 6.29
         },
         {
           "id": "w18",
-          "text": "por",
-          "start": 7.37,
-          "end": 7.53
+          "text": "frase.",
+          "start": 6.29,
+          "end": 6.82
         },
         {
           "id": "w19",
-          "text": "cada",
-          "start": 7.6,
-          "end": 7.81
+          "text": "Por",
+          "start": 7.02,
+          "end": 7.05
         },
         {
           "id": "w20",
-          "text": "peso",
-          "start": 7.81,
-          "end": 8.05
+          "text": "cada",
+          "start": 7.05,
+          "end": 7.36
         },
         {
           "id": "w21",
-          "text": "invertido",
-          "start": 8.05,
-          "end": 8.64
+          "text": "peso",
+          "start": 7.36,
+          "end": 7.67
         },
         {
           "id": "w22",
-          "text": "vendiste",
-          "start": 8.72,
-          "end": 9.44
+          "text": "invertido,",
+          "start": 7.67,
+          "end": 8.51
         },
         {
           "id": "w23",
-          "text": "3,80",
-          "start": 9.44,
-          "end": 10.56
+          "text": "vendiste",
+          "start": 8.57,
+          "end": 9.14
         },
         {
           "id": "w24",
-          "text": "y",
-          "start": 10.56,
-          "end": 10.65
+          "text": "3,80.",
+          "start": 9.14,
+          "end": 10.24
         },
         {
           "id": "w25",
-          "text": "campaña",
-          "start": 10.65,
-          "end": 11.24
+          "text": "Ycampaña",
+          "start": 10.29,
+          "end": 10.79
         },
         {
           "id": "w26",
           "text": "por",
-          "start": 11.31,
-          "end": 11.47
+          "start": 10.79,
+          "end": 10.98
         },
         {
           "id": "w27",
           "text": "campaña",
-          "start": 11.47,
-          "end": 11.92
+          "start": 10.98,
+          "end": 11.43
         },
         {
           "id": "w28",
           "text": "te",
-          "start": 11.92,
-          "end": 12.18
+          "start": 11.43,
+          "end": 11.56
         },
         {
           "id": "w29",
           "text": "recomienda",
-          "start": 12.18,
-          "end": 12.76
+          "start": 11.56,
+          "end": 12.2
         },
         {
           "id": "w30",
           "text": "que",
-          "start": 12.76,
-          "end": 12.96
+          "start": 12.2,
+          "end": 12.39
         },
         {
           "id": "w31",
           "text": "hacer,",
-          "start": 12.97,
-          "end": 13.46
+          "start": 12.39,
+          "end": 12.93
         },
         {
           "id": "w32",
           "text": "subir,",
-          "start": 13.46,
-          "end": 13.95
+          "start": 12.93,
+          "end": 13.5
         },
         {
           "id": "w33",
           "text": "mantener",
-          "start": 13.95,
-          "end": 14.51
+          "start": 13.57,
+          "end": 14.24
         },
         {
           "id": "w34",
           "text": "o",
-          "start": 14.52,
-          "end": 14.59
+          "start": 14.24,
+          "end": 14.3
         },
         {
           "id": "w35",
           "text": "bajar",
-          "start": 14.59,
-          "end": 14.88
+          "start": 14.3,
+          "end": 14.67
         },
         {
           "id": "w36",
           "text": "el",
-          "start": 14.88,
-          "end": 15.37
+          "start": 14.67,
+          "end": 14.79
         },
         {
           "id": "w37",
           "text": "presupuesto.",
-          "start": 15.37,
-          "end": 16.53
+          "start": 15.23,
+          "end": 15.88
         },
         {
           "id": "w38",
           "text": "Lumo,",
-          "start": 16.8,
-          "end": 16.94
+          "start": 16.08,
+          "end": 16.32
         },
         {
           "id": "w39",
           "text": "tu",
-          "start": 17.02,
-          "end": 17.15
+          "start": 16.32,
+          "end": 16.47
         },
         {
           "id": "w40",
           "text": "asistente",
-          "start": 17.15,
-          "end": 17.74
+          "start": 16.47,
+          "end": 17.11
         },
         {
           "id": "w41",
           "text": "de",
-          "start": 17.81,
-          "end": 17.93
+          "start": 17.15,
+          "end": 17.26
         },
         {
           "id": "w42",
           "text": "publicidad",
-          "start": 17.93,
-          "end": 18.66
+          "start": 17.31,
+          "end": 18.04
         },
         {
           "id": "w43",
           "text": "en",
-          "start": 18.66,
-          "end": 18.8
+          "start": 18.04,
+          "end": 18.19
         },
         {
           "id": "w44",
-          "text": "MercadoLibre",
-          "start": 18.8,
-          "end": 19.55
+          "text": "Mercado",
+          "start": 18.19,
+          "end": 18.71
         },
         {
           "id": "w45",
-          "text": "para",
-          "start": 19.55,
-          "end": 20.03
+          "text": "Libre,",
+          "start": 18.71,
+          "end": 19.14
         },
         {
           "id": "w46",
-          "text": "gastar",
-          "start": 20.03,
-          "end": 20.37
+          "text": "para",
+          "start": 19.15,
+          "end": 19.4
         },
         {
           "id": "w47",
-          "text": "mejor",
-          "start": 20.37,
-          "end": 20.72
+          "text": "invertir",
+          "start": 19.4,
+          "end": 19.93
         },
         {
           "id": "w48",
-          "text": "y",
-          "start": 20.72,
-          "end": 20.8
+          "text": "mejor",
+          "start": 19.93,
+          "end": 20.27
         },
         {
           "id": "w49",
-          "text": "vender",
-          "start": 20.8,
-          "end": 21.19
+          "text": "y",
+          "start": 20.27,
+          "end": 20.36
         },
         {
           "id": "w50",
-          "text": "más,",
-          "start": 21.24,
-          "end": 21.72
+          "text": "vender",
+          "start": 20.36,
+          "end": 20.85
         },
         {
           "id": "w51",
-          "text": "probálo",
-          "start": 21.85,
-          "end": 22.04
+          "text": "más.",
+          "start": 20.85,
+          "end": 21.36
         },
         {
           "id": "w52",
-          "text": "gratis",
-          "start": 22.29,
-          "end": 22.4
+          "text": "Prova",
+          "start": 21.56,
+          "end": 21.66
         },
         {
           "id": "w53",
-          "text": "14",
-          "start": 22.48,
-          "end": 22.9
+          "text": "lo",
+          "start": 21.74,
+          "end": 21.85
         },
         {
           "id": "w54",
+          "text": "gratis",
+          "start": 21.85,
+          "end": 22.27
+        },
+        {
+          "id": "w55",
+          "text": "14",
+          "start": 22.27,
+          "end": 22.69
+        },
+        {
+          "id": "w56",
           "text": "días.",
-          "start": 22.9,
+          "start": 22.69,
           "end": 23.2
         }
       ]
     }
   ],
   "sfx": [],
-  "total_duration_s": 23.4
+  "total_duration_s": 23.44
 }

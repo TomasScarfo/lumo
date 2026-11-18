@@ -47,13 +47,13 @@
     // empieza igual que terminó la escena 1; las otras dos campañas se van y Organizadores se abre en su recomendación
     tl.set("#s2-r1-ring", { opacity: 1 }, 0);
     tl.set("#s2-r3-ring", { opacity: 1 }, 0);
-    tl.to("#s2-r2, #s2-r3", { y: 260, opacity: 0, duration: 0.3, ease: "power3.in", stagger: 0.05 }, 0.123);
-    tl.fromTo("#s2-rec", { clipPath: "inset(0% 0% 100% 0% round 34px)" }, { clipPath: "inset(0% 0% 0% 0% round 34px)", duration: 0.55, ease: "power3.out" }, 0.329);
-    tl.fromTo("#s2-rec .title", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.493);
-    tl.fromTo("#s2-rec .body", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 0.699);
+    tl.to("#s2-r2, #s2-r3", { y: 260, opacity: 0, duration: 0.3, ease: "power3.in", stagger: 0.05 }, 0.149);
+    tl.fromTo("#s2-rec", { clipPath: "inset(0% 0% 100% 0% round 34px)" }, { clipPath: "inset(0% 0% 0% 0% round 34px)", duration: 0.55, ease: "power3.out" }, 0.398);
+    tl.fromTo("#s2-rec .title", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 0.596);
+    tl.fromTo("#s2-rec .body", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.out" }, 0.845);
     // "con tus números": las barras comparan el ROAS con el objetivo
-    tl.fromTo("#s2-bar-roas, #s2-bar-goal", { scaleX: 0, transformOrigin: "0% 50%" }, { scaleX: 1, duration: 0.6, ease: "expo.out", stagger: 0.15 }, 0.986);
-    tl.fromTo("#s2-plus", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.4)" }, 1.644);
+    tl.fromTo("#s2-bar-roas, #s2-bar-goal", { scaleX: 0, transformOrigin: "0% 50%" }, { scaleX: 1, duration: 0.6, ease: "expo.out", stagger: 0.15 }, 1.193);
+    tl.fromTo("#s2-plus", { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2.4)" }, 1.988);
     // salida: la tarjeta se queda y el azul del cierre se abre desde ella
     window.__timelines["s2"] = tl;
   </script>

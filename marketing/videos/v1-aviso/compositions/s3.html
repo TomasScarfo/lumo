@@ -126,53 +126,53 @@
     tl.set("#s3-fore-r", { rotation: -160, svgOrigin: "560 960" }, 0);
     tl.set("#s3-arm-r", { rotation: -6, svgOrigin: "515 690" }, 0);
     // guarda el celular (mano, brazo y celular bajan juntos) y aparece el frasco
-    tl.to("#s3-phone", { y: 1500, duration: 0.5, ease: "power3.in" }, 0.445);
+    tl.to("#s3-phone", { y: 1500, duration: 0.5, ease: "power3.in" }, 0.45);
     // guarda el celular: el brazo baja al costado
-    tl.to("#s3-fore-r", { rotation: 0, svgOrigin: "560 960", duration: 0.5, ease: "power2.inOut" }, 0.485);
-    tl.to("#s3-arm-r", { rotation: 0, svgOrigin: "515 690", duration: 0.5, ease: "power2.inOut" }, 0.485);
+    tl.to("#s3-fore-r", { rotation: 0, svgOrigin: "560 960", duration: 0.5, ease: "power2.inOut" }, 0.491);
+    tl.to("#s3-arm-r", { rotation: 0, svgOrigin: "515 690", duration: 0.5, ease: "power2.inOut" }, 0.491);
     tl.to("#s3-body", { scaleY: 1.008, svgOrigin: "320 1700", duration: 1.6, ease: "sine.inOut", yoyo: true, repeat: 3 }, 0);
-    tl.fromTo("#s3-jar", { opacity: 0, scale: 0.6, transformOrigin: "50% 100%" }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" }, 0.686);
+    tl.fromTo("#s3-jar", { opacity: 0, scale: 0.6, transformOrigin: "50% 100%" }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" }, 0.718);
     // el frasco pierde monedas: tres monedas caen en ronda hasta que llega el parche (13.6 s en el video)
     const drops = ["#s3-d1", "#s3-d2", "#s3-d3"];
     for (let i = 0; i < 10; i++) {
       const d = drops[i % 3], t0 = 1.15 + i * 0.36;
       tl.fromTo(d, { y: 0, x: 0, opacity: 1, rotation: 0 }, { y: 120, x: 26, rotation: 40, opacity: 0, duration: 0.5, ease: "power2.in", transformOrigin: "50% 50%", immediateRender: false }, t0);
     }
-    tl.to("#s3-coin-top3", { y: 30, duration: 0.6, ease: "power1.inOut" }, 0.887);
-    tl.to("#s3-coin-top2", { y: 26, duration: 0.6, ease: "power1.inOut" }, 1.529);
+    tl.to("#s3-coin-top3", { y: 30, duration: 0.6, ease: "power1.inOut" }, 0.95);
+    tl.to("#s3-coin-top2", { y: 26, duration: 0.6, ease: "power1.inOut" }, 1.692);
     // la mira con cara de preocupación
-    tl.set("#s3-m-smile", { opacity: 0 }, 0.767);
-    tl.set("#s3-m-o", { opacity: 1 }, 0.767);
-    tl.to("#s3-look", { x: 9, y: 9, duration: 0.25, ease: "power2.out" }, 0.767);
-    tl.to("#s3-brow-l", { y: -6, rotation: 10, svgOrigin: "300 246", duration: 0.25, ease: "back.out(2)" }, 0.799);
-    tl.to("#s3-brow-r", { y: -6, rotation: -10, svgOrigin: "340 246", duration: 0.25, ease: "back.out(2)" }, 0.831);
-    tl.to("#s3-head", { rotation: 7, y: 6, duration: 0.4, ease: "back.out(1.6)" }, 0.783);
+    tl.set("#s3-m-smile", { opacity: 0 }, 0.811);
+    tl.set("#s3-m-o", { opacity: 1 }, 0.811);
+    tl.to("#s3-look", { x: 9, y: 9, duration: 0.25, ease: "power2.out" }, 0.811);
+    tl.to("#s3-brow-l", { y: -6, rotation: 10, svgOrigin: "300 246", duration: 0.25, ease: "back.out(2)" }, 0.848);
+    tl.to("#s3-brow-r", { y: -6, rotation: -10, svgOrigin: "340 246", duration: 0.25, ease: "back.out(2)" }, 0.885);
+    tl.to("#s3-head", { rotation: 7, y: 6, duration: 0.4, ease: "back.out(1.6)" }, 0.83);
     // llega el aviso rojo desde arriba
-    tl.fromTo("#s3-alert", { y: -620, opacity: 1 }, { y: 0, duration: 0.55, ease: "back.out(1.3)" }, 0.807);
-    tl.to("#s3-sample", { opacity: 0, duration: 0.15 }, 0.807);
-    tl.to("#s3-head", { rotation: -4, y: -6, duration: 0.35, ease: "back.out(1.8)" }, 1.128);
-    tl.to("#s3-look", { x: 4, y: -9, duration: 0.25, ease: "power2.out" }, 1.007);
+    tl.fromTo("#s3-alert", { y: -620, opacity: 1 }, { y: 0, duration: 0.55, ease: "back.out(1.3)" }, 0.858);
+    tl.to("#s3-sample", { opacity: 0, duration: 0.15 }, 0.858);
+    tl.to("#s3-head", { rotation: -4, y: -6, duration: 0.35, ease: "back.out(1.8)" }, 1.229);
+    tl.to("#s3-look", { x: 4, y: -9, duration: 0.25, ease: "power2.out" }, 1.089);
     // parpadeo
-    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 0.1, transformOrigin: "50% 50%", duration: 0.05, ease: "none" }, 1.931);
-    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 1.971);
-    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 0.1, duration: 0.05, ease: "none" }, 3.135);
-    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 3.175);
+    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 0.1, transformOrigin: "50% 50%", duration: 0.05, ease: "none" }, 2.156);
+    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 2.202);
+    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 0.1, duration: 0.05, ease: "none" }, 3.547);
+    tl.to("#s3-eye-l, #s3-eye-r", { scaleY: 1, duration: 0.06, ease: "none" }, 3.594);
     // el aviso se encoge y tapa el agujero: el frasco deja de perder
-    tl.to("#s3-alert", { x: 360, y: 800, scale: 0.12, rotation: -8, duration: 0.5, ease: "power3.inOut", transformOrigin: "50% 50%" }, 3.456);
-    tl.to("#s3-alert", { opacity: 0, duration: 0.08 }, 3.793);
-    tl.set("#s3-patch", { opacity: 1 }, 3.817);
-    tl.fromTo("#s3-patch", { scale: 1.5, rotation: -8 }, { scale: 1, rotation: -8, duration: 0.3, ease: "back.out(2.6)", transformOrigin: "50% 50%" }, 3.817);
-    tl.to("#s3-sample", { opacity: 1, duration: 0.2 }, 3.817);
+    tl.to("#s3-alert", { x: 360, y: 800, scale: 0.12, rotation: -8, duration: 0.5, ease: "power3.inOut", transformOrigin: "50% 50%" }, 3.918);
+    tl.to("#s3-alert", { opacity: 0, duration: 0.08 }, 4.308);
+    tl.set("#s3-patch", { opacity: 1 }, 4.336);
+    tl.fromTo("#s3-patch", { scale: 1.5, rotation: -8 }, { scale: 1, rotation: -8, duration: 0.3, ease: "back.out(2.6)", transformOrigin: "50% 50%" }, 4.336);
+    tl.to("#s3-sample", { opacity: 1, duration: 0.2 }, 4.336);
     // alivio
-    tl.set("#s3-m-o", { opacity: 0 }, 3.937);
-    tl.set("#s3-m-grin", { opacity: 1 }, 3.937);
-    tl.fromTo("#s3-m-grin", { scale: 0.7, svgOrigin: "320 405" }, { scale: 1, duration: 0.3, ease: "back.out(2.2)" }, 3.937);
-    tl.to("#s3-brow-l, #s3-brow-r", { rotation: 0, y: -10, duration: 0.3, ease: "power2.out" }, 3.937);
-    tl.to("#s3-look", { x: 0, y: 0, duration: 0.3, ease: "power2.out" }, 3.977);
-    tl.to("#s3-head", { rotation: 0, y: 0, duration: 0.45, ease: "back.out(1.6)" }, 3.977);
+    tl.set("#s3-m-o", { opacity: 0 }, 4.475);
+    tl.set("#s3-m-grin", { opacity: 1 }, 4.475);
+    tl.fromTo("#s3-m-grin", { scale: 0.7, svgOrigin: "320 405" }, { scale: 1, duration: 0.3, ease: "back.out(2.2)" }, 4.475);
+    tl.to("#s3-brow-l, #s3-brow-r", { rotation: 0, y: -10, duration: 0.3, ease: "power2.out" }, 4.475);
+    tl.to("#s3-look", { x: 0, y: 0, duration: 0.3, ease: "power2.out" }, 4.521);
+    tl.to("#s3-head", { rotation: 0, y: 0, duration: 0.45, ease: "back.out(1.6)" }, 4.521);
     // alivio: levanta el puño, contenta
-    tl.to("#s3-arm-l", { rotation: -25, svgOrigin: "125 690", duration: 0.35, ease: "back.out(2)" }, 4.098);
-    tl.to("#s3-fore-l", { rotation: -125, svgOrigin: "80 960", duration: 0.35, ease: "back.out(2)" }, 4.138);
+    tl.to("#s3-arm-l", { rotation: -25, svgOrigin: "125 690", duration: 0.35, ease: "back.out(2)" }, 4.66);
+    tl.to("#s3-fore-l", { rotation: -125, svgOrigin: "80 960", duration: 0.35, ease: "back.out(2)" }, 4.707);
     window.__timelines["s3"] = tl;
   </script>
 </template>

@@ -20,7 +20,7 @@ LINES = [
     (0.9, 4.6, "En Mercado Libre, tu organizador de cajones se vende solo, sin un peso de publicidad."),
     (4.8, 10.4, "Lumo lo detectó y te dice qué hacer: sumalo a tu campaña de organizadores, que es la que mejor rinde."),
     (10.9, 15.7, "Y si una publicación gasta y no vende, también te avisa, antes de que se te vaya la plata."),
-    (16.3, 21.5, "Lumo: tu asistente de publicidad en Mercado Libre, para gastar mejor y vender más. Probalo gratis 14 días."),
+    (16.3, 21.5, "Lumo: tu asistente de publicidad en Mercado Libre, para invertir mejor y vender más. Probalo gratis 14 días."),
 ]
 SCRIPT = " ".join(line for _, _, line in LINES)  # el texto exacto del guion
 

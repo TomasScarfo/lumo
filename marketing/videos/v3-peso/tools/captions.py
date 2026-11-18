@@ -21,7 +21,7 @@ LINES = [
     (3.8, 5.3, "¿cuánto vuelve en ventas?"),
     (5.8, 10.8, "Lumo te lo dice en una frase: por cada peso invertido, vendiste tres con ochenta."),
     (11.6, 16.6, "Y campaña por campaña te recomienda qué hacer: subir, mantener o bajar el presupuesto."),
-    (17.4, 22.0, "Lumo: tu asistente de publicidad en Mercado Libre, para gastar mejor y vender más. Probalo gratis 14 días."),
+    (17.4, 22.0, "Lumo: tu asistente de publicidad en Mercado Libre, para invertir mejor y vender más. Probalo gratis 14 días."),
 ]
 SCRIPT = " ".join(line for _, _, line in LINES)  # el texto exacto del guion corrige lo que Whisper escribe mal
 
