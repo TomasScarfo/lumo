@@ -41,7 +41,7 @@
   var fbclid = new URLSearchParams(location.search).get('fbclid') || '';
   document.addEventListener('click', function (e) {
     var a = e.target.closest('a[data-app]');
-    if (!a || a.pathname.slice(-8) !== '/connect') return;
+    if (!a || !/\/(connect|suscripcion)$/.test(a.pathname)) return;
     var u = new URL(a.href, location.href), fbc = cookie('_fbc'), fbp = cookie('_fbp');
     if (fbc) u.searchParams.set('fbc', fbc); else if (fbclid) u.searchParams.set('fbclid', fbclid);
     if (fbp) u.searchParams.set('fbp', fbp);
@@ -149,18 +149,18 @@
           <h3>Mensual</h3>
           <p class="plan-price" style="margin:10px 0 6px"><span data-price="monthly">US$10</span> <small>por mes</small></p>
           <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
-          <a class="btn ghost" href="__APP_URL__/connect?plan=monthly" data-app style="margin-top:16px">Probar gratis el mensual</a>
+          <a class="btn ghost" href="__APP_URL__/suscripcion?plan=monthly" data-app style="margin-top:16px">Probar gratis el mensual</a>
         </div>
         
         <div class="card best">
           <h3>Anual <span class="save">Ahorrás 17%</span></h3>
           <p class="plan-price" style="margin:10px 0 6px"><span data-price="annual">US$100</span> <small>por año</small></p>
           <p>Lo mismo, pagando una vez al año: <span data-price="saving">US$20</span> menos que mes a mes.</p>
-          <a class="btn" href="__APP_URL__/connect?plan=annual" data-app style="margin-top:16px">Probar gratis el anual</a>
+          <a class="btn" href="__APP_URL__/suscripcion?plan=annual" data-app style="margin-top:16px">Probar gratis el anual</a>
         </div>
         
       </div>
-      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, conectás tu cuenta de Mercado Libre y cargás tu medio de pago en Mercado Pago. Precios en pesos argentinos, actualizados según el dólar oficial del día.</p>
+      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, cargás tu medio de pago en Mercado Pago y conectás tu cuenta de Mercado Libre. Precios en pesos argentinos, actualizados según el dólar oficial del día.</p>
     </div>
   </section>
 
@@ -191,8 +191,8 @@
         <h2>Listo en un minuto, sin instalar nada</h2>
       </div>
       <ol class="steps">
-        <li><h3>Conectás tu cuenta</h3><p>Entrás con Mercado Libre. Tu contraseña no pasa por Lumo.</p></li>
-        <li><h3>Lumo lee tu publicidad</h3><p>Trae 90 días de campañas y publicaciones y las compara con tus objetivos.</p></li>
+        <li><h3>Elegís tu plan</h3><p>Cargás tu medio de pago en Mercado Pago. No se cobra nada por 14 días.</p></li>
+        <li><h3>Conectás Mercado Libre</h3><p>Lumo lee 90 días de campañas y publicaciones. Tu contraseña no pasa por Lumo.</p></li>
         <li><h3>Sabés qué hacer</h3><p>Tareas, alertas y recomendaciones ordenadas por importancia.</p></li>
       </ol>
     </div>
@@ -246,7 +246,7 @@
       <details><summary>¿Puedo ver más de 3 meses de métricas?</summary><p>Mercado Libre solo permite consultar los últimos 90 días. Lumo guarda tus métricas todos los días desde que te conectás, así que tu historial crece con el tiempo (hasta dos años). Las fechas anteriores a tu conexión que ya no están en Mercado Libre no se pueden recuperar.</p></details>
       <details><summary>¿Puedo elegir el período que quiero ver?</summary><p>Sí. Podés usar 7, 14 o 30 días, o elegir un rango de fechas personalizado dentro de tu historial.</p></details>
       <details><summary>¿De dónde salen las recomendaciones?</summary><p>De comparar el rendimiento real de cada campaña y publicación con el ROAS objetivo que configuraste. Son orientativas: las decisiones y sus resultados dependen de tu negocio, la temporada y la competencia.</p></details>
-      <details><summary>¿Cómo funciona la prueba gratis?</summary><p>Conectás tu cuenta de Mercado Libre, elegís un plan y cargás tu medio de pago en Mercado Pago. Desde ese momento usás Lumo completo 14 días sin que se te cobre nada: el primer cobro es recién el día 15. Si cancelás antes, no pagás.</p></details>
+      <details><summary>¿Cómo funciona la prueba gratis?</summary><p>Elegís un plan, cargás tu medio de pago en Mercado Pago y conectás tu cuenta de Mercado Libre. Desde que Mercado Pago confirma tu medio de pago usás Lumo completo 14 días sin que se te cobre nada: el primer cobro es recién el día 15. Si cancelás antes, no pagás.</p></details>
       <details><summary>¿Cuánto cuesta y cómo se paga?</summary><p><span data-price="monthly">US$10</span> por mes, o <span data-price="annual">US$100</span> por año (ahorrás 17%). Se paga en pesos con Mercado Pago. El precio sigue al dólar oficial, así que el monto en pesos puede cambiar de un cobro a otro. La suscripción se renueva sola.</p></details>
       <details><summary>¿Qué pasa si falla un cobro?</summary><p>Te avisamos por email y seguís usando Lumo 7 días mientras lo resolvés. Si no se regulariza, el acceso se pausa, pero no borramos nada: cuando vuelvas, encontrás todo como lo dejaste.</p></details>
       <details><summary>¿Cómo cancelo?</summary><p>Desde la página de tu suscripción, con un clic. Seguís teniendo acceso hasta el final del mes ya pagado y no se te vuelve a cobrar.</p></details>

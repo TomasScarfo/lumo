@@ -8,7 +8,7 @@ from unittest import mock
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from lumo import billing, create_app, notify
+from lumo import access, billing, create_app, notify
 from lumo.models import Account, AuditLog, Notice, Subscription, utcnow
 from test_access import CFG, connect_as
 
@@ -211,8 +211,8 @@ class Prueba(Base):
 
     def test_el_plan_elegido_en_la_portada_queda_marcado_al_conectarse(self):
         html = self.client.get("/").get_data(as_text=True)
-        self.assertIn('href="/connect?plan=annual" data-app', html)
-        self.assertIn('href="/connect?plan=monthly" data-app', html)
+        self.assertIn('href="/suscripcion?plan=annual" data-app', html)
+        self.assertIn('href="/suscripcion?plan=monthly" data-app', html)
         c = self.app.test_client()
         c.get("/connect?plan=monthly")  # connect_as vuelve a pasar por /connect: el plan tiene que sobrevivir a todo el ingreso
         with c.session_transaction() as sess:
@@ -275,9 +275,11 @@ class Prueba(Base):
         self.assertEqual(self.client.get("/panel").status_code, 200)
         self.assertIn("Cancelaste tu suscripción", self.client.get("/suscripcion").get_data(as_text=True))
 
-    def test_sin_sesion_no_hay_pagina_de_suscripcion(self):
-        self.assertEqual(self.client.get("/suscripcion").headers["Location"], "/")
-        self.assertEqual(self.client.post("/suscripcion").headers["Location"], "/")
+    def test_sin_sesion_se_elige_el_plan_antes_de_conectar(self):
+        html = self.client.get("/suscripcion?plan=monthly").get_data(as_text=True)
+        for texto in ("Empezá tu prueba gratis", "Después conectás tu cuenta de Mercado Libre", "¿Ya tenés cuenta? Ingresar", 'value="monthly" checked'):
+            self.assertIn(texto, html)
+        self.assertNotIn('href="/salir"', html)
 
     def test_quien_tiene_acceso_sin_cargo_no_paga(self):
         connect_as(self.client, 1)  # administrador
@@ -627,8 +629,8 @@ class Portada(Base):
         self.assertIn("Probalo 14 días gratis", html)
         self.assertIn('<a class="btn" href="#precio">Probar gratis 14 días</a>', html)
         self.assertIn('href="#precio">Elegir mi plan y probar gratis</a>', html)
-        # solo los botones de cada plan (y el de invitación) llevan a Mercado Libre
-        self.assertEqual(html.count('/connect?plan='), 2)
+        # los botones de cada plan llevan a elegir y pagar; Mercado Libre se conecta después
+        self.assertEqual(html.count('/suscripcion?plan='), 2)
         self.assertNotIn('href="/connect" data-app', html)
         self.assertIn('href="/entrar" data-app>Ingresar', html)
 
@@ -699,3 +701,111 @@ class Mensajes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PagarPrimero(Base):
+    """Desde la portada: primero se elige el plan y se paga en Mercado Pago, y después se conecta Mercado Libre."""
+
+    def pay_first(self, client=None, plan="monthly", email="nuevo@pago.test", authorize=True):
+        c = client or self.client
+        c.get("/suscripcion?plan=" + plan)
+        with c.session_transaction() as sess:
+            csrf = sess["csrf"]
+        r = c.post("/suscripcion", data={"plan": plan, "email": email, "csrf": csrf})
+        pid = r.headers["Location"].rsplit("/", 1)[1]
+        body = self.mp.store[pid]
+        if authorize:
+            self.mp.authorize(pid, 14)
+        back = body["back_url"].replace("https://lumo.test", "")
+        return pid, body, c.get(back + "?preapproval_id=" + pid)
+
+    def provisional(self):
+        with Session(self.engine) as s:
+            return s.execute(select(Subscription).where(Subscription.user_id < 0)).scalars().all()
+
+    def admin_html(self):
+        admin = self.app.test_client()
+        connect_as(admin, 1)
+        return admin.get("/admin").get_data(as_text=True)
+
+    def test_paga_y_despues_conecta(self):
+        pid, body, r = self.pay_first()
+        self.assertTrue(r.headers["Location"].endswith("/suscripcion/conectar"))
+        self.assertTrue(int(body["external_reference"]) < 0)  # todavía no hay cuenta de Mercado Libre
+        self.assertIn("start_date", body["auto_recurring"])  # la prueba gratis: el primer cobro es al terminarla
+        html = self.client.get("/suscripcion/conectar").get_data(as_text=True)
+        self.assertIn("tu prueba gratis empezó", html)
+        self.assertIn('href=\'/connect\'', html)
+        self.assertEqual(self.client.get("/panel").status_code, 302)  # sin Mercado Libre no hay panel
+        [prov] = self.provisional()
+        self.assertEqual((prov.status, prov.payer_email), ("authorized", "nuevo@pago.test"))
+        # el admin lo ve como pagó y no conectó
+        html = self.admin_html()
+        bloque = html.split('id="sin-conectar"')[1].split('id="accesos"')[0]
+        self.assertIn("nuevo@pago.test", bloque)
+        self.assertIn("/suscripcion/conectar?c=", bloque)
+        # conecta Mercado Libre: la suscripción pasa a su cuenta y entra al panel
+        r = connect_as(self.client, 950)
+        self.assertTrue(r.headers["Location"].endswith("/panel"))
+        self.assertEqual(self.provisional(), [])
+        sub = self.sub(950)
+        self.assertEqual((sub.mp_preapproval_id, sub.status, sub.plan, sub.payer_email), (pid, "authorized", "monthly", "nuevo@pago.test"))
+        with Session(self.engine) as s:
+            self.assertEqual(access.plan(s, self.cfg, 950)["kind"], "trial")
+        self.assertNotIn("nuevo@pago.test", self.admin_html().split('id="sin-conectar"')[1].split('id="accesos"')[0])
+        # los avisos de Mercado Pago siguen llegando a su cuenta aunque la referencia sea la provisoria
+        self.mp.store[pid]["status"] = "paused"
+        self.notify_mp("subscription_preapproval", pid)
+        self.assertEqual(self.sub(950).status, "paused")
+
+    def test_el_enlace_del_admin_sirve_en_otro_navegador(self):
+        self.pay_first()
+        url = self.admin_html().split('id="sin-conectar"')[1].split('value="')[1].split('"')[0]
+        otro = self.app.test_client()
+        self.assertTrue(otro.get(url.replace("https://lumo.test", "").replace("http://localhost", "")).headers["Location"].endswith("/suscripcion/conectar"))
+        self.assertTrue(connect_as(otro, 951).headers["Location"].endswith("/panel"))
+        self.assertEqual(self.sub(951).status, "authorized")
+        # un enlace adulterado no sirve
+        falso = self.app.test_client()
+        self.assertEqual(falso.get("/suscripcion/conectar?c=xx", follow_redirects=True).request.path, "/suscripcion")
+
+    def test_sin_confirmar_el_pago_no_entra(self):
+        self.pay_first(authorize=False)
+        self.assertNotIn("nuevo@pago.test", self.admin_html().split('id="sin-conectar"')[1].split('id="accesos"')[0])
+        r = connect_as(self.client, 952)
+        self.assertTrue(r.headers["Location"].endswith("/suscripcion"))
+        self.assertEqual(self.sub(952).status, "pending")
+        # cuando Mercado Pago confirma, el aviso la encuentra en su cuenta
+        pid = self.sub(952).mp_preapproval_id
+        self.mp.authorize(pid, 14)
+        self.notify_mp("subscription_preapproval", pid)
+        self.assertEqual(self.client.get("/panel").status_code, 200)
+
+    def test_quien_ya_entraba_gratis_no_queda_pagando(self):
+        with Session(self.engine) as s:
+            access.grant(s, 953, "Amigo")
+            s.commit()
+        pid, _, _ = self.pay_first()
+        connect_as(self.client, 953)
+        self.assertEqual(self.mp.store[pid]["status"], "cancelled")
+        self.assertIsNone(self.sub(953))
+        self.assertEqual(self.provisional(), [])
+
+    def test_quien_ya_uso_la_prueba_no_tiene_otra(self):
+        self.used_trial(954)
+        self.pay_first()
+        connect_as(self.client, 954)
+        with Session(self.engine) as s:
+            self.assertEqual(access.plan(s, self.cfg, 954)["kind"], "paid")
+        self.assertLess(self.sub(954).trial_started_at, utcnow() - timedelta(days=30))
+
+    def test_el_chequeo_diario_borra_los_pagos_abandonados(self):
+        pid, _, _ = self.pay_first(authorize=False)
+        [prov] = self.provisional()
+        with Session(self.engine) as s:
+            s.get(Subscription, prov.user_id).created_at = utcnow() - timedelta(days=4)
+            s.commit()
+        with mock.patch("lumo.ml.advertisers", return_value=[]):
+            self.app.test_client().post("/cron/avisos", headers=CRON)
+        self.assertEqual(self.provisional(), [])
+        self.assertEqual(self.mp.store[pid]["status"], "cancelled")

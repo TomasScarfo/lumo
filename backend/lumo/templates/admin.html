@@ -39,6 +39,7 @@
               {% elif x.kind in ('free', 'admin') %}<span class="pill bi">Acceso sin cargo</span>
               {% elif x.reason == 'unpaid' %}<span class="pill re">Suspendida por falta de pago</span>
               {% elif x.reason == 'cancelled' %}<span class="pill us">Cancelada</span>
+              {% elif x.reason == 'new' %}<span class="pill us">No cargó el medio de pago</span><br><small>sin acceso</small>
               {% else %}<span class="pill us">Prueba vencida</span>{% endif %}</td>
           <td>{{ x.plan|capitalize if x.plan else '—' }}{% if x.next_plan %}<br><small>cambia a {{ x.next_plan }}</small>{% endif %}</td>
           <td>{{ x.email or '—' }}</td>
@@ -47,6 +48,27 @@
       </tbody>
     </table>
     {% else %}<p class="empty">Todavía nadie empezó una prueba.</p>{% endif %}
+  </div>
+
+  <h2 id="sin-conectar">Pagaron y no conectaron Mercado Libre</h2>
+  <p class="sub">Cargaron su medio de pago en Mercado Pago pero todavía no conectaron su cuenta, así que no ven el panel. Mandales su enlace para que terminen.</p>
+  <div class="tw">
+    {% if unclaimed %}
+    <table>
+      <thead><tr><th>Email de pago</th><th>Plan</th><th>Estado</th><th>Enlace para conectar</th></tr></thead>
+      <tbody>
+      {% for u in unclaimed %}
+        <tr>
+          <td>{{ u.email or '—' }}<br><small>pagó el {{ u.since.strftime('%d/%m/%y') }}</small></td>
+          <td>{{ u.plan|capitalize if u.plan else '—' }}</td>
+          <td>{% if u.trial_ends %}<span class="pill pe">En prueba</span><br><small>primer cobro {{ u.trial_ends.strftime('%d/%m') }}</small>
+              {% elif u.status == 'paused' %}<span class="pill at">Pausada</span>{% else %}<span class="pill ex">Pagando</span>{% endif %}</td>
+          <td><div class="linkbox"><input type="text" value="{{ u.url }}" readonly aria-label="Enlace para conectar" onclick="this.select()"></div></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="empty">Nadie: todos los que pagaron conectaron su cuenta.</p>{% endif %}
   </div>
 
   <h2 id="accesos">Cuentas con acceso sin cargo</h2>

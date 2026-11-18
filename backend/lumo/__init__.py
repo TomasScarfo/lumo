@@ -10,8 +10,9 @@ from pathlib import Path
 from urllib.parse import quote
 
 import requests
+from itsdangerous import BadSignature, URLSafeSerializer
 from flask import Flask, Response, abort, has_request_context, jsonify, redirect, render_template, render_template_string, request, session
-from sqlalchemy import create_engine, func, inspect, select, text
+from sqlalchemy import create_engine, func, inspect, or_, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 from werkzeug.exceptions import HTTPException
@@ -304,19 +305,22 @@ def create_app(overrides=None) -> Flask:
             return redirect("/admin" if access.is_admin(cfg, uid) else "/panel" if _current_user() else "/suscripcion")
         return redirect("/connect")
 
-    @app.get("/connect")
-    def connect():
-        if missing_config():
-            return redirect("/")
+    def _remember_origin():
+        """El plan que eligió en la portada y de qué anuncio de Meta vino (la portada estática pasa sus cookies del Píxel en la dirección)."""
         if request.args.get("plan") in billing.PLANS:
-            session["plan"] = request.args["plan"]  # el plan que eligió en la portada: queda marcado al volver de Mercado Libre
-        # De qué anuncio de Meta vino: la portada estática pasa sus cookies del Píxel en la dirección; servida por la app, se leen acá.
+            session["plan"] = request.args["plan"]
         fbc = meta.clean_fbc(request.args.get("fbc") or request.cookies.get("_fbc")) or meta.fbc_from_click(request.args.get("fbclid"))
         fbp = meta.clean_fbp(request.args.get("fbp") or request.cookies.get("_fbp"))
         if fbc:
             session["fbc"] = fbc
         if fbp:
             session["fbp"] = fbp
+
+    @app.get("/connect")
+    def connect():
+        if missing_config():
+            return redirect("/")
+        _remember_origin()
         verifier, challenge = ml.new_pkce()
         state = secrets.token_urlsafe(24)
         session["oauth_state"] = state
@@ -339,8 +343,11 @@ def create_app(overrides=None) -> Flask:
             return page("<h1>No se pudo conectar</h1><p>Mercado Libre rechazó el intercambio (<code>%s</code>). Revisá que la dirección de redirección de la app sea exactamente <code>%s</code>.</p>" % (_esc(exc.code), _esc(cfg["REDIRECT_URI"])), 502)
         user_id = int(tok["user_id"])
         invite_token = session.get("invite")
+        pending = session.get("pending_sub")
         with Session(engine) as s:
             is_new = s.get(Account, user_id) is None
+            if pending:
+                _claim(s, pending, user_id)  # pagó antes de conectar: la suscripción pasa a esta cuenta
             allowed = access.has_access(s, cfg, user_id)
             if not allowed and invite_token and access.valid_invite(s, invite_token):
                 if access.consume_invite(s, invite_token, user_id):
@@ -354,6 +361,9 @@ def create_app(overrides=None) -> Flask:
                 meta.remember(s, user_id, session.get("fbc"), session.get("fbp"), request.headers.get("User-Agent"))
                 if is_new:
                     _meta_track(s, "Lead", user_id, live=True)
+                sub = s.get(Subscription, user_id) if pending else None
+                if sub and sub.trial_started_at:  # pagó antes de conectar: la prueba ya empezó (Meta recibe cada evento una sola vez)
+                    _meta_track(s, "StartTrial", user_id, billing.price_usd(cfg, sub.plan or "monthly"), live=True)
             s.commit()
         chosen = session.get("plan")
         session.clear()
@@ -688,8 +698,14 @@ def create_app(overrides=None) -> Flask:
                         pass
                 members.append({"user_id": row.user_id, "note": row.note, "since": row.created_at,
                                 "status": acc.status if acc else "sin conectar", "advertiser": name})
-            subs = []
+            subs, unclaimed = [], []
             for sub in s.execute(select(Subscription).order_by(Subscription.created_at.desc())).scalars():
+                if sub.user_id < 0:  # pagó y todavía no conectó Mercado Libre
+                    if sub.status in ("authorized", "paused"):
+                        unclaimed.append({"email": sub.payer_email, "plan": billing.NAMES.get(sub.plan), "since": sub.created_at,
+                                          "trial_ends": sub.trial_ends_at if billing.in_trial(sub) else None, "status": sub.status,
+                                          "url": "%s/suscripcion/conectar?c=%s" % (base, _claim_token(sub.user_id))})
+                    continue
                 p = access.plan(s, cfg, sub.user_id)
                 subs.append({"user_id": sub.user_id, "kind": p["kind"], "days": p.get("days"), "status": sub.status, "reason": p.get("reason"),
                              "plan": billing.NAMES.get(sub.plan), "next_plan": billing.NAMES.get(sub.next_plan), "past_due": bool(p.get("past_due")),
@@ -703,7 +719,7 @@ def create_app(overrides=None) -> Flask:
             page = min(max(request.args.get("act", 1, type=int) or 1, 1), pages)
             events = s.execute(select(AuditLog).order_by(AuditLog.id.desc()).offset((page - 1) * ACTIVITY_PAGE).limit(ACTIVITY_PAGE)).scalars().all()
             events = [{"at": e.at, "event": e.event, "actor": e.actor, "target": e.target, "detail": e.detail} for e in events]
-        return render_template("admin.html", csrf=_csrf(), invites=invites, members=members, subs=subs, admins=sorted(access.admin_ids(cfg)),
+        return render_template("admin.html", csrf=_csrf(), invites=invites, members=members, subs=subs, unclaimed=unclaimed, admins=sorted(access.admin_ids(cfg)),
                                billing_on=billing.enabled(cfg), stats=stats, events=events,
                                act={"page": page, "pages": pages})
 
@@ -852,16 +868,18 @@ def create_app(overrides=None) -> Flask:
         return uri[: -len("/callback")] if uri.endswith("/callback") else request.url_root.rstrip("/")
 
     def _suscripcion_page(uid, error=None, status=200, detail=None):
+        """uid es la cuenta de Mercado Libre de la sesión, o, para quien todavía no la conectó, su suscripción provisoria (número negativo)."""
         with Session(engine) as s:
-            p = access.plan(s, cfg, uid)
-            sub = s.get(Subscription, uid)
-            acc = s.get(Account, uid)
+            p = access.plan(s, cfg, uid) if uid else {"kind": "none"}
+            sub = s.get(Subscription, uid) if uid else None
+            acc = s.get(Account, uid) if uid and uid > 0 else None
             email = (sub.payer_email if sub else None) or (acc.email if acc else None) or ""
             can_cancel = bool(sub and sub.mp_preapproval_id and sub.status in billing.LIVE)
             trial_offer = billing.trial_available(sub)
         html = render_template("suscripcion.html", plan=p, email=email, csrf=_csrf(), error=error, detail=detail, can_cancel=can_cancel, home=_home(), trial_offer=trial_offer,
                                chosen=request.form.get("plan") or session.get("plan"),
-                               names=billing.NAMES, estado=request.args.get("estado"), billing_on=billing.enabled(cfg), **_offer())
+                               names=billing.NAMES, estado=request.args.get("estado"), billing_on=billing.enabled(cfg),
+                               anon=not (uid and uid > 0), **_offer())
         resp = Response(html, status, mimetype="text/html")
         # El formulario de pago termina en Mercado Pago: esta página, y solo esta, puede enviar hacia sus dominios de pago.
         # Sin esto, los navegadores bloquean la redirección por la regla form-action 'self'.
@@ -872,18 +890,92 @@ def create_app(overrides=None) -> Flask:
     def _checkout_origins():
         return [o for o in cfg["MP_CHECKOUT_ORIGINS"].split() if o.startswith("https://") or not prod]
 
+    # Quien llega desde la portada primero elige su plan y paga en Mercado Pago, y después conecta Mercado Libre.
+    # Mientras no la conecta, su suscripción vive con un número provisorio negativo (no hay cuentas de Mercado Libre negativas)
+    # y se pasa a su cuenta en el /callback. Si pierde la sesión, el enlace firmado de /suscripcion/conectar la recupera.
+    claims = URLSafeSerializer(cfg["SECRET_KEY"], salt="lumo-pago-sin-conectar")
+
+    def _claim_token(pending_id):
+        return claims.dumps(-int(pending_id))
+
+    def _pending_from(token):
+        try:
+            value = int(claims.loads(token or ""))
+        except (BadSignature, ValueError, TypeError):
+            return None
+        return -value if value > 0 else None
+
+    def _pending():
+        """La suscripción provisoria de este navegador, si todavía existe (se borra cuando se pasa a una cuenta)."""
+        pid = session.get("pending_sub")
+        if not isinstance(pid, int) or pid >= 0:
+            return None
+        with Session(engine) as s:
+            return pid if s.get(Subscription, pid) else None
+
+    def _claim(s, pending_id, uid):
+        """Pasa la suscripción pagada antes de conectar a la cuenta de Mercado Libre que se acaba de conectar."""
+        session.pop("pending_sub", None)
+        tmp = s.get(Subscription, pending_id) if isinstance(pending_id, int) and pending_id < 0 else None
+        if tmp is None:
+            return
+        p, cur = access.plan(s, cfg, uid), s.get(Subscription, uid)
+        if p["kind"] in ("admin", "free") or (cur and cur.status == "authorized" and p["kind"] in ("paid", "trial")):
+            # Ya entraba sin pagar, o ya tiene un plan al día: no se le cobra dos veces.
+            billing.end(cfg, tmp)
+            s.delete(tmp)
+            audit.record(s, "sub_claim_dup", actor=uid, detail=tmp.plan)
+            return
+        data = {c.name: getattr(tmp, c.name) for c in Subscription.__table__.columns if c.name != "user_id"}
+        used = cur.trial_started_at if cur else None
+        if cur:
+            billing.end(cfg, cur)  # una suscripción vieja sin terminar no puede seguir viva en Mercado Pago
+            s.delete(cur)
+        s.delete(tmp)
+        s.flush()
+        sub = Subscription(user_id=uid, **data)
+        if used:  # la prueba gratis es una sola por cuenta: quien ya la usó entra como plan pago
+            sub.trial_started_at = min(used, sub.trial_started_at or used)
+            sub.trial_ends_at = min(sub.trial_ends_at or utcnow(), utcnow())
+        s.add(sub)
+        audit.record(s, "sub_claim", actor=uid, detail=sub.plan)
+
     @app.get("/suscripcion")
     def suscripcion():
         uid = _session_uid()
-        if not uid:
-            return redirect("/")
-        return _suscripcion_page(uid)
+        if uid:
+            return _suscripcion_page(uid)
+        _remember_origin()
+        pending = _pending()
+        if pending:
+            with Session(engine) as s:
+                if s.get(Subscription, pending).status == "authorized":
+                    return redirect("/suscripcion/conectar")
+        return _suscripcion_page(pending)
+
+    @app.get("/suscripcion/conectar")
+    def suscripcion_conectar():
+        """Pagó y le falta conectar Mercado Libre. El enlace con ?c= (el de la vuelta de Mercado Pago o el que manda el admin)
+        recupera la suscripción en otro navegador."""
+        if request.args.get("c"):
+            pid = _pending_from(request.args["c"])
+            if pid:
+                session["pending_sub"] = pid
+            return redirect("/suscripcion/conectar")
+        pending = _pending()
+        if not pending:
+            return redirect("/suscripcion")
+        with Session(engine) as s:
+            sub = s.get(Subscription, pending)
+            ok, plan_name, days = sub.status == "authorized", billing.NAMES.get(sub.plan, ""), billing.trial_days(cfg)
+        head = ("<h1>Listo, tu prueba gratis empezó</h1><p>Mercado Pago confirmó tu medio de pago para el plan %s. No se cobra nada durante %d días.</p>" % (_esc(plan_name), days)
+                if ok else "<h1>Ya casi</h1><p>Estamos esperando la confirmación de Mercado Pago. Mientras tanto, ya podés conectar tu cuenta.</p>")
+        return page(head + "<p><b>Último paso:</b> conectá tu cuenta de Mercado Libre para que Lumo lea tu publicidad. "
+                    "Tu contraseña no pasa por Lumo.</p><a class='btn' href='/connect'>Conectar Mercado Libre</a>")
 
     @app.post("/suscripcion")
     def suscripcion_pagar():
-        uid = _session_uid()
-        if not uid:
-            return redirect("/")
+        uid = _session_uid() or _pending()  # sin cuenta conectada: paga primero y conecta después
         _check_csrf()
         if not billing.enabled(cfg):
             return _suscripcion_page(uid, "El pago todavía no está disponible.", 503)
@@ -894,16 +986,19 @@ def create_app(overrides=None) -> Flask:
         if not billing.EMAIL_RE.match(email) or len(email) > 254:
             return _suscripcion_page(uid, "Revisá el email: tiene que ser el de tu cuenta de Mercado Pago.", 400)
         with Session(engine) as s:
-            if access.plan(s, cfg, uid)["kind"] in ("admin", "free"):
+            if uid and access.plan(s, cfg, uid)["kind"] in ("admin", "free"):
                 return redirect("/panel")
-            sub = s.get(Subscription, uid)
+            sub = s.get(Subscription, uid) if uid else None
+            if uid and uid < 0 and sub and sub.status == "authorized":
+                return redirect("/suscripcion/conectar")  # ya pagó: le falta conectar
             if sub is None:
-                sub = Subscription(user_id=uid)
+                sub = Subscription(user_id=uid or -(secrets.randbits(52) + 1))
                 s.add(sub)
             if sub.status == "authorized" and sub.plan == plan and not sub.past_due_since:
                 return redirect("/suscripcion")  # ya tiene ese plan al día
+            back = "/suscripcion/listo" if sub.user_id > 0 else "/suscripcion/listo/" + _claim_token(sub.user_id)
             try:
-                url = billing.create_checkout(cfg, sub, plan, email, _base_url() + "/suscripcion/listo")
+                url = billing.create_checkout(cfg, sub, plan, email, _base_url() + back)
             except billing.RateError:
                 log.warning("no se pudo obtener la cotización del dólar")
                 return _suscripcion_page(uid, "No pudimos calcular el precio en pesos en este momento. Probá de nuevo en unos minutos.", 503)
@@ -920,9 +1015,40 @@ def create_app(overrides=None) -> Flask:
                 log.warning("Mercado Pago devolvió un enlace de pago fuera de los dominios permitidos: %s", host)
                 return _suscripcion_page(uid, "Mercado Pago no pudo iniciar el pago. Probá de nuevo en unos minutos.", 502,
                                          "El enlace de pago es de %s, que no está en MP_CHECKOUT_ORIGINS." % host)
-            audit.record(s, "sub_checkout", actor=uid, detail=plan)
+            audit.record(s, "sub_checkout", actor=sub.user_id if sub.user_id > 0 else None, detail=plan)
             s.commit()
+            if sub.user_id < 0:
+                session["pending_sub"] = sub.user_id
         return redirect(url)
+
+    @app.get("/suscripcion/listo/<token>")
+    def suscripcion_listo_sin_conectar(token):
+        """Vuelta de Mercado Pago para quien pagó antes de conectar Mercado Libre."""
+        pending = _pending_from(token)
+        if not pending:
+            return redirect("/suscripcion")
+        with Session(engine) as s:
+            sub = s.get(Subscription, pending)
+            if sub is None:
+                return redirect(_home())  # ya se pasó a una cuenta
+            pid = request.args.get("preapproval_id") or sub.mp_preapproval_id
+            if pid and billing.owns(sub, pid) and billing.enabled(cfg):
+                try:
+                    pre = billing.fetch(cfg, pid)
+                except billing.MPError as exc:
+                    log.warning("consultar suscripción falló: %s", exc.status)
+                    pre = None
+                if pre and str(pre.get("external_reference")) == str(pending):
+                    _apply_preapproval(s, sub, pre)
+                    s.commit()
+        session["pending_sub"] = pending
+        uid = _session_uid()
+        if uid:  # ya tenía Mercado Libre conectado en este navegador
+            with Session(engine) as s:
+                _claim(s, pending, uid)
+                s.commit()
+            return redirect("/panel" if _current_user() else "/suscripcion")
+        return redirect("/suscripcion/conectar")
 
     @app.get("/suscripcion/listo")
     def suscripcion_listo():
@@ -978,7 +1104,7 @@ def create_app(overrides=None) -> Flask:
 
     def _meta_track(s, name, uid, value=None, live=None):
         """Evento de conversión para Meta. La IP solo se manda si el pedido es de la misma persona, en este momento; no se guarda."""
-        if not meta.enabled(cfg):
+        if not meta.enabled(cfg) or uid < 0:  # sin cuenta conectada todavía: se manda al conectar
             return
         acc, sub = s.get(Account, uid), s.get(Subscription, uid)
         email = (acc.email if acc else None) or (sub.payer_email if sub else None)
@@ -998,7 +1124,7 @@ def create_app(overrides=None) -> Flask:
 
     def _billing_notices(s, sub) -> int:
         """Avisos por email de la suscripción: cobro rechazado, acceso suspendido y prueba por terminar. Cada uno se manda una vez."""
-        if not notify.enabled(cfg):
+        if not notify.enabled(cfg) or sub.user_id < 0:
             return 0
         p = access.plan(s, cfg, sub.user_id)
         if p["kind"] in ("admin", "free", "none"):
@@ -1038,6 +1164,11 @@ def create_app(overrides=None) -> Flask:
             try:
                 with Session(engine) as s:
                     sub = s.get(Subscription, uid)
+                    if uid < 0 and sub.status in ("new", "pending") and sub.created_at < utcnow() - timedelta(days=3):
+                        billing.end(cfg, sub)  # empezó a pagar sin conectar y lo dejó: no queda nada que guardar
+                        s.delete(sub)
+                        s.commit()
+                        continue
                     if billing.enabled(cfg) and sub.mp_preapproval_id and sub.status in billing.LIVE:
                         out["suscripciones"] += 1
                         _apply_preapproval(s, sub, billing.fetch(cfg, sub.mp_preapproval_id))
@@ -1066,12 +1197,16 @@ def create_app(overrides=None) -> Flask:
             if kind in ("subscription_preapproval", "preapproval"):
                 pre = billing.fetch(cfg, data_id)
                 ref = str(pre.get("external_reference") or "")
-                if ref.isdigit():
-                    with Session(engine) as s:
+                with Session(engine) as s:
+                    # Por el id de Mercado Pago: quien pagó antes de conectar quedó con una referencia provisoria que ya no es su cuenta.
+                    sub = s.execute(select(Subscription).where(or_(Subscription.mp_preapproval_id == data_id,
+                                                                   Subscription.next_preapproval_id == data_id))).scalars().first()
+                    if sub is None and re.fullmatch(r"-?\d{1,19}", ref):
                         sub = s.get(Subscription, int(ref))
-                        if sub and (sub.mp_preapproval_id is None or billing.owns(sub, data_id)):
-                            _apply_preapproval(s, sub, pre)
-                            s.commit()
+                        sub = sub if sub and sub.mp_preapproval_id is None else None
+                    if sub:
+                        _apply_preapproval(s, sub, pre)
+                        s.commit()
             elif kind in ("subscription_authorized_payment", "authorized_payment"):
                 pay = billing.fetch_payment(cfg, data_id)
                 pid = str(pay.get("preapproval_id") or "")
