@@ -849,8 +849,14 @@ class AvisosAlAdministrador(Base):
         self.assertIn("Cuenta de Mercado Libre: 961", self.admin_mails[1][2])
 
     def test_sin_email_configurado_va_al_de_contacto(self):
-        app = create_app(BILLING)
+        app = create_app(dict(BILLING, CONTACT_EMAIL="lumoads.ml@gmail.com"))
         self.assertEqual(app.extensions["lumo_cfg"]["ADMIN_NOTIFY_EMAIL"], "")
         self.app, self.engine, self.client = app, app.extensions["lumo_engine"], app.test_client()
         self.trialing(962)
-        self.assertEqual(self.admin_mails[0][0], app.extensions["lumo_cfg"]["CONTACT_EMAIL"])
+        self.assertEqual(self.admin_mails[0][0], "lumoads.ml+suscripciones@gmail.com")  # para filtrarlos a una etiqueta en Gmail
+
+    def test_un_email_que_no_es_de_gmail_queda_igual(self):
+        app = create_app(BILLING)  # contacto hola@lumo.test
+        self.app, self.engine, self.client = app, app.extensions["lumo_engine"], app.test_client()
+        self.trialing(963)
+        self.assertEqual(self.admin_mails[0][0], "hola@lumo.test")

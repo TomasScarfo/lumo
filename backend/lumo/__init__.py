@@ -1116,10 +1116,15 @@ def create_app(overrides=None) -> Flask:
         ip = request.remote_addr if live else None
         meta.track(cfg, s, name, uid, email=email, value=value, ip=ip, source_url=cfg.get("SITE_URL") or _base_url())
 
+    def _tagged(email, tag):
+        """En Gmail, nombre+etiqueta@gmail.com llega a la misma casilla y se puede filtrar a una etiqueta."""
+        user, at, domain = (email or "").partition("@")
+        return "%s+%s@%s" % (user, tag, domain) if at and domain.lower() in ("gmail.com", "googlemail.com") and "+" not in user else email
+
     def _admin_alert(s, title, sub, *rows, once=None):
         """Mail a quien administra Lumo cuando alguien empieza la prueba, conecta, paga, falla un cobro o cancela.
         once: referencia para mandarlo una sola vez (Mercado Pago puede repetir sus avisos)."""
-        to = cfg.get("ADMIN_NOTIFY_EMAIL") or cfg.get("CONTACT_EMAIL")
+        to = cfg.get("ADMIN_NOTIFY_EMAIL") or _tagged(cfg.get("CONTACT_EMAIL"), "suscripciones")
         if not to or not notify.enabled(cfg):
             return
         if once and s.get(Notice, (sub.user_id, "adm", once[:64])):
