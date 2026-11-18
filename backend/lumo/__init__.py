@@ -475,7 +475,7 @@ def create_app(overrides=None) -> Flask:
                     _meta_track(s, "StartTrial", user_id, billing.price_usd(cfg, sub.plan or "monthly"), live=True)
             s.commit()
             luid = lumo_user.id if lumo_user else None
-        chosen = session.get("plan")
+        chosen, wanted = session.get("plan"), session.get("next")
         session.clear()
         if chosen in billing.PLANS:
             session["plan"] = chosen
@@ -488,6 +488,8 @@ def create_app(overrides=None) -> Flask:
         if not allowed:
             log.info("la cuenta %s no tiene una suscripción activa", user_id)  # nueva: va a empezar su prueba gratis
             return redirect("/suscripcion")
+        if wanted == "/admin" and access.is_admin(cfg, user_id):
+            return redirect("/admin")  # venía de abrir la administración
         body, ok = _result_body(cfg, tok, user_id)
         if ok:
             return redirect("/panel")
@@ -771,12 +773,16 @@ def create_app(overrides=None) -> Flask:
         return _json({"ok": True, "purga": purged, "cobros": cobros})
 
     def _admin_uid():
+        if not _session_uid() and request.method == "GET":
+            session["next"] = "/admin"  # sin sesión: inicia sesión con Mercado Libre y vuelve a la administración
+            abort(redirect("/connect"))
         uid = _current_user()
         if not uid or not access.is_admin(cfg, uid):
             if uid:
                 log.warning("la cuenta %s intentó entrar a la administración", uid)
             abort(404)  # a quien no administra, la página ni siquiera le aparece
         if session.get("via") != "ml" or time.time() - session.get("at", 0) > ADMIN_SESSION_HOURS * 3600:
+            session["next"] = "/admin"
             abort(redirect("/connect"))  # entró con el email, o la sesión venció: la administración se confirma con Mercado Libre
         return uid
 
