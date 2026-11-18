@@ -277,6 +277,15 @@ def billing_mail(kind: str, link: str, until: datetime = None, days: int = None,
     return (subject,) + _layout(title, h, "\n".join(lines) + "\n", link, why, "Ver mi suscripción")
 
 
+def admin_mail(title: str, rows: list, link: str):
+    """Aviso para quien administra Lumo: qué pasó con una suscripción, en una línea por dato."""
+    h = "<table style='border-collapse:collapse'>" + "".join(
+        "<tr><td style='padding:4px 12px 4px 0;color:#5B6B7B'>%s</td><td style='padding:4px 0'><b>%s</b></td></tr>" % (escape(k), escape(str(v)))
+        for k, v in rows if v not in (None, "")) + "</table>"
+    t = "\n".join("%s: %s" % (k, v) for k, v in rows if v not in (None, "")) + "\n"
+    return ("Lumo · " + title,) + _layout(title, h, t, link, "Te escribimos porque administrás Lumo.", "Abrir la administración")
+
+
 def _due(s: Session, uid: int, kind: str, ref: str, every: timedelta, now) -> bool:
     row = s.get(Notice, (uid, kind, ref))
     return row is None or now - row.sent_at >= every

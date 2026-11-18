@@ -82,6 +82,7 @@ def load_config(overrides=None) -> dict:
         "ML_API_BASE": os.environ.get("ML_API_BASE", "https://api.mercadolibre.com"),
         "ADMIN_USER_IDS": os.environ.get("ADMIN_USER_IDS", ""),
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com"),
+        "ADMIN_NOTIFY_EMAIL": os.environ.get("ADMIN_NOTIFY_EMAIL", ""),  # adónde llegan los avisos de suscripciones; vacío: CONTACT_EMAIL
         # Avisos por email. Se envían por la API de Brevo (BREVO_API_KEY), que sirve en el plan gratis de Render; MAIL_FROM es el remitente
         # verificado en Brevo. Sin Brevo, usa SMTP (SMTP_PASSWORD, contraseña de aplicación de Gmail). Sin ninguno no se envía nada.
         "BREVO_API_KEY": os.environ.get("BREVO_API_KEY", ""),
@@ -939,6 +940,7 @@ def create_app(overrides=None) -> Flask:
             sub.trial_ends_at = min(sub.trial_ends_at or utcnow(), utcnow())
         s.add(sub)
         audit.record(s, "sub_claim", actor=uid, detail=sub.plan)
+        _admin_alert(s, "Conectó Mercado Libre después de pagar", sub)
 
     @app.get("/suscripcion")
     def suscripcion():
@@ -1099,6 +1101,7 @@ def create_app(overrides=None) -> Flask:
                 sub.status = "cancelled"  # sigue entrando hasta la fecha ya paga
                 sub.next_preapproval_id = sub.next_plan = sub.next_amount_ars = None
                 audit.record(s, "sub_cancel", actor=uid)
+                _admin_alert(s, "Suscripción cancelada", sub, ("Acceso hasta", (sub.paid_until or sub.trial_ends_at).strftime("%d/%m/%Y")))
                 s.commit()
         return redirect("/suscripcion")
 
@@ -1113,14 +1116,39 @@ def create_app(overrides=None) -> Flask:
         ip = request.remote_addr if live else None
         meta.track(cfg, s, name, uid, email=email, value=value, ip=ip, source_url=cfg.get("SITE_URL") or _base_url())
 
+    def _admin_alert(s, title, sub, *rows, once=None):
+        """Mail a quien administra Lumo cuando alguien empieza la prueba, conecta, paga, falla un cobro o cancela.
+        once: referencia para mandarlo una sola vez (Mercado Pago puede repetir sus avisos)."""
+        to = cfg.get("ADMIN_NOTIFY_EMAIL") or cfg.get("CONTACT_EMAIL")
+        if not to or not notify.enabled(cfg):
+            return
+        if once and s.get(Notice, (sub.user_id, "adm", once[:64])):
+            return
+        acc = s.get(Account, sub.user_id) if sub.user_id > 0 else None
+        info = [("Email de pago", sub.payer_email), ("Email de Mercado Libre", acc.email if acc and acc.email != sub.payer_email else None),
+                ("Cuenta de Mercado Libre", sub.user_id if sub.user_id > 0 else "todavía no la conectó"),
+                ("Plan", billing.NAMES.get(sub.plan, "").capitalize()), ("Monto", notify.money(sub.amount_ars) if sub.amount_ars else None)]
+        subject, text, html = notify.admin_mail(title, list(rows) + info, _base_url() + "/admin")
+        try:
+            notify.send_mail(cfg, to, subject, text, html)
+        except Exception as exc:  # un aviso que no sale no puede frenar el cobro ni el ingreso
+            log.warning("aviso al administrador falló: %s", notify.why(exc))
+            return
+        if once:
+            notify._mark(s, sub.user_id, "adm", once[:64], utcnow())
+
     def _apply_preapproval(s, sub, pre):
         before, had_trial = (sub.status, sub.plan), sub.trial_started_at
         billing.apply(cfg, sub, pre)
         if sub.trial_started_at and not had_trial:
             audit.record(s, "trial_start", target=sub.user_id, detail=sub.plan)
             _meta_track(s, "StartTrial", sub.user_id, billing.price_usd(cfg, sub.plan or "monthly"))
+            _admin_alert(s, "Nueva prueba gratis", sub, ("Primer cobro", sub.trial_ends_at.strftime("%d/%m/%Y")))
         if (sub.status, sub.plan) != before:
             audit.record(s, "sub_" + sub.status, target=sub.user_id, detail=sub.plan)
+            if before[0] == "authorized" and sub.status in ("cancelled", "paused"):
+                _admin_alert(s, "Suscripción cancelada" if sub.status == "cancelled" else "Suscripción pausada en Mercado Pago", sub,
+                             ("Acceso hasta", sub.paid_until.strftime("%d/%m/%Y") if sub.paid_until else None))
 
     def _billing_notices(s, sub) -> int:
         """Avisos por email de la suscripción: cobro rechazado, acceso suspendido y prueba por terminar. Cada uno se manda una vez."""
@@ -1216,6 +1244,7 @@ def create_app(overrides=None) -> Flask:
                         result = billing.apply_payment(sub, pay)
                         if result:
                             audit.record(s, "sub_pago_" + ("ok" if result == "ok" else "rechazado"), target=sub.user_id)
+                            _admin_alert(s, "Cobro aprobado" if result == "ok" else "Cobro rechazado", sub, once="pago-" + data_id)
                             if result == "ok":
                                 _meta_track(s, "Subscribe", sub.user_id, billing.price_usd(cfg, sub.plan or "monthly"))
                             _apply_preapproval(s, sub, billing.fetch(cfg, pid))
