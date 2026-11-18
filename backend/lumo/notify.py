@@ -45,6 +45,9 @@ def enabled(cfg: dict) -> bool:
 
 def _send_brevo(cfg: dict, to: str, subject: str, text: str, html: str, attachments=None) -> None:
     body = {"sender": {"name": "Lumo", "email": _sender(cfg)}, "to": [{"email": to}], "subject": subject, "textContent": text, "htmlContent": html}
+    reply = cfg.get("CONTACT_EMAIL")
+    if reply and reply.lower() != _sender(cfg).lower():
+        body["replyTo"] = {"email": reply}  # se envía desde el dominio de Lumo, pero las respuestas llegan a la casilla de contacto
     if attachments:
         body["attachment"] = [{"name": name, "content": base64.b64encode(content).decode("ascii")} for name, content in attachments]
     resp = requests.post(BREVO_URL, timeout=30, headers={"api-key": cfg["BREVO_API_KEY"], "accept": "application/json"}, json=body)

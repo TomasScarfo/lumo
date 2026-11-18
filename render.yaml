@@ -84,7 +84,8 @@ services:
       - key: SITE_URL
         sync: false
       # Avisos por email: se envían por la API de Brevo (el SMTP está bloqueado en el plan gratis de Render).
-      # MAIL_FROM es el remitente verificado en Brevo (por ejemplo lumoads.ml@gmail.com).
+      # MAIL_FROM es el remitente, de un dominio autenticado en Brevo (por ejemplo admin@lumoads.com.ar). Con una casilla de Gmail,
+      # Brevo lo cambia por una dirección @brevosend.com. Las respuestas llegan a CONTACT_EMAIL.
       - key: BREVO_API_KEY
         sync: false
       - key: MAIL_FROM
