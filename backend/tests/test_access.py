@@ -303,6 +303,18 @@ class Administracion(Base):
         self.assertTrue(r.headers["Location"].endswith("/admin"))  # aunque tenga publicidad, vuelve a donde quería ir
         self.assertEqual(self.client.get("/admin").status_code, 200)
 
+    def test_si_entra_al_admin_con_otra_cuenta_le_dice_cual_uso(self):
+        self.client.get("/admin")
+        loc = self.client.get("/connect").headers["Location"]
+        state = loc.split("state=")[1].split("&")[0]
+        with mock.patch("lumo.ml.exchange_code", return_value=tok(777)), mock.patch("lumo.ml.advertisers", return_value=ADS):
+            r = self.client.get("/callback?code=abc&state=" + state)
+        self.assertEqual(r.status_code, 403)
+        html = r.get_data(as_text=True)
+        self.assertIn("<code>777</code>", html)
+        self.assertIn("ADMIN_USER_IDS", html)
+        self.assertEqual(self.client.get("/admin").status_code, 404)
+
     def test_solo_los_administradores_la_ven(self):
         token = self.invite()
         miembro = self.app.test_client()
