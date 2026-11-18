@@ -485,6 +485,13 @@ def create_app(overrides=None) -> Flask:
         session["at"] = int(time.time())  # cuándo entró: las sesiones de administración vencen antes
         session["via"] = "ml"  # entró con Mercado Libre: es lo que pide la administración
         session.permanent = True
+        if wanted == "/admin" and not access.is_admin(cfg, user_id):
+            # Quería entrar a la administración con una cuenta que no administra: se le dice cuál usó, en vez de mandarlo a pagar.
+            log.warning("la cuenta %s quiso entrar a la administración y no es administradora", user_id)
+            return page("<h1>Esta cuenta no administra Lumo</h1><p>Entraste con la cuenta de Mercado Libre número <code>%d</code>, "
+                        "que no figura entre las cuentas administradoras.</p><p>Si entraste con otra cuenta por error, cerrá la sesión en "
+                        "mercadolibre.com.ar y volvé a intentarlo. Si es tu cuenta, agregá ese número en la variable <code>ADMIN_USER_IDS</code> "
+                        "de la app en Render.</p><a class='btn' href='/salir'>Salir</a>" % user_id, 403)
         if not allowed:
             log.info("la cuenta %s no tiene una suscripción activa", user_id)  # nueva: va a empezar su prueba gratis
             return redirect("/suscripcion")
