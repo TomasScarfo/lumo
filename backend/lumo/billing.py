@@ -139,6 +139,10 @@ def ars_amount(cfg: dict, plan: str) -> float:
 
 
 # ---------- Prueba gratis ----------
+def email_hash(email) -> str:
+    return hashlib.sha256((email or "").strip().lower().encode()).hexdigest()
+
+
 def trial_available(sub) -> bool:
     """La prueba gratis es una sola por cuenta y empieza cuando Mercado Pago confirma el medio de pago."""
     return sub is None or sub.trial_started_at is None
@@ -178,7 +182,7 @@ def _parse_date(raw):
         return None
 
 
-def create_checkout(cfg: dict, sub: Subscription, plan: str, email: str, back_url: str) -> str:
+def create_checkout(cfg: dict, sub: Subscription, plan: str, email: str, back_url: str, trial_ok: bool = True) -> str:
     """Crea la suscripción pendiente en Mercado Pago y devuelve el enlace donde la persona carga su medio de pago.
 
     Quien nunca usó la prueba gratis no paga nada los primeros días: el primer cobro se agenda para cuando termina la prueba,
@@ -190,6 +194,8 @@ def create_checkout(cfg: dict, sub: Subscription, plan: str, email: str, back_ur
     recurring = {"frequency": MONTHS[plan], "frequency_type": "months", "transaction_amount": amount, "currency_id": "ARS"}
     now = utcnow()
     replacing = sub.status == "authorized" and bool(sub.mp_preapproval_id)
+    if not trial_ok and trial_available(sub):
+        sub.trial_started_at = sub.trial_ends_at = now  # ese email ya usó su prueba gratis: cobra apenas se suscribe
     if trial_available(sub) and not replacing:
         sub.trial_ends_at = now + timedelta(days=trial_days(cfg))  # provisorio: vale cuando Mercado Pago autoriza
         starts = [sub.trial_ends_at]

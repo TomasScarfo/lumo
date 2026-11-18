@@ -89,7 +89,8 @@
           </div>
         </form>
         <ul class="fine">
-          {% if trial_offer %}<li>La prueba empieza cuando Mercado Pago confirma tu medio de pago. No se cobra nada hasta que termina.</li>{% endif %}
+          {% if trial_offer %}<li>La prueba empieza cuando Mercado Pago confirma tu medio de pago. No se cobra nada hasta que termina.</li>
+          <li>La prueba gratis es una sola por persona: si ya la usaste (con esta u otra cuenta, con el mismo email de pago), el primer cobro es inmediato.</li>{% endif %}
           <li>Usá el mismo email con el que entrás a Mercado Pago.</li>
           <li>El precio en pesos sigue al dólar oficial: el monto puede cambiar de un cobro a otro.</li>
           {% if active and not plan.past_due %}<li>El plan nuevo empieza cuando termina el período que ya pagaste: no se cobra dos veces.</li>{% endif %}

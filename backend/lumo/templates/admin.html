@@ -27,11 +27,13 @@
   <div class="tw">
     {% if subs %}
     <table>
-      <thead><tr><th>Cuenta</th><th>Estado</th><th>Plan</th><th>Email de pago</th></tr></thead>
+      <thead><tr><th>Cuenta</th><th>Estado</th><th>Plan y cobro</th><th>Emails</th><th>Fechas</th></tr></thead>
       <tbody>
       {% for x in subs %}
         <tr>
-          <td><code>{{ x.user_id }}</code></td>
+          <td>{% if x.nickname %}<b>{{ x.nickname }}</b><br>{% endif %}<code>{{ x.user_id }}</code>
+              {% if x.advertiser %}<br><small>{{ x.advertiser }}</small>{% endif %}
+              <br><small>{% if x.conn == 'connected' %}Mercado Libre conectado{% elif x.conn == 'needs_reconnect' %}Debe reconectar Mercado Libre{% else %}Sin Mercado Libre conectado{% endif %}</small></td>
           <td>{% if x.past_due %}<span class="pill re">Cobro rechazado</span><br><small>entra hasta el {{ x.grace_ends.strftime('%d/%m') }}</small>
               {% elif x.kind == 'paid' and x.status == 'authorized' %}<span class="pill ex">Pagando</span>{% if x.paid_until %}<br><small>próximo cobro {{ x.paid_until.strftime('%d/%m/%y') }}</small>{% endif %}
               {% elif x.kind == 'paid' %}<span class="pill at">Canceló</span><br><small>acceso hasta {{ x.paid_until.strftime('%d/%m/%y') }}</small>
@@ -41,8 +43,18 @@
               {% elif x.reason == 'cancelled' %}<span class="pill us">Cancelada</span>
               {% elif x.reason == 'new' %}<span class="pill us">No cargó el medio de pago</span><br><small>sin acceso</small>
               {% else %}<span class="pill us">Prueba vencida</span>{% endif %}</td>
-          <td>{{ x.plan|capitalize if x.plan else '—' }}{% if x.next_plan %}<br><small>cambia a {{ x.next_plan }}</small>{% endif %}</td>
-          <td>{{ x.email or '—' }}</td>
+          <td>{{ x.plan|capitalize if x.plan else '—' }}{% if x.amount %} · {{ x.amount }}{% endif %}
+              {% if x.next_plan %}<br><small>cambia a {{ x.next_plan }}</small>{% endif %}
+              {% if x.paid_until and x.kind in ('paid', 'trial') %}<br><small>{{ 'primer' if x.kind == 'trial' else 'próximo' }} cobro {{ x.paid_until.strftime('%d/%m/%y') }}</small>{% endif %}
+              {% if x.past_due_since %}<br><small>cobro rechazado el {{ x.past_due_since.strftime('%d/%m/%y') }}</small>{% endif %}
+              {% if x.mp_id %}<br><small>Mercado Pago: <code>{{ x.mp_id }}</code></small>{% endif %}</td>
+          <td><small>Mercado Libre:</small> {{ x.ml_email or '—' }}
+              <br><small>Pago:</small> {{ x.email or '—' }}
+              {% if x.lumo_email %}<br><small>Registro en Lumo:</small> {{ x.lumo_email }}{% endif %}</td>
+          <td><small>Alta: {{ x.since.strftime('%d/%m/%y') }}
+              {% if x.trial_started %}<br>Prueba: {{ x.trial_started.strftime('%d/%m') }} al {{ x.trial_ends.strftime('%d/%m/%y') }}{% endif %}
+              {% if x.connected_at %}<br>Conectó Mercado Libre: {{ x.connected_at.strftime('%d/%m/%y') }}{% endif %}
+              {% if x.last_login %}<br>Último ingreso: {{ x.last_login.strftime('%d/%m/%y %H:%M') }}{% endif %}</small></td>
         </tr>
       {% endfor %}
       </tbody>
