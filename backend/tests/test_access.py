@@ -292,8 +292,18 @@ class Ingreso(Base):
 
 
 class Administracion(Base):
+    def test_sin_sesion_admin_lleva_a_iniciar_sesion_y_vuelve(self):
+        r = self.client.get("/admin")
+        self.assertTrue(r.headers["Location"].endswith("/connect"))
+        self.assertEqual(self.client.post("/admin/invitar", data={"label": "x"}).status_code, 404)  # sin sesión no se hace nada
+        loc = self.client.get("/connect").headers["Location"]
+        state = loc.split("state=")[1].split("&")[0]
+        with mock.patch("lumo.ml.exchange_code", return_value=tok(1)), mock.patch("lumo.ml.advertisers", return_value=ADS):
+            r = self.client.get("/callback?code=abc&state=" + state)
+        self.assertTrue(r.headers["Location"].endswith("/admin"))  # aunque tenga publicidad, vuelve a donde quería ir
+        self.assertEqual(self.client.get("/admin").status_code, 200)
+
     def test_solo_los_administradores_la_ven(self):
-        self.assertEqual(self.client.get("/admin").status_code, 404)
         token = self.invite()
         miembro = self.app.test_client()
         miembro.get("/invitacion/" + token)
