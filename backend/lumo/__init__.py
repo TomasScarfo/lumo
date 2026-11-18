@@ -84,7 +84,8 @@ def load_config(overrides=None) -> dict:
         "CONTACT_EMAIL": os.environ.get("CONTACT_EMAIL", "lumoads.ml@gmail.com"),
         "ADMIN_NOTIFY_EMAIL": os.environ.get("ADMIN_NOTIFY_EMAIL", ""),  # adónde llegan los avisos de suscripciones; vacío: CONTACT_EMAIL
         # Avisos por email. Se envían por la API de Brevo (BREVO_API_KEY), que sirve en el plan gratis de Render; MAIL_FROM es el remitente
-        # verificado en Brevo. Sin Brevo, usa SMTP (SMTP_PASSWORD, contraseña de aplicación de Gmail). Sin ninguno no se envía nada.
+        # verificado en Brevo: con una casilla de Gmail, Brevo lo reemplaza por una suya (…@brevosend.com); con un dominio propio
+        # autenticado en Brevo (por ejemplo admin@lumoads.com.ar) sale tal cual. Las respuestas van a CONTACT_EMAIL. Sin Brevo, usa SMTP (SMTP_PASSWORD, contraseña de aplicación de Gmail). Sin ninguno no se envía nada.
         "BREVO_API_KEY": os.environ.get("BREVO_API_KEY", ""),
         "MAIL_FROM": os.environ.get("MAIL_FROM", ""),
         "SMTP_HOST": os.environ.get("SMTP_HOST", "smtp.gmail.com"),

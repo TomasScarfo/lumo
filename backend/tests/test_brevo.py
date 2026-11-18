@@ -37,6 +37,14 @@ class EnvioPorBrevo(unittest.TestCase):
         self.assertEqual(kw["json"]["to"], [{"email": "cliente@ejemplo.com"}])
         self.assertEqual((kw["json"]["subject"], kw["json"]["textContent"], kw["json"]["htmlContent"]), ("Asunto", "texto", "<p>html</p>"))
 
+    def test_desde_el_dominio_propio_las_respuestas_van_al_contacto(self):
+        cfg = dict(BREVO, MAIL_FROM="admin@lumoads.com.ar", CONTACT_EMAIL="lumoads.ml@gmail.com")
+        with mock.patch("lumo.notify.requests.post", return_value=resp(201, {"messageId": "x"})) as post:
+            notify.send_mail(cfg, "cliente@ejemplo.com", "Asunto", "texto", "<p>html</p>")
+        body = post.call_args[1]["json"]
+        self.assertEqual(body["sender"], {"name": "Lumo", "email": "admin@lumoads.com.ar"})
+        self.assertEqual(body["replyTo"], {"email": "lumoads.ml@gmail.com"})
+
     def test_si_brevo_rechaza_el_envio_se_avisa_con_el_motivo_y_sin_la_clave(self):
         with mock.patch("lumo.notify.requests.post", return_value=resp(400, {"code": "invalid_parameter", "message": "sender no validado"})):
             with self.assertRaises(notify.MailError) as cm:
