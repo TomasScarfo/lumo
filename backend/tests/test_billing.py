@@ -277,6 +277,13 @@ class Prueba(Base):
         self.assertEqual(self.client.get("/panel").status_code, 200)
         self.assertIn("Cancelaste tu suscripción", self.client.get("/suscripcion").get_data(as_text=True))
 
+    def test_sin_mercado_libre_conectado_ofrece_entrar_sin_pagar(self):
+        html = self.client.get("/suscripcion").get_data(as_text=True)
+        self.assertIn("¿Administrás Lumo o tenés acceso sin cargo?", html)
+        self.assertIn('href="/connect"', html)
+        r = connect_as(self.client, 1)  # el administrador conecta y entra, sin pagar
+        self.assertNotIn("/suscripcion", r.headers["Location"])
+
     def test_sin_sesion_se_elige_el_plan_antes_de_conectar(self):
         html = self.client.get("/suscripcion?plan=monthly").get_data(as_text=True)
         for texto in ("Empezá tu prueba gratis", "Después conectás tu cuenta de Mercado Libre", "¿Ya tenés cuenta? Ingresar", 'value="monthly" checked'):
