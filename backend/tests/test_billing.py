@@ -622,9 +622,10 @@ class Administracion(Base):
 
 
 class Portada(Base):
-    def test_los_planes_van_primero_y_los_botones_de_prueba_llevan_a_ellos(self):
+    def test_la_portada_sigue_el_orden_de_una_pagina_de_producto_y_los_botones_llevan_a_los_planes(self):
         html = self.client.get("/").get_data(as_text=True)
-        self.assertLess(html.index('id="precio"'), html.index('id="que-hace"'))  # justo después de la presentación
+        orden = [html.index('id="%s"' % i) for i in ("que-hace", "como", "vistazo", "seguridad", "precio", "preguntas")]
+        self.assertEqual(orden, sorted(orden))  # presentación, por qué elegirla, cómo funciona, números, seguridad, planes y preguntas
         self.assertNotIn("sin letra chica", html)
         self.assertIn("Probalo 14 días gratis", html)
         self.assertIn('<a class="btn" href="#precio">Probar gratis 14 días</a>', html)

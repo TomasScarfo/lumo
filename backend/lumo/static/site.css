@@ -447,3 +447,70 @@ section.block .feats .card p { font-size: .86rem; line-height: 1.4; }
   .tab b { font-size: .88rem; }
   .tab span { font-size: .78rem; }
 }
+
+/* Portada con la estructura de una página de producto: presentación centrada, por qué elegirla, cómo funciona,
+   números, planes y preguntas. Los componentes nuevos son de la portada; las demás pantallas no los usan. */
+.nav-cta { display: flex; align-items: center; gap: 8px; }
+@media (max-width: 460px) { .nav-cta .btn.sm { padding: 0 12px; min-height: 36px; font-size: .86rem; } }
+.hero.hero-c { padding: 52px 0 20px; }
+.hero.hero-c .wrap { display: block; max-width: 860px; text-align: center; }
+.hero-c h1 { font-size: clamp(2.3rem, 6vw, 4rem); margin: 18px 0 16px; }
+.hero-c .lead { margin: 0 auto; }
+.hero-c .lead b { color: var(--ink); }
+.hero-c .cta-row, .hero-c .chips { justify-content: center; }
+.hero-c .invite-note { max-width: 580px; margin-left: auto; margin-right: auto; text-align: left; }
+@media (min-width: 960px) { .hero.hero-c { padding: 76px 0 28px; } }
+.hero.hero-c .hero-mock { max-width: 820px; margin-top: 34px; text-align: left; display: block; }
+.head h2 em { font-style: normal; color: var(--accent); }
+.head p b { color: var(--ink); }
+
+/* Por qué elegir Lumo: dos grupos de tres y el negocio en el medio */
+.why { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+.why-col { display: grid; gap: 12px; align-content: start; }
+.why-tag { text-align: center; color: var(--accent); font-weight: 700; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; }
+.why-hub { display: none; }
+@media (min-width: 960px) {
+  .why { grid-template-columns: minmax(0, 1fr) 190px minmax(0, 1fr); gap: 22px; align-items: center; }
+  .why-col { align-self: stretch; align-content: center; }
+  .why-hub { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+}
+.orb { position: relative; width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle, var(--accent-soft) 0%, transparent 72%); animation: orb-luz 3.6s ease-in-out infinite alternate; }
+.orb img { width: 64px; height: 64px; border-radius: 16px; box-shadow: 0 10px 28px rgba(36,70,214,.3); }
+.orb::before, .orb::after { content: ""; position: absolute; top: 50%; width: 56px; border-top: 2px dotted var(--line); }
+.orb::before { right: 100%; margin-right: 2px; }
+.orb::after { left: 100%; margin-left: 2px; }
+.why-hub > b { font: 800 1.05rem var(--font-display); }
+.why-hub ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.why-hub li { font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
+@keyframes orb-luz { from { box-shadow: 0 0 0 0 rgba(255,214,102,0); } to { box-shadow: 0 0 36px 4px rgba(255,214,102,.35); } }
+@media (prefers-reduced-motion: reduce) { .orb { animation: none; } }
+.also { max-width: 640px; margin: 24px auto 0; text-align: center; color: var(--ink-2); font-size: .95rem; }
+.also b { color: var(--ink); }
+.cta-line { margin-top: 26px; padding: 16px 20px; border-radius: 16px; background: var(--accent-soft); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.cta-line p { margin: 0; color: var(--ink); max-width: 40em; }
+
+/* Cómo funciona: pasos en una línea de tiempo */
+.tl { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; }
+.tl li { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px; padding-bottom: 20px; }
+.tl li:not(:last-child)::before { content: ""; position: absolute; left: 19px; top: 42px; bottom: 2px; width: 2px; background: linear-gradient(var(--accent), var(--line)); }
+.tl-n { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font: 800 1.05rem var(--font-display); }
+.tl h3 { font-size: 1.1rem; margin: 6px 0 4px; }
+.tl p { color: var(--ink-2); font-size: .95rem; line-height: 1.5; }
+
+/* Números */
+.stats { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); max-width: 980px; margin: 0 auto; }
+@media (min-width: 720px) { .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.stat { padding: 22px 20px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.stat b { display: block; font: 800 clamp(2.4rem, 5vw, 3.4rem)/1.05 var(--font-display); color: var(--accent); }
+.stat span { display: block; margin-top: 8px; color: var(--ink-2); font-size: .95rem; line-height: 1.5; }
+
+/* Planes: tres columnas con lo que incluye cada uno */
+@media (min-width: 960px) { .price-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.price-grid.three { max-width: 1020px; margin: 0 auto; }
+.price-grid.three .card { text-align: left; display: flex; flex-direction: column; position: relative; }
+.price-grid.three .btn { margin-top: auto; align-self: stretch; }
+.badge { position: absolute; top: -11px; right: 16px; background: var(--accent); color: var(--accent-ink); font: 700 .72rem var(--font-body); padding: 3px 11px; border-radius: 999px; }
+.plan-list { list-style: none; margin: 12px 0 18px; padding: 0; display: grid; gap: 6px; color: var(--ink-2); font-size: .9rem; }
+.plan-list li { display: flex; gap: 8px; }
+.plan-list li::before { content: "✓"; color: var(--good); font-weight: 800; flex: none; }

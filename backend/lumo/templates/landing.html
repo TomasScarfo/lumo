@@ -80,40 +80,42 @@
   <div class="wrap">
     <a class="logo" href="/" aria-label="Lumo, inicio"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
     <nav class="links" aria-label="Secciones">
-      <a href="#precio">Planes</a><a href="#que-hace">Qué hace</a><a href="#como">Cómo funciona</a><a href="#panel">El panel</a><a href="#seguridad">Seguridad</a><a href="#preguntas">Preguntas</a>{% if contact %}<a href="#contacto">Contacto</a>{% endif %}
+      <a href="#que-hace">Qué hace</a><a href="#como">Cómo funciona</a><a href="#seguridad">Seguridad</a><a href="#precio">Planes</a><a href="#preguntas">Preguntas</a>{% if contact %}<a href="#contacto">Contacto</a>{% endif %}
     </nav>
-    <a class="btn sm" href="{{ app }}/entrar" data-app>Ingresar</a>
+    <div class="nav-cta">
+      {% if not invited %}<a class="btn sm" href="#precio">Probar gratis</a>{% endif %}
+      <a class="btn sm ghost" href="{{ app }}/entrar" data-app>Ingresar</a>
+    </div>
   </div>
 </header>
 
 <main id="main">
-  <section class="hero">
+  <section class="hero hero-c">
     <div class="wrap">
-      <div>
-        <span class="eyebrow"><i></i>Para vendedores y agencias de Mercado Libre</span>
-        <h1>Sabé qué mejorar en tu publicidad, <em>sin descifrar métricas</em>.</h1>
-        <p class="lead">Lumo lee tus campañas de Product Ads y te explica, en palabras simples, qué está funcionando, qué no y qué conviene hacer primero. Sin planillas ni jerga.</p>
-        <div class="cta-row">
-          {% if invited %}<a class="btn" href="{{ app }}/connect" data-app>Aceptar la invitación y conectar</a>{% else %}<a class="btn" href="#precio">Probar gratis {{ trial_days }} días</a>{% endif %}
-          <a class="btn ghost" href="#como">Ver cómo funciona</a>
-        </div>
-        <ul class="chips" aria-label="Garantías">
-          <li><svg><use href="#i-eye"/></svg>Solo consulta tus datos</li>
-          <li><svg><use href="#i-lock"/></svg>Tokens cifrados</li>
-          <li><svg><use href="#i-power"/></svg>Te desconectás cuando quieras</li>
-        </ul>
-        {% if invite_error %}
-        <p class="invite-note bad" role="alert"><b>Esa invitación no es válida.</b> Puede que ya se haya usado, que haya vencido o que la hayan cancelado. Pedí una nueva a quien te la envió.</p>
-        {% elif invited %}
-        <p class="invite-note ok"><b>Te invitaron a Lumo{% if label %}, {{ label }}{% endif %}.</b> Conectá tu cuenta de Mercado Libre para activar tu acceso. La invitación es de un solo uso.</p>
-        {% else %}
-        <p class="invite-note"><b>{{ trial_days }} días gratis: no se cobra nada hasta el día {{ trial_days + 1 }}.</b>
-          {% if price.monthly %}Después, desde <span data-price="monthly">{{ price.monthly }}</span> por mes. Cancelás cuando quieras.{% else %}Conectás tu cuenta de Mercado Libre y empezás. Cancelás cuando quieras.{% endif %}
-          ¿Ya tenés cuenta? <a href="{{ app }}/entrar" data-app>Ingresá</a>.</p>
-        {% endif %}
+      <span class="eyebrow"><i></i>Para vendedores y agencias de Mercado Libre</span>
+      <h1>Tu publicidad en Mercado Libre, <em>por fin clara</em>.</h1>
+      <p class="lead">Lumo lee tus campañas de <b>Product Ads</b> y te dice, en palabras simples, <b>qué mejorar primero</b>. Sin planillas ni jerga.</p>
+      <div class="cta-row">
+        {% if invited %}<a class="btn" href="{{ app }}/connect" data-app>Aceptar la invitación y conectar</a>{% else %}<a class="btn" href="#precio">Probar gratis {{ trial_days }} días</a>{% endif %}
+        <a class="btn ghost" href="#como">Ver cómo funciona</a>
       </div>
-
-      <div class="mock" role="img" aria-label="Ejemplo del panel de Lumo con datos ficticios: una campaña en estado Excelente, una en Atención y una en Revisar, y una recomendación para subir el presupuesto.">
+      {% if invite_error %}
+      <p class="invite-note bad" role="alert"><b>Esa invitación no es válida.</b> Puede que ya se haya usado, que haya vencido o que la hayan cancelado. Pedí una nueva a quien te la envió.</p>
+      {% elif invited %}
+      <p class="invite-note ok"><b>Te invitaron a Lumo{% if label %}, {{ label }}{% endif %}.</b> Conectá tu cuenta de Mercado Libre para activar tu acceso. La invitación es de un solo uso.</p>
+      {% else %}
+      <p class="invite-note"><b>{{ trial_days }} días gratis: no se cobra nada hasta el día {{ trial_days + 1 }}.</b>
+        {% if price.monthly %}Después, desde <span data-price="monthly">{{ price.monthly }}</span> por mes. Cancelás cuando quieras.{% else %}Conectás tu cuenta de Mercado Libre y empezás. Cancelás cuando quieras.{% endif %}
+        ¿Ya tenés cuenta? <a href="{{ app }}/entrar" data-app>Ingresá</a>.</p>
+      {% endif %}
+      <ul class="chips" aria-label="Garantías">
+        <li><svg><use href="#i-eye"/></svg>Solo consulta tus datos</li>
+        <li><svg><use href="#i-lock"/></svg>Tokens cifrados</li>
+        <li><svg><use href="#i-power"/></svg>Te desconectás cuando quieras</li>
+      </ul>
+    </div>
+    <div class="wrap hero-mock">
+      <div class="mock mock-c" role="img" aria-label="Ejemplo del panel de Lumo con datos ficticios: una campaña en estado Excelente, una en Atención y una en Revisar, y una recomendación para subir el presupuesto.">
         <span class="mock-tag">Ejemplo con datos ficticios</span>
         <div class="mk-hero">
           <div class="ic"><svg><use href="#i-alert"/></svg></div>
@@ -141,88 +143,70 @@
     </div>
   </section>
 
-  <section class="block" id="precio">
-    <div class="wrap" style="max-width:820px">
-      <div class="head center">
-        <span class="kicker">Planes</span>
-        <h2>Probalo {{ trial_days }} días gratis</h2>
-        <p>Elegí tu plan. No se cobra nada hasta el día {{ trial_days + 1 }}, y si cancelás antes no pagás.</p>
-      </div>
-      <div class="price-grid">
-        <div class="card">
-          <h3>Mensual</h3>
-          <p class="plan-price" style="margin:10px 0 6px"><span data-price="monthly">{{ price.monthly }}</span> <small>por mes</small></p>
-          <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
-          <a class="btn ghost" href="{{ app }}/suscripcion?plan=monthly" data-app style="margin-top:16px">Probar gratis el mensual</a>
-        </div>
-        {% if price.annual %}
-        <div class="card best">
-          <h3>Anual{% if price.saving_pct %} <span class="save">Ahorrás {{ price.saving_pct }}%</span>{% endif %}</h3>
-          <p class="plan-price" style="margin:10px 0 6px"><span data-price="annual">{{ price.annual }}</span> <small>por año</small></p>
-          <p>Lo mismo, pagando una vez al año{% if price.saving %}: <span data-price="saving">{{ price.saving }}</span> menos que mes a mes{% endif %}.</p>
-          <a class="btn" href="{{ app }}/suscripcion?plan=annual" data-app style="margin-top:16px">Probar gratis el anual</a>
-        </div>
-        {% endif %}
-      </div>
-      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, cargás tu medio de pago en Mercado Pago y conectás tu cuenta de Mercado Libre. Precios en pesos argentinos, actualizados según el dólar oficial del día.</p>
-    </div>
-  </section>
-
-  <section class="block alt" id="que-hace">
+  <section class="block" id="que-hace">
     <div class="wrap">
-      <div class="head">
-        <span class="kicker">Qué hace Lumo</span>
-        <h2>De los números de Mercado Ads a las decisiones que importan</h2>
-        <p>Mercado Ads te muestra métricas. Lumo las interpreta contra el objetivo de cada campaña y te dice qué hacer, en qué orden.</p>
+      <div class="head center">
+        <h2>Lo que <em>Lumo</em> hace por tus campañas</h2>
+        <p>Mercado Ads te muestra métricas. Lumo las traduce a decisiones: <b>qué mirar primero</b> y qué conviene hacer con cada campaña.</p>
       </div>
-      <div class="grid c4 feats">
-        <article class="card"><div class="ico"><svg><use href="#i-target"/></svg></div><h3>Un estado por campaña</h3><p>Ves cuáles superan su objetivo, cuáles mejoran y cuáles tienen oportunidad.</p></article>
-        <article class="card"><div class="ico"><svg><use href="#i-sliders"/></svg></div><h3>Recomendaciones con números</h3><p>Cuánto subir o bajar cada presupuesto, con tus cifras.</p></article>
-        <article class="card"><div class="ico"><svg><use href="#i-alert"/></svg></div><h3>Alertas por publicación</h3><p>Las que gastan sin vender y las que merecen publicidad.</p></article>
-        <article class="card"><div class="ico"><svg><use href="#i-flag"/></svg></div><h3>Seguimiento</h3><p>Marcás lo que hiciste y ves cómo cambiaron tus ventas.</p></article>
-        <article class="card"><div class="ico"><svg><use href="#i-trend"/></svg></div><h3>Tendencias</h3><p>Categorías y marcas que crecen y cuánta publicidad tienen.</p></article>
-        <article class="card"><div class="ico"><svg><use href="#i-eye"/></svg></div><h3>El período que quieras</h3><p>7, 14, 30 días o un rango a medida, contra el anterior.</p></article>
-        <article class="card"><div class="ico"><svg><use href="#i-trend"/></svg></div><h3>Más de 3 meses de historial</h3><p>Lumo guarda tus métricas día a día desde que te conectás.</p></article>
-        <article class="card"><div class="ico"><svg><use href="#i-book"/></svg></div><h3>Glosario simple</h3><p>ROAS, ACOS, CTR y más, explicados con un ejemplo.</p></article>
+      <div class="why">
+        <div class="why-col">
+          <span class="why-tag">Para entender</span>
+          <article class="card"><div class="ico"><svg><use href="#i-target"/></svg></div><h3>Un estado por campaña</h3><p>Ves cuáles superan su ROAS objetivo, cuáles mejoran y cuáles tienen oportunidad. Sin abrir una planilla.</p></article>
+          <article class="card"><div class="ico"><svg><use href="#i-book"/></svg></div><h3>Métricas en palabras simples</h3><p>ROAS, ACOS, CTR y más, explicados con un ejemplo. Entendés qué mirás y por qué importa.</p></article>
+          <article class="card"><div class="ico"><svg><use href="#i-trend"/></svg></div><h3>Un historial que supera los 3 meses</h3><p>Lumo guarda tus métricas día a día desde que te conectás, hasta dos años, y las comparás contra el período anterior.</p></article>
+        </div>
+        <div class="why-hub" aria-hidden="true">
+          <div class="orb"><img src="/static/logo.svg" alt="" width="64" height="64"></div>
+          <b>Tus métricas</b>
+          <ul><li>Leer</li><li>Explicar</li><li>Priorizar</li></ul>
+        </div>
+        <div class="why-col">
+          <span class="why-tag">Para decidir</span>
+          <article class="card"><div class="ico"><svg><use href="#i-sliders"/></svg></div><h3>Recomendaciones con números</h3><p>Cuánto subir o bajar el presupuesto de cada campaña, con tus cifras. Nada de consejos genéricos.</p></article>
+          <article class="card"><div class="ico"><svg><use href="#i-alert"/></svg></div><h3>Alertas por publicación</h3><p>Detectás las que gastan sin vender y las que ya venden solas y merecen publicidad.</p></article>
+          <article class="card"><div class="ico"><svg><use href="#i-mail"/></svg></div><h3>Resumen semanal, con Excel</h3><p>Cada semana te llega por mail la evolución de tu inversión, las 5 publicaciones que más aportaron y un Excel con las mismas tablas del panel.</p></article>
+        </div>
+      </div>
+      <p class="also"><b>Y además:</b> seguimiento de lo que hacés, tendencias de tu catálogo y el período que quieras (7, 14, 30 días o un rango a medida).</p>
+      <div class="cta-line">
+        <p><b>¿Querés ver tus campañas con claridad?</b> Probá Lumo {{ trial_days }} días gratis, sin compromiso.</p>
+        {% if invited %}<a class="btn" href="{{ app }}/connect" data-app>Aceptar la invitación y conectar</a>{% else %}<a class="btn" href="#precio">Probar gratis {{ trial_days }} días</a>{% endif %}
       </div>
     </div>
   </section>
 
-  <section class="block" id="como">
+  <section class="block alt" id="como">
     <div class="wrap">
       <div class="head center">
-        <span class="kicker">Cómo funciona</span>
-        <h2>Listo en un minuto, sin instalar nada</h2>
+        <h2>De conectar a decidir, en cinco pasos</h2>
+        <p>Sin instalar nada, sin cargar planillas y sin que Lumo toque tus campañas.</p>
       </div>
-      <ol class="steps">
-        <li><h3>Elegís tu plan</h3><p>Cargás tu medio de pago en Mercado Pago. No se cobra nada por {{ trial_days }} días.</p></li>
-        <li><h3>Conectás Mercado Libre</h3><p>Lumo lee 90 días de campañas y publicaciones. Tu contraseña no pasa por Lumo.</p></li>
-        <li><h3>Sabés qué hacer</h3><p>Tareas, alertas y recomendaciones ordenadas por importancia.</p></li>
+      <ol class="tl">
+        <li><div class="tl-n">1</div><div><h3>Elegí tu plan</h3><p>Cargás tu medio de pago en Mercado Pago. No se cobra nada por {{ trial_days }} días y, si cancelás antes, no pagás.</p></div></li>
+        <li><div class="tl-n">2</div><div><h3>Conectá tu cuenta de Mercado Libre</h3><p>Un clic y listo. Iniciás sesión en Mercado Libre, así que tu contraseña no pasa por Lumo. Y Lumo queda en modo lectura: solo consulta.</p></div></li>
+        <li><div class="tl-n">3</div><div><h3>Lumo lee tus campañas</h3><p>Trae hasta 90 días de Product Ads y compara cada campaña y cada publicación con su ROAS objetivo.</p></div></li>
+        <li><div class="tl-n">4</div><div><h3>Seguí lo que Lumo te marca</h3><p>Tareas, alertas y recomendaciones ordenadas por importancia. Los cambios los hacés vos, en Mercado Libre, cuando quieras.</p></div></li>
+        <li><div class="tl-n">5</div><div><h3>Comprobá si funcionó</h3><p>Marcás lo que hiciste y ves el antes y el después. Cada semana te llega el resumen por mail, con un Excel para guardar o compartir.</p></div></li>
       </ol>
     </div>
   </section>
 
-  <section class="block alt" id="panel">
+  <section class="block" id="vistazo">
     <div class="wrap">
-      <div class="head">
-        <span class="kicker">El panel</span>
-        <h2>Siete pestañas, cada una responde una pregunta</h2>
-        <p>Pensado para entenderse a primera vista, también desde el celular.</p>
+      <div class="head center">
+        <h2>Lumo de un vistazo</h2>
+        <p>Tres cosas que conviene saber antes de empezar.</p>
       </div>
-      <div class="tabs">
-        <div class="tab"><span class="dot"></span><div><b>Principal</b><span>¿Cómo voy? Métricas, gráficos y campañas.</span></div></div>
-        <div class="tab"><span class="dot"></span><div><b>Tareas</b><span>¿Qué hago hoy? Una lista priorizada.</span></div></div>
-        <div class="tab"><span class="dot"></span><div><b>Alertas</b><span>¿Qué se rompió? Lo que gasta sin vender.</span></div></div>
-        <div class="tab"><span class="dot"></span><div><b>Recomendaciones</b><span>¿Qué me conviene? Ajustes con cifras.</span></div></div>
-        <div class="tab"><span class="dot"></span><div><b>Seguimiento</b><span>¿Funcionó? El antes y el después.</span></div></div>
-        <div class="tab"><span class="dot"></span><div><b>Tendencias</b><span>¿Qué crece? Categorías y marcas.</span></div></div>
-        <div class="tab"><span class="dot"></span><div><b>Glosario</b><span>¿Qué significa? Cada métrica, simple.</span></div></div>
-        <div class="tab"><span class="dot"></span><div><b>Agencias<span class="soon">Próximamente</span></b><span>Todos tus clientes en un lugar.</span></div></div>
+      <div class="stats">
+        <div class="stat"><b>+90</b><span>días de métricas de Product Ads, leídos apenas conectás. Después, tu historial propio crece día a día.</span></div>
+        <div class="stat"><b>0</b><span>cambios que hace Lumo en tus campañas. Solo consulta: las decisiones son tuyas.</span></div>
+        <div class="stat"><b>{{ trial_days }}</b><span>días de prueba gratis. No se cobra nada hasta el día {{ trial_days + 1 }}.</span></div>
       </div>
     </div>
   </section>
 
-  <section class="block" id="seguridad">
+  <section class="block alt" id="seguridad">
     <div class="wrap split">
       <div class="head" style="margin-bottom:0">
         <span class="kicker">Seguridad y transparencia</span>
@@ -235,6 +219,43 @@
         <li><svg><use href="#i-lock"/></svg><div><b>Credenciales cifradas</b><span>Los permisos que le das a Lumo se guardan cifrados y nunca se muestran en pantalla.</span></div></li>
         <li><svg><use href="#i-power"/></svg><div><b>Vos decidís</b><span>Podés quitarle el acceso a Lumo cuando quieras desde la configuración de tu cuenta de Mercado Libre, o pedir que borremos tus datos.</span></div></li>
       </ul>
+    </div>
+  </section>
+
+  <section class="block" id="precio">
+    <div class="wrap">
+      <div class="head center">
+        <span class="kicker">Planes</span>
+        <h2>Probalo {{ trial_days }} días gratis</h2>
+        <p>Elegí el que te quede cómodo. No se cobra nada hasta el día {{ trial_days + 1 }}, y si cancelás antes no pagás.</p>
+      </div>
+      <div class="price-grid three">
+        <div class="card">
+          <h3>Mensual</h3>
+          <p class="plan-price" style="margin:10px 0 6px"><span data-price="monthly">{{ price.monthly }}</span> <small>por mes</small></p>
+          <p>Todo el panel, para tu cuenta de Mercado Libre. Cancelás cuando quieras.</p>
+          <ul class="plan-list"><li>Estado por campaña, tareas, alertas y recomendaciones</li><li>Resumen semanal por email, con Excel</li><li>Tu historial de métricas, día a día</li><li>Soporte por email</li></ul>
+          <a class="btn ghost" href="{{ app }}/suscripcion?plan=monthly" data-app>Probar gratis el mensual</a>
+        </div>
+        {% if price.annual %}
+        <div class="card best">
+          <span class="badge">Más conveniente</span>
+          <h3>Anual{% if price.saving_pct %} <span class="save">Ahorrás {{ price.saving_pct }}%</span>{% endif %}</h3>
+          <p class="plan-price" style="margin:10px 0 6px"><span data-price="annual">{{ price.annual }}</span> <small>por año</small></p>
+          <p>Lo mismo, pagando una vez al año{% if price.saving %}: <span data-price="saving">{{ price.saving }}</span> menos que mes a mes{% endif %}.</p>
+          <ul class="plan-list"><li>Todo lo del plan mensual</li><li>Un solo pago al año</li><li>Soporte por email</li></ul>
+          <a class="btn" href="{{ app }}/suscripcion?plan=annual" data-app>Probar gratis el anual</a>
+        </div>
+        {% endif %}
+        <div class="card">
+          <h3>Agencias y consultores <span class="soon">Próximamente</span></h3>
+          <p class="plan-price" style="margin:10px 0 6px"><small>A medida</small></p>
+          <p>Todos tus clientes en una sola vista de cartera, con alertas y resúmenes por cuenta.</p>
+          <ul class="plan-list"><li>Varias cuentas de Mercado Libre juntas</li><li>Una vista para comparar clientes</li></ul>
+          <a class="btn ghost" href="{% if contact %}#contacto{% else %}#preguntas{% endif %}">Contactanos</a>
+        </div>
+      </div>
+      <p style="text-align:center;margin-top:18px;color:var(--ink-2);font-size:.92rem">Después de elegir, cargás tu medio de pago en Mercado Pago y conectás tu cuenta de Mercado Libre. Precios en pesos argentinos, actualizados según el dólar oficial del día.</p>
     </div>
   </section>
 
