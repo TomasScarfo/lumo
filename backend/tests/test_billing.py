@@ -67,9 +67,11 @@ class Base(unittest.TestCase):
         self.engine = self.app.extensions["lumo_engine"]
         self.client = self.app.test_client()
         self.mp = FakeMP()
-        self.mails = []
-        for target, value in (("lumo.billing.requests.request", self.mp),
-                              ("lumo.notify.send_mail", lambda cfg, to, subject, text, html, attachments=None: self.mails.append((to, subject, text)))):
+        self.mails, self.admin_mails = [], []  # los de cada persona y los avisos para quien administra
+
+        def send(cfg, to, subject, text, html, attachments=None):
+            (self.admin_mails if subject.startswith("Lumo · ") else self.mails).append((to, subject, text))
+        for target, value in (("lumo.billing.requests.request", self.mp), ("lumo.notify.send_mail", send)):
             patcher = mock.patch(target, value)
             patcher.start()
             self.addCleanup(patcher.stop)
@@ -531,7 +533,7 @@ class ChequeoDiario(Base):
         self.cron()
         self.assertEqual([m[1] for m in self.mails], ["No pudimos cobrar tu suscripción de Lumo", "Tu acceso a Lumo quedó en pausa"])
         with Session(self.engine) as s:
-            self.assertEqual(sorted(n.kind for n in s.execute(select(Notice).where(Notice.user_id == 883)).scalars()), ["baja", "pago"])
+            self.assertEqual(sorted(n.kind for n in s.execute(select(Notice).where(Notice.user_id == 883, Notice.kind != "adm")).scalars()), ["baja", "pago"])
 
 
 class Webhook(Base):
@@ -810,3 +812,45 @@ class PagarPrimero(Base):
             self.app.test_client().post("/cron/avisos", headers=CRON)
         self.assertEqual(self.provisional(), [])
         self.assertEqual(self.mp.store[pid]["status"], "cancelled")
+
+
+class AvisosAlAdministrador(Base):
+    cfg = dict(BILLING, ADMIN_NOTIFY_EMAIL="yo@lumo.test")
+
+    def titles(self):
+        return [m[1].replace("Lumo · ", "") for m in self.admin_mails]
+
+    def test_prueba_cobros_y_cancelacion_llegan_por_mail(self):
+        pid = self.trialing(960)
+        self.assertEqual(self.titles(), ["Nueva prueba gratis"])
+        to, _, text = self.admin_mails[0]
+        self.assertEqual(to, "yo@lumo.test")
+        for dato in ("Email de pago: vende@dor.test", "Cuenta de Mercado Libre: 960", "Plan: Mensual", "Primer cobro:"):
+            self.assertIn(dato, text)
+        self.end_trial(960)
+        pay = self.mp.charge(pid, "approved")
+        self.notify_mp("subscription_authorized_payment", pay)
+        self.notify_mp("subscription_authorized_payment", pay)  # Mercado Pago repite el aviso: llega un solo mail
+        self.notify_mp("subscription_authorized_payment", self.mp.charge(pid, "rejected"))
+        self.assertEqual(self.titles(), ["Nueva prueba gratis", "Cobro aprobado", "Cobro rechazado"])
+        self.client.post("/suscripcion/cancelar", data={"csrf": self.csrf()})
+        self.assertEqual(self.titles()[-1], "Suscripción cancelada")
+
+    def test_pago_antes_de_conectar_y_conexion(self):
+        self.client.get("/suscripcion?plan=annual")
+        r = self.client.post("/suscripcion", data={"plan": "annual", "email": "nuevo@pago.test", "csrf": self.csrf()})
+        pid = r.headers["Location"].rsplit("/", 1)[1]
+        self.mp.authorize(pid, 14)
+        self.client.get(self.mp.store[pid]["back_url"].replace("https://lumo.test", "") + "?preapproval_id=" + pid)
+        self.assertEqual(self.titles(), ["Nueva prueba gratis"])
+        self.assertIn("Cuenta de Mercado Libre: todavía no la conectó", self.admin_mails[0][2])
+        connect_as(self.client, 961)
+        self.assertEqual(self.titles(), ["Nueva prueba gratis", "Conectó Mercado Libre después de pagar"])
+        self.assertIn("Cuenta de Mercado Libre: 961", self.admin_mails[1][2])
+
+    def test_sin_email_configurado_va_al_de_contacto(self):
+        app = create_app(BILLING)
+        self.assertEqual(app.extensions["lumo_cfg"]["ADMIN_NOTIFY_EMAIL"], "")
+        self.app, self.engine, self.client = app, app.extensions["lumo_engine"], app.test_client()
+        self.trialing(962)
+        self.assertEqual(self.admin_mails[0][0], app.extensions["lumo_cfg"]["CONTACT_EMAIL"])
