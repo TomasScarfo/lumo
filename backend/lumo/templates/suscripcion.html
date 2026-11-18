@@ -15,7 +15,8 @@
 <main class="page">
   <div class="row" style="justify-content:space-between">
     <a class="logo" href="{{ home }}"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
-    <div class="row">{% if plan.kind in ('trial', 'paid', 'admin', 'free') %}<a class="btn ghost sm" href="/panel">Ir al panel</a>{% endif %}<a class="btn ghost sm" href="/salir">Salir</a></div>
+    {% if anon %}<a class="btn ghost sm" href="/entrar">¿Ya tenés cuenta? Ingresar</a>
+    {% else %}<div class="row">{% if plan.kind in ('trial', 'paid', 'admin', 'free') %}<a class="btn ghost sm" href="/panel">Ir al panel</a>{% endif %}<a class="btn ghost sm" href="/salir">Salir</a></div>{% endif %}
   </div>
   <div class="panel" style="margin-top:24px">
     {% if plan.kind in ('admin', 'free') %}
@@ -42,6 +43,7 @@
     {% elif trial_offer %}
       <h1>Empezá tu prueba gratis de {{ trial_days }} días</h1>
       <p>Elegí un plan y cargá tu medio de pago en Mercado Pago. <b>No se cobra nada durante {{ trial_days }} días</b>: el primer cobro es recién el día {{ trial_days + 1 }}. Si cancelás antes, no pagás nada.</p>
+      {% if anon %}<p>Después conectás tu cuenta de Mercado Libre y empezás a usar Lumo.</p>{% endif %}
     {% else %}
       <h1>Tu suscripción terminó</h1>
       <p>Tus datos y lo que marcaste en el panel te esperan. Elegí un plan para volver a entrar.</p>
