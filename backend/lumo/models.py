@@ -22,6 +22,8 @@ class Account(Base):
     expires_at = Column(DateTime, nullable=False)
     scope = Column(Text, nullable=True)
     email = Column(Text, nullable=True)  # para los avisos por mail; se lee de Mercado Libre
+    ml_email = Column(Text, nullable=True)  # el email de la cuenta de Mercado Libre, tal cual lo informa (para la administración)
+    ml_nickname = Column(Text, nullable=True)  # el apodo de la cuenta en Mercado Libre
     # connected | needs_reconnect
     status = Column(String(32), nullable=False, default="connected")
     created_at = Column(DateTime, nullable=False, default=utcnow)
@@ -148,6 +150,9 @@ class Subscription(Base):
     user_id = Column(BigInteger, primary_key=True, autoincrement=False)
     trial_started_at = Column(DateTime, nullable=True)  # cuándo empezó la prueba gratis; vacío: todavía no la usó
     trial_ends_at = Column(DateTime, nullable=False, default=utcnow)  # día del primer cobro; solo vale si trial_started_at tiene fecha
+    # Resumen (hash) del email de pago con el que usó la prueba gratis: nunca se borra, para que el mismo email no tenga otra prueba
+    # con otra cuenta de Mercado Libre. No guarda el email.
+    trial_email_hash = Column(String(64), nullable=True)
     # new | pending | authorized | paused | cancelled (los últimos cuatro son los estados de Mercado Pago)
     status = Column(String(32), nullable=False, default="new")
     mp_preapproval_id = Column(String(64), nullable=True)

@@ -100,10 +100,11 @@ class Base(unittest.TestCase):
         self.end_trial(uid)
         return pid
 
-    def trialing(self, uid, plan="monthly", days=14):
-        """La cuenta eligió un plan y Mercado Pago confirmó su medio de pago: está en la prueba gratis."""
+    def trialing(self, uid, plan="monthly", days=14, email="vende@dor.test"):
+        """La cuenta eligió un plan y Mercado Pago confirmó su medio de pago: está en la prueba gratis.
+        Cada email de pago tiene una sola prueba: para varias cuentas en prueba, usar emails distintos."""
         connect_as(self.client, uid)
-        self.subscribe(plan)
+        self.subscribe(plan, email)
         pid = self.sub(uid).mp_preapproval_id
         self.mp.authorize(pid, days)
         self.client.get("/suscripcion/listo?preapproval_id=" + pid)
@@ -598,13 +599,21 @@ class Administracion(Base):
         with c.session_transaction() as sess:
             return c, sess["csrf"]
 
+    def test_detalle_de_cada_cuenta_con_su_email_de_mercado_libre(self):
+        with mock.patch("lumo.ml.api_get", return_value={"email": "Vendedor@ML.test", "nickname": "TIENDA_DEMO"}):
+            self.trialing(857, email="paga@mp.test")
+        html = self.admin()[0].get("/admin").get_data(as_text=True)
+        fila = [r for r in html.split("<tr>") if "<code>857</code>" in r][0]
+        for dato in ("TIENDA_DEMO", "Vendedor@ML.test", "paga@mp.test", "Mercado Libre conectado", "primer cobro", "Prueba:", "Último ingreso", "$10.000"):
+            self.assertIn(dato, fila)
+
     def test_lista_planes_e_ingreso_mensual(self):
         self.paying(850, "monthly")
         otro = Base.paying
         self.client = self.app.test_client()
         otro(self, 851, "annual", days=365)
         self.client = self.app.test_client()
-        Base.trialing(self, 852)  # en prueba
+        Base.trialing(self, 852, email="otra@dor.test")  # en prueba (con otro email: la prueba es una por email)
         html = self.admin()[0].get("/admin").get_data(as_text=True)
         for texto in ("Pagando", "vende@dor.test", "Mensual", "Anual", "En prueba", "US$18,33"):  # 10 + 100 / 12
             self.assertIn(texto, html)
@@ -806,11 +815,39 @@ class PagarPrimero(Base):
 
     def test_quien_ya_uso_la_prueba_no_tiene_otra(self):
         self.used_trial(954)
-        self.pay_first()
-        connect_as(self.client, 954)
+        pid, _, _ = self.pay_first()
+        r = connect_as(self.client, 954)
+        self.assertTrue(r.headers["Location"].endswith("/suscripcion"))
+        self.assertEqual(self.mp.store[pid]["status"], "cancelled")  # Mercado Pago no le cobra recién en 14 días: ese pago se cancela
         with Session(self.engine) as s:
-            self.assertEqual(access.plan(s, self.cfg, 954)["kind"], "paid")
+            self.assertEqual(access.plan(s, self.cfg, 954)["kind"], "expired")
         self.assertLess(self.sub(954).trial_started_at, utcnow() - timedelta(days=30))
+        self.assertEqual(self.provisional(), [])
+        self.assertIn("Esta cuenta ya usó su prueba gratis", self.client.get("/suscripcion").get_data(as_text=True))
+        # al suscribirse de nuevo, el cobro es inmediato (sin fecha de inicio)
+        self.subscribe("monthly", "nuevo@pago.test")
+        self.assertNotIn("start_date", self.mp.store[self.sub(954).mp_preapproval_id]["auto_recurring"])
+
+    def test_el_mismo_email_no_tiene_otra_prueba_con_otra_cuenta(self):
+        self.trialing(955, email="Repite@Pago.test")
+        self.client = self.app.test_client()
+        connect_as(self.client, 956)  # otra cuenta de Mercado Libre, mismo email de pago
+        self.subscribe("monthly", "repite@pago.test ")
+        pid = self.sub(956).mp_preapproval_id
+        self.assertNotIn("start_date", self.mp.store[pid]["auto_recurring"])  # se cobra apenas se suscribe
+        self.mp.authorize(pid, 30)
+        self.client.get("/suscripcion/listo?preapproval_id=" + pid)
+        with Session(self.engine) as s:
+            self.assertEqual(access.plan(s, self.cfg, 956)["kind"], "paid")
+        # y pagando primero, sin conectar, tampoco
+        _, body, _ = self.pay_first(client=self.app.test_client(), email="repite@pago.test")
+        self.assertNotIn("start_date", body["auto_recurring"])
+        # quitar el acceso borra el email, pero no el resumen que impide otra prueba
+        with Session(self.engine) as s:
+            from lumo import privacy
+            privacy.erase_user(s, 955)
+            s.commit()
+        self.assertIsNotNone(self.sub(955).trial_email_hash)
 
     def test_el_chequeo_diario_borra_los_pagos_abandonados(self):
         pid, _, _ = self.pay_first(authorize=False)

@@ -460,7 +460,7 @@ def create_app(overrides=None) -> Flask:
                     access.grant(s, user_id, inv.label)
                     allowed = True
             acc = save_tokens(s, cfg, user_id, tok)
-            acc.email = _read_email(tok["access_token"]) or acc.email
+            acc.email = _read_email(tok["access_token"], acc) or acc.email
             if lumo_user:
                 usuarios.link(s, lumo_user, user_id)
                 acc.email = lumo_user.email  # los avisos van al email con el que se registró
@@ -475,8 +475,10 @@ def create_app(overrides=None) -> Flask:
                     _meta_track(s, "StartTrial", user_id, billing.price_usd(cfg, sub.plan or "monthly"), live=True)
             s.commit()
             luid = lumo_user.id if lumo_user else None
-        chosen, wanted = session.get("plan"), session.get("next")
+        chosen, wanted, trial_used = session.get("plan"), session.get("next"), session.get("trial_used")
         session.clear()
+        if trial_used:
+            session["trial_used"] = True
         if chosen in billing.PLANS:
             session["plan"] = chosen
         if luid:
@@ -504,8 +506,9 @@ def create_app(overrides=None) -> Flask:
             return redirect("/admin")
         return page(body)
 
-    def _read_email(token):
-        """El email de la cuenta de Mercado Libre, para los avisos. Si no se puede leer, los avisos quedan sin destino."""
+    def _read_email(token, acc=None):
+        """El email de la cuenta de Mercado Libre, para los avisos. Si no se puede leer, los avisos quedan sin destino.
+        Con acc, además guarda en la cuenta el email y el apodo de Mercado Libre tal cual, para la administración."""
         try:
             body = ml.api_get(cfg, token, "/users/me", None, None)
         except ml.MLError as exc:
@@ -515,6 +518,10 @@ def create_app(overrides=None) -> Flask:
             log.warning("no se pudo leer el email: %s", type(exc).__name__)
             return None
         mail = body.get("email") if isinstance(body, dict) else None
+        if acc is not None and isinstance(body, dict):
+            nick = body.get("nickname")
+            acc.ml_nickname = nick[:120] if isinstance(nick, str) and nick else acc.ml_nickname
+            acc.ml_email = mail if isinstance(mail, str) and "@" in mail else acc.ml_email
         if not (isinstance(mail, str) and "@" in mail):
             log.warning("Mercado Libre no devolvió el email; campos recibidos: %s", sorted(body)[:30] if isinstance(body, dict) else type(body).__name__)
             return None
@@ -618,7 +625,7 @@ def create_app(overrides=None) -> Flask:
             if acc and not acc.email and notify.enabled(cfg) and notify._due(s, uid, "mailread", "x", timedelta(hours=1), utcnow()):
                 # Cuentas conectadas antes de los avisos: se intenta leer el email una vez por hora, sin pedir que reconecten.
                 try:
-                    acc.email = _read_email(valid_access_token(s, cfg, uid))
+                    acc.email = _read_email(valid_access_token(s, cfg, uid), acc)
                 except NeedsReconnect:
                     pass
                 notify._mark(s, uid, "mailread", "x", utcnow())
@@ -833,9 +840,22 @@ def create_app(overrides=None) -> Flask:
                                           "url": "%s/suscripcion/conectar?c=%s" % (base, _claim_token(sub.user_id))})
                     continue
                 p = access.plan(s, cfg, sub.user_id)
+                acc, user = s.get(Account, sub.user_id), usuarios.by_ml(s, sub.user_id)
+                snap = s.get(Snapshot, sub.user_id)
+                try:
+                    advertiser = json.loads(snap.data).get("advertiser", {}).get("name") if snap else None
+                except ValueError:
+                    advertiser = None
                 subs.append({"user_id": sub.user_id, "kind": p["kind"], "days": p.get("days"), "status": sub.status, "reason": p.get("reason"),
                              "plan": billing.NAMES.get(sub.plan), "next_plan": billing.NAMES.get(sub.next_plan), "past_due": bool(p.get("past_due")),
-                             "grace_ends": p.get("grace_ends"), "email": sub.payer_email, "trial_ends": sub.trial_ends_at, "paid_until": sub.paid_until})
+                             "grace_ends": p.get("grace_ends"), "email": sub.payer_email, "trial_ends": sub.trial_ends_at, "paid_until": sub.paid_until,
+                             # cuenta de Mercado Libre: email y apodo tal cual los informa (las cuentas viejas lo completan en su próximo ingreso)
+                             "ml_email": (acc.ml_email if acc else None) or (acc.email if acc and not user else None),
+                             "nickname": acc.ml_nickname if acc else None, "lumo_email": user.email if user else None,
+                             "advertiser": advertiser, "conn": acc.status if acc else None, "connected_at": acc.created_at if acc else None,
+                             "last_login": (user.last_login_at if user else None) or (acc.updated_at if acc else None),
+                             "since": sub.created_at, "trial_started": sub.trial_started_at, "amount": notify.money(sub.amount_ars) if sub.amount_ars else None,
+                             "past_due_since": sub.past_due_since, "mp_id": sub.mp_preapproval_id})
             all_subs = s.execute(select(Subscription)).scalars().all()
             stats = {"paying": sum(1 for x in subs if x["kind"] == "paid" and x["status"] == "authorized" and not x["past_due"]),
                      "trial": sum(1 for x in subs if x["kind"] == "trial"), "past_due": sum(1 for x in subs if x["past_due"]),
@@ -1072,8 +1092,16 @@ def create_app(overrides=None) -> Flask:
             s.delete(tmp)
             audit.record(s, "sub_claim_dup", actor=uid, detail=tmp.plan)
             return
-        data = {c.name: getattr(tmp, c.name) for c in Subscription.__table__.columns if c.name != "user_id"}
         used = cur.trial_started_at if cur else None
+        if used and billing.in_trial(tmp):
+            # Ya usó su prueba gratis con esta cuenta y pagó antes de conectar como si fuera nueva: Mercado Pago le cobraría
+            # recién al terminar otra prueba. Se cancela ese pago y se le pide suscribirse de nuevo, con el cobro de hoy.
+            billing.end(cfg, tmp)
+            s.delete(tmp)
+            audit.record(s, "sub_claim_trial_used", actor=uid, detail=tmp.plan)
+            session["trial_used"] = True
+            return
+        data = {c.name: getattr(tmp, c.name) for c in Subscription.__table__.columns if c.name != "user_id"}
         if cur:
             billing.end(cfg, cur)  # una suscripción vieja sin terminar no puede seguir viva en Mercado Pago
             s.delete(cur)
@@ -1091,6 +1119,9 @@ def create_app(overrides=None) -> Flask:
     def suscripcion():
         uid = _session_uid()
         if uid:
+            if session.pop("trial_used", None):
+                return _suscripcion_page(uid, "Esta cuenta ya usó su prueba gratis, así que cancelamos ese pago en Mercado Pago (no se te cobró nada). "
+                                              "Para seguir usando Lumo, elegí tu plan: el primer cobro es hoy.")
             return _suscripcion_page(uid)
         _remember_origin()
         pending = _pending()
@@ -1145,7 +1176,9 @@ def create_app(overrides=None) -> Flask:
                 return redirect("/suscripcion")  # ya tiene ese plan al día
             back = "/suscripcion/listo" if sub.user_id > 0 else "/suscripcion/listo/" + _claim_token(sub.user_id)
             try:
-                url = billing.create_checkout(cfg, sub, plan, email, _base_url() + back)
+                used = s.execute(select(Subscription.user_id).where(Subscription.trial_email_hash == billing.email_hash(email),
+                                                                  Subscription.user_id != sub.user_id)).first()
+                url = billing.create_checkout(cfg, sub, plan, email, _base_url() + back, trial_ok=used is None)
             except billing.RateError:
                 log.warning("no se pudo obtener la cotización del dólar")
                 return _suscripcion_page(uid, "No pudimos calcular el precio en pesos en este momento. Probá de nuevo en unos minutos.", 503)
@@ -1291,6 +1324,7 @@ def create_app(overrides=None) -> Flask:
         before, had_trial = (sub.status, sub.plan), sub.trial_started_at
         billing.apply(cfg, sub, pre)
         if sub.trial_started_at and not had_trial:
+            sub.trial_email_hash = billing.email_hash(sub.payer_email)  # ese email ya no tiene otra prueba gratis
             audit.record(s, "trial_start", target=sub.user_id, detail=sub.plan)
             _meta_track(s, "StartTrial", sub.user_id, billing.price_usd(cfg, sub.plan or "monthly"))
             _admin_alert(s, "Nueva prueba gratis", sub, ("Primer cobro", sub.trial_ends_at.strftime("%d/%m/%Y")))
@@ -1428,11 +1462,17 @@ def _widen_scope(engine) -> None:
 
 
 def _add_email_column(engine) -> None:
-    """La tabla account ya existía sin la columna email."""
-    if "email" in {c["name"] for c in inspect(engine).get_columns("account")}:
-        return
+    """La tabla account ya existía sin las columnas de email (y después sin el email y el apodo de Mercado Libre)."""
+    have = {c["name"] for c in inspect(engine).get_columns("account")}
     with engine.begin() as conn:
-        conn.execute(text("ALTER TABLE account ADD COLUMN email TEXT"))
+        for col in ("email", "ml_email", "ml_nickname"):
+            if col not in have:
+                conn.execute(text("ALTER TABLE account ADD COLUMN %s TEXT" % col))
+        if "trial_email_hash" not in {c["name"] for c in inspect(engine).get_columns("subscription")}:
+            conn.execute(text("ALTER TABLE subscription ADD COLUMN trial_email_hash VARCHAR(64)"))
+            # Las pruebas que ya se usaron también cuentan: se guarda el resumen de su email de pago.
+            for uid, mail in conn.execute(text("SELECT user_id, payer_email FROM subscription WHERE trial_started_at IS NOT NULL AND payer_email IS NOT NULL")).all():
+                conn.execute(text("UPDATE subscription SET trial_email_hash = :h WHERE user_id = :u"), {"h": billing.email_hash(mail), "u": uid})
 
 
 def _esc(text) -> str:
