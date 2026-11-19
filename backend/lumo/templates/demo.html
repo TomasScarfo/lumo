@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pedí una demo · Lumo</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+<style>
+.demo-form { display: grid; gap: 14px; margin-top: 18px; }
+.demo-form label, .demo-form fieldset { display: grid; gap: 6px; font-weight: 600; font-size: .93rem; border: 0; padding: 0; margin: 0; }
+.demo-form legend { font-weight: 600; font-size: .93rem; padding: 0; margin-bottom: 6px; }
+.demo-form small { font-weight: 400; color: var(--ink-3); }
+.demo-form input[type=text], .demo-form input[type=email], .demo-form input[type=tel], .demo-form select, .demo-form textarea {
+  min-height: 44px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 400 1rem var(--font-body); width: 100%; }
+.demo-form textarea { min-height: 80px; resize: vertical; }
+.demo-form .f2 { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .demo-form .f2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opts label { display: inline-flex; flex-direction: row; align-items: center; gap: 8px; font-weight: 500; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); cursor: pointer; }
+.opts input { accent-color: var(--accent); margin: 0; }
+.trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+</style>
+</head>
+<body>
+<main class="page">
+  <a class="logo" href="{{ home }}"><img src="/static/logo.svg" alt="" width="34" height="34">Lumo</a>
+  <div class="panel" style="margin-top:24px">
+    {% if sent %}
+      <h1>¡Gracias! Te escribimos pronto</h1>
+      <p>Recibimos tu pedido. En menos de un día hábil te contactamos para coordinar la demo: en 20 minutos te mostramos Lumo con ejemplos parecidos a tu cuenta.</p>
+      <div class="row" style="margin-top:16px"><a class="btn ghost" href="{{ home }}">Volver al inicio</a></div>
+    {% else %}
+      <h1>Pedí una demo</h1>
+      <p>En 20 minutos te mostramos cómo Lumo lee tu publicidad y qué te recomendaría. Contanos un poco de tu cuenta para prepararla: solo el email es obligatorio.</p>
+      {% if error %}<p class="invite-note bad" role="alert"><b>{{ error }}</b></p>{% endif %}
+      <form method="post" action="/demo" class="demo-form">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <div class="trap" aria-hidden="true"><label>Sitio web <input type="text" name="web" tabindex="-1" autocomplete="off"></label></div>
+        <div class="f2">
+          <label>Tu nombre <small>(opcional)</small><input type="text" name="nombre" maxlength="120" autocomplete="name" value="{{ f.nombre }}"></label>
+          <label>Tu email<input type="email" name="email" required maxlength="254" autocomplete="email" value="{{ f.email }}"></label>
+        </div>
+        <div class="f2">
+          <label>WhatsApp o teléfono <small>(opcional)</small><input type="tel" name="telefono" maxlength="40" autocomplete="tel" value="{{ f.telefono }}"></label>
+          <label>Tu tienda en Mercado Libre <small>(nombre o apodo, opcional)</small><input type="text" name="tienda" maxlength="120" value="{{ f.tienda }}"></label>
+        </div>
+        <fieldset><legend>¿Quién sos?</legend>
+          <div class="opts">{% for v in perfiles %}<label><input type="radio" name="perfil" value="{{ v }}"{% if f.perfil == v %} checked{% endif %}>{{ v }}</label>{% endfor %}</div>
+        </fieldset>
+        <label>¿Qué vendés? <small>(rubro o productos principales)</small><input type="text" name="rubro" maxlength="200" value="{{ f.rubro }}" placeholder="Ej: accesorios para celulares, muebles, ropa deportiva"></label>
+        <div class="f2">
+          <label>¿Usás Product Ads hoy?
+            <select name="ads">{% for v in usos %}<option{% if f.ads == v %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+          <label>Inversión mensual aproximada en publicidad
+            <select name="inversion">{% for v in inversiones %}<option{% if f.inversion == v %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+        </div>
+        <div class="f2">
+          <label>¿Cuántas campañas activas tenés?
+            <select name="campanas">{% for v in campanas %}<option{% if f.campanas == v %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+          <label>¿Cuántas publicaciones activas?
+            <select name="publicaciones">{% for v in publicaciones %}<option{% if f.publicaciones == v %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+        </div>
+        <fieldset><legend>¿Qué querés lograr? <small>(podés marcar varios)</small></legend>
+          <div class="opts">{% for v in objetivos %}<label><input type="checkbox" name="objetivos" value="{{ v }}"{% if v in f.objetivos %} checked{% endif %}>{{ v }}</label>{% endfor %}</div>
+        </fieldset>
+        <label>Lo que más te cuesta hoy de la publicidad <small>(opcional)</small><textarea name="dolor" maxlength="1000" placeholder="Ej: no sé si me conviene subir el presupuesto, gasto mucho y vendo poco">{{ f.dolor }}</textarea></label>
+        <div class="f2">
+          <label>¿Cuándo te queda mejor la demo?
+            <select name="horario">{% for v in horarios %}<option{% if f.horario == v %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+          <label>¿Cómo conociste Lumo?
+            <select name="origen">{% for v in origenes %}<option{% if f.origen == v %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+        </div>
+        <button class="btn" type="submit" style="justify-self:start">Pedir mi demo</button>
+        <p class="sub" style="font-size:.88rem">Usamos estos datos solo para contactarte por la demo. <a href="/privacidad">Privacidad</a>.</p>
+      </form>
+    {% endif %}
+  </div>
+</main>
+</body>
+</html>

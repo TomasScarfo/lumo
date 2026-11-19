@@ -140,7 +140,7 @@
       <p class="lead">Lumo lee tus campañas de <b>Product Ads</b> y te dice, en palabras simples, <b>qué mejorar primero</b>. Sin planillas ni jerga.</p>
       <div class="cta-row">
         {% if invited %}<a class="btn" href="{{ app }}/entrar" data-app>Aceptar la invitación y registrarme</a>{% else %}<a class="btn" href="#precio">Probar gratis {{ trial_days }} días</a>{% endif %}
-        <a class="btn ghost" href="#como">Ver cómo funciona</a>
+        <a class="btn ghost" href="{{ app }}/demo" data-app>Pedí una demo</a>
       </div>
       {% if invite_error %}
       <p class="invite-note bad" role="alert"><b>Esa invitación no es válida.</b> Puede que ya se haya usado, que haya vencido o que la hayan cancelado. Pedí una nueva a quien te la envió.</p>
@@ -315,7 +315,8 @@
         <p>Escribime y te ayudo a empezar.</p>
       </div>
       <div class="grid" style="max-width:420px;margin:0 auto">
-        {% if contact.email %}<a class="card contact" href="{{ contact.mailto }}"><div class="brand mail"><svg><use href="#b-mail"/></svg></div><h3>Email</h3><p>{{ contact.email }}</p><span class="go">Enviar un email <svg><use href="#i-arrow"/></svg></span></a>{% endif %}
+        <a class="card contact" href="{{ app }}/demo" data-app><div class="brand" style="background:var(--accent)"><svg><use href="#i-light"/></svg></div><h3>Pedí una demo</h3><p>Te mostramos Lumo en 20 minutos, con ejemplos parecidos a tu cuenta.</p><span class="go">Elegir horario <svg><use href="#i-arrow"/></svg></span></a>
+                {% if contact.email %}<a class="card contact" href="{{ contact.mailto }}"><div class="brand mail"><svg><use href="#b-mail"/></svg></div><h3>Email</h3><p>{{ contact.email }}</p><span class="go">Enviar un email <svg><use href="#i-arrow"/></svg></span></a>{% endif %}
       </div>
       <form class="card inquiry" id="consulta" data-to="{{ contact.email }}">
         <h3>O dejame tu consulta</h3>

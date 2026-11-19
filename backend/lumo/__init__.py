@@ -944,6 +944,63 @@ def create_app(overrides=None) -> Flask:
         resp.headers["Content-Security-Policy"] = security.with_gtm(security.CSP)
         return resp
 
+    # ---------- Pedido de demo: el formulario de la portada llega por mail a quien administra ----------
+    DEMO_OPCIONES = {
+        "perfiles": ("Vendedor", "Agencia o consultor", "Marca o fabricante"),
+        "usos": ("Sí, hace tiempo", "Sí, hace poco", "No, quiero empezar"),
+        "inversiones": ("No sé / prefiero no decir", "Menos de $100.000", "$100.000 a $500.000", "$500.000 a $2.000.000", "Más de $2.000.000"),
+        "campanas": ("No sé", "1", "2 a 5", "6 a 15", "Más de 15"),
+        "publicaciones": ("No sé", "Menos de 20", "20 a 100", "100 a 500", "Más de 500"),
+        "objetivos": ("Vender más", "Gastar menos por venta", "Entender las métricas", "Saber qué hacer primero", "Ahorrar tiempo", "Seguir a mis clientes"),
+        "horarios": ("Cualquier momento", "Mañana (9 a 12)", "Mediodía (12 a 15)", "Tarde (15 a 19)"),
+        "origenes": ("Anuncio en Instagram o Facebook", "Google", "Recomendación", "Otro"),
+    }
+    DEMO_TEXTO = (("nombre", 120), ("telefono", 40), ("tienda", 120), ("rubro", 200), ("dolor", 1000))
+
+    def _demo_page(f=None, error=None, sent=False, status=200):
+        f = f or {"objetivos": []}
+        resp = Response(render_template("demo.html", csrf=_csrf(), f=f, error=error, sent=sent, home=_home(), **DEMO_OPCIONES), status, mimetype="text/html")
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+
+    @app.get("/demo")
+    def demo():
+        _remember_origin()
+        return _demo_page()
+
+    @app.post("/demo")
+    def demo_pedir():
+        _check_csrf()
+        form = request.form
+        f = {k: (form.get(k) or "").strip()[:n] for k, n in DEMO_TEXTO}
+        f["email"] = (form.get("email") or "").strip()[:254]
+        for key, opts in (("perfil", "perfiles"), ("ads", "usos"), ("inversion", "inversiones"), ("campanas", "campanas"),
+                          ("publicaciones", "publicaciones"), ("horario", "horarios"), ("origen", "origenes")):
+            f[key] = form.get(key) if form.get(key) in DEMO_OPCIONES[opts] else ""
+        f["objetivos"] = [o for o in form.getlist("objetivos") if o in DEMO_OPCIONES["objetivos"]]
+        if form.get("web"):
+            return _demo_page(sent=True)  # lo completó un robot: se le agradece y no se manda nada
+        if not billing.EMAIL_RE.match(f["email"]):
+            return _demo_page(f, "Revisá el email: lo necesitamos para contactarte.", status=400)
+        to = cfg.get("ADMIN_NOTIFY_EMAIL") or _tagged(cfg.get("CONTACT_EMAIL"), "demos")
+        if not to or not notify.enabled(cfg):
+            log.warning("pedido de demo sin envío de mails configurado")
+            return _demo_page(f, "Hoy no pudimos recibir tu pedido. Escribinos a %s y coordinamos." % (cfg.get("CONTACT_EMAIL") or "nuestro email"), status=503)
+        rows = [("Nombre", f["nombre"]), ("Email", f["email"]), ("WhatsApp / teléfono", f["telefono"]), ("Tienda en Mercado Libre", f["tienda"]),
+                ("Perfil", f["perfil"]), ("Qué vende", f["rubro"]), ("Usa Product Ads", f["ads"]), ("Inversión mensual", f["inversion"]),
+                ("Campañas activas", f["campanas"]), ("Publicaciones activas", f["publicaciones"]), ("Objetivos", ", ".join(f["objetivos"])),
+                ("Lo que más le cuesta", f["dolor"]), ("Horario para la demo", f["horario"]), ("Cómo conoció Lumo", f["origen"])]
+        subject, text, html = notify.admin_mail("Pedido de demo de %s" % (f["nombre"] or f["email"]), rows, _base_url() + "/admin")
+        try:
+            notify.send_mail(cfg, to, subject, text, html, reply_to=f["email"])  # responder el mail le escribe a la persona
+        except Exception as exc:
+            log.warning("el pedido de demo no salió: %s", notify.why(exc))
+            return _demo_page(f, "No pudimos mandar tu pedido. Probá de nuevo en un rato o escribinos a %s." % cfg.get("CONTACT_EMAIL", ""), status=502)
+        with Session(engine) as s:
+            audit.record(s, "demo_pedido", detail=(f["perfil"] or "")[:40])
+            s.commit()
+        return _demo_page(sent=True)
+
     @app.get("/privacidad")
     def privacidad():
         uid = _current_user()

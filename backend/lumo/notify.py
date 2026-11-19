@@ -43,9 +43,9 @@ def enabled(cfg: dict) -> bool:
     return bool(cfg.get("SMTP_PASSWORD") and cfg.get("SMTP_USER"))
 
 
-def _send_brevo(cfg: dict, to: str, subject: str, text: str, html: str, attachments=None) -> None:
+def _send_brevo(cfg: dict, to: str, subject: str, text: str, html: str, attachments=None, reply_to=None) -> None:
     body = {"sender": {"name": "Lumo", "email": _sender(cfg)}, "to": [{"email": to}], "subject": subject, "textContent": text, "htmlContent": html}
-    reply = cfg.get("CONTACT_EMAIL")
+    reply = reply_to or cfg.get("CONTACT_EMAIL")
     if reply and reply.lower() != _sender(cfg).lower():
         body["replyTo"] = {"email": reply}  # se envía desde el dominio de Lumo, pero las respuestas llegan a la casilla de contacto
     if attachments:
@@ -62,15 +62,17 @@ def _send_brevo(cfg: dict, to: str, subject: str, text: str, html: str, attachme
 XLSX = ("application", "vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
-def send_mail(cfg: dict, to: str, subject: str, text: str, html: str, attachments=None) -> None:
+def send_mail(cfg: dict, to: str, subject: str, text: str, html: str, attachments=None, reply_to=None) -> None:
     """attachments: lista de (nombre, bytes) con archivos .xlsx."""
     if cfg.get("BREVO_API_KEY"):
-        _send_brevo(cfg, to, subject, text, html, attachments)
+        _send_brevo(cfg, to, subject, text, html, attachments, reply_to)
         return
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = "Lumo <%s>" % cfg["SMTP_USER"]
     msg["To"] = to
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.set_content(text)
     msg.add_alternative(html, subtype="html")
     for name, content in attachments or []:
