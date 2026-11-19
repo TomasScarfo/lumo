@@ -54,6 +54,10 @@
     {% elif estado == 'cambio' %}
       <p class="invite-note ok" role="status"><b>Listo.</b> {% if plan.next_plan %}Estamos esperando la confirmación de Mercado Pago para cambiar tu plan.{% else %}Tu plan ahora es el {{ names[plan.plan] }}.{% endif %}</p>
     {% endif %}
+    {% if anon and plan.kind in ('none', 'expired') %}
+      <p class="invite-note" style="margin-top:16px"><b>¿Administrás Lumo o tenés acceso sin cargo?</b> No tenés que pagar:
+        <a href="/connect">conectá tu cuenta de Mercado Libre</a> y entrás directo.</p>
+    {% endif %}
     {% if error %}<p class="invite-note bad" role="alert"><b>{{ error }}</b>{% if detail %}<br><small>Detalle técnico: {{ detail }}</small>{% endif %}</p>{% endif %}
 
     {% if can_pay %}
