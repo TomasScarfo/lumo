@@ -19,16 +19,23 @@
       <p>Si no lo ves, mirá en la carpeta de spam o correo no deseado.</p>
       <div class="row" style="margin-top:16px"><a class="btn ghost" href="/entrar{% if plan %}?plan={{ plan }}{% endif %}">Pedir otro enlace</a></div>
     {% else %}
-      <h1>{% if invited %}Creá tu cuenta para aceptar la invitación{% else %}Entrá o creá tu cuenta{% endif %}</h1>
+      {% if invited or plan %}
+      <h1>{% if invited %}Creá tu cuenta para aceptar la invitación{% else %}Creá tu cuenta{% endif %}</h1>
       <p>Escribí tu email y te mandamos un enlace para entrar. <b>No hace falta contraseña.</b> Después conectás tu cuenta de Mercado Libre desde adentro de Lumo.</p>
+      {% else %}
+      <h1>Ingresá a Lumo</h1>
+      <p>Si ya tenés cuenta, entrá con Mercado Libre: si tu suscripción está activa vas directo a tu panel, y si no, elegís tu plan.</p>
+      <a class="btn" href="/connect" style="margin-top:16px;width:100%">Ingresar con Mercado Libre</a>
+      <p class="sub" style="margin-top:20px">O entrá con tu email: te mandamos un enlace, sin contraseña.</p>
+      {% endif %}
       {% if error %}<p class="bad" role="alert" style="margin-top:12px">{{ error }}</p>{% endif %}
-      <form method="post" action="/entrar" class="row" style="margin-top:16px">
+      <form method="post" action="/entrar" class="row" style="margin-top:12px">
         <input type="hidden" name="plan" value="{{ plan or '' }}">
-        <input type="email" name="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="tu@email.com" value="{{ email or '' }}" aria-label="Tu email" autofocus>
-        <button class="btn" type="submit">Enviarme el enlace</button>
+        <input type="email" name="email" required maxlength="254" autocomplete="email" inputmode="email" placeholder="tu@email.com" value="{{ email or '' }}" aria-label="Tu email"{% if invited or plan %} autofocus{% endif %}>
+        <button class="btn{% if not (invited or plan) %} ghost{% endif %}" type="submit">Enviarme el enlace</button>
       </form>
       <p class="sub" style="margin-top:14px;font-size:.9rem">Lumo solo consulta tus datos de Mercado Libre: no modifica tus campañas.</p>
-      <p style="margin-top:18px;font-size:.92rem">¿Ya conectaste tu cuenta antes? <a href="/connect">Ingresar con Mercado Libre</a>.</p>
+      {% if invited or plan %}<p style="margin-top:18px;font-size:.92rem">¿Ya tenés cuenta? <a href="/connect">Ingresar con Mercado Libre</a>.</p>{% endif %}
     {% endif %}
   </div>
 </main>

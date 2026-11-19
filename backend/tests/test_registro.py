@@ -40,9 +40,14 @@ class Registro(Base):
         html = r.get_data(as_text=True)
         self.assertEqual(r.status_code, 200)
         self.assertIn('name="email"', html)
-        self.assertIn("No hace falta contraseña", html)
-        self.assertIn('href="/connect"', html)
+        self.assertIn("Ingresá a Lumo", html)  # "Ingresar": ya tiene cuenta, primero Mercado Libre y también el email
+        self.assertLess(html.index('href="/connect"'), html.index('name="email"'))
+        self.assertIn("Ingresar con Mercado Libre", html)
         self.assertEqual(r.headers["Cache-Control"], "no-store")
+        # desde un plan de la portada es un registro: primero el email
+        html = self.client.get("/entrar?plan=monthly").get_data(as_text=True)
+        self.assertIn("Creá tu cuenta", html)
+        self.assertIn("No hace falta contraseña", html)
 
     def test_pedir_el_enlace_manda_un_mail_con_el_enlace_y_guarda_solo_su_hash(self):
         r = self.pedir()

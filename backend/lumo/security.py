@@ -137,6 +137,7 @@ LIMITS = (
     ("/cuenta", True, 10, 60),
     ("/arrepentimiento", True, 10, 60),
     ("/suscripcion", True, 20, 60),
+    ("/demo", True, 5, 600),
     ("/api/", False, 120, 60),
 )
 

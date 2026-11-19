@@ -69,7 +69,7 @@ class Base(unittest.TestCase):
         self.mp = FakeMP()
         self.mails, self.admin_mails = [], []  # los de cada persona y los avisos para quien administra
 
-        def send(cfg, to, subject, text, html, attachments=None):
+        def send(cfg, to, subject, text, html, attachments=None, reply_to=None):
             (self.admin_mails if subject.startswith("Lumo · ") else self.mails).append((to, subject, text))
         for target, value in (("lumo.billing.requests.request", self.mp), ("lumo.notify.send_mail", send)):
             patcher = mock.patch(target, value)
